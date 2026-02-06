@@ -5,7 +5,11 @@ import { CLASSIFICATIONS } from "../data/checklist";
 
 export default function Screen12() {
   const navigate = useNavigate();
-  const { classification, roles, resolvePrecedenceOrder, shouldReevaluateRules, setShouldReevaluateRules } = useWizard();
+  const { classification, roles, resolvePrecedenceOrder, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+
+  useEffect(() => {
+    pushHistory("/screen12");
+  }, [pushHistory]);
 
   // Use the global precedence resolver from context
   const finalClassification = resolvePrecedenceOrder(classification);

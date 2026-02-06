@@ -1,10 +1,15 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
 import { MODIFICATIONS } from "../data/checklist";
 
 export default function Screen2() {
   const navigate = useNavigate();
-  const { answers, toggleAnswer, saveAnswer, setRole, role, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules } = useWizard();
+  const { answers, toggleAnswer, saveAnswer, setRole, role, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+
+  useEffect(() => {
+    pushHistory("/screen2");
+  }, [pushHistory]);
   const modifications = answers.modifications || [];
 
   const handleToggle = (id) => {

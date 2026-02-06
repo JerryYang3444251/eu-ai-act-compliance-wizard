@@ -1,10 +1,15 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
 import { ANNEX_IA_CATEGORIES, CLASSIFICATIONS } from "../data/checklist";
 
 export default function Screen5() {
   const navigate = useNavigate();
-  const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules } = useWizard();
+  const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+
+  useEffect(() => {
+    pushHistory("/screen5");
+  }, [pushHistory]);
 
   const categories = answers.annexIACategories || [];
   const safety_function = answers.safety_function; // "yes" / "no" / null

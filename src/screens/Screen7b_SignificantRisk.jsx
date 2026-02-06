@@ -1,10 +1,15 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
 import { CLASSIFICATIONS } from "../data/checklist";
 
 export default function Screen7b_SignificantRisk() {
   const navigate = useNavigate();
-  const { answers, saveAnswer, toggleAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules } = useWizard();
+  const { answers, saveAnswer, toggleAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+
+  useEffect(() => {
+    pushHistory("/screen7b");
+  }, [pushHistory]);
 
   const impactChecks = answers.impact_checks || [];
 
@@ -119,8 +124,7 @@ export default function Screen7b_SignificantRisk() {
           ))}
         </div>
 
-        <h3 style={{ marginTop: "32px" }}>None of the above</h3>
-        <label className="checkbox-option">
+        <label className="checkbox-option" style={{ marginTop: "32px" }}>
           <input
             type="checkbox"
             checked={hasNone}

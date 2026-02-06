@@ -23,7 +23,7 @@ const STEPS = [
 export default function ProgressBar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { clearAnswersAfter, navigationHistory } = useWizard();
+  const { clearAnswersAfter, navigationHistory, obligations } = useWizard();
 
   // Treat /screenFinal as /screen14 for progress calculation
   const currentPath = location.pathname === "/screenFinal" ? "/screen14" : location.pathname;
@@ -33,7 +33,13 @@ export default function ProgressBar() {
   // Screen 0 (Information) doesn't count toward completion
   const completedPages = Math.max(0, currentIndex); // Pages after Part 0
   const totalCompletablePages = Math.max(1, total - 1); // Total pages excluding Part 0
-  const percent = completedPages > 0 ? Math.round((completedPages / totalCompletablePages) * 100) : 0;
+  let percent = completedPages > 0 ? Math.round((completedPages / totalCompletablePages) * 100) : 0;
+  
+  // If on final screen and no applicable obligations, set to 100%
+  const isFinalScreen = currentPath === "/screen14";
+  if (isFinalScreen && (!obligations || obligations.length === 0)) {
+    percent = 100;
+  }
 
   // Determine which steps have been visited (not skipped)
   const isStepVisited = (stepPath) => navigationHistory.includes(stepPath);

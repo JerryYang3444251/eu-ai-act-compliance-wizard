@@ -1,9 +1,14 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
 
 export default function Screen1() {
   const navigate = useNavigate();
-  const { roles_raw, setRoles_raw, navigateBack, reclassifyRoles, setRoles, saveAnswer, shouldReevaluateRules, setShouldReevaluateRules } = useWizard();
+  const { roles_raw, setRoles_raw, navigateBack, reclassifyRoles, setRoles, saveAnswer, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+
+  useEffect(() => {
+    pushHistory("/screen1");
+  }, [pushHistory]);
 
   // ----------------------------------------------------------------------
   // MODULE 2 — RAW ROLE INPUT CAPTURE

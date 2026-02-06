@@ -16,7 +16,12 @@ export default function Screen13() {
     hasModifications,
     shouldReevaluateRules,
     setShouldReevaluateRules,
+    pushHistory,
   } = useWizard();
+
+  useEffect(() => {
+    pushHistory("/screen13");
+  }, [pushHistory]);
 
   // -------------------------------------------------------------------------
   // RULE ENGINE: Non-providers skip directly to checklist

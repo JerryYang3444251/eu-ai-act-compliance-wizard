@@ -122,6 +122,11 @@ export default function Screen14() {
   };
 
   const completedCount = Object.values(completedItems).filter(Boolean).length;
+  
+  // Calculate progress: 100% if no items, otherwise percentage of completed items
+  const progressPercent = applicableItems.length > 0 
+    ? (completedCount / applicableItems.length) * 100 
+    : 100;
 
   return (
     <div className="screen-container">
@@ -132,16 +137,11 @@ export default function Screen14() {
           <div
             className="progress"
             style={{
-              width:
-                applicableItems.length > 0
-                  ? `${(completedCount / applicableItems.length) * 100}%`
-                  : "0%",
+              width: `${progressPercent}%`,
             }}
           ></div>
           <p className="progress-text">
-            {Math.round(
-              applicableItems.length > 0 ? (completedCount / applicableItems.length) * 100 : 0
-            )}
+            {Math.round(progressPercent)}
             % Completed — {completedCount} of {applicableItems.length} items
           </p>
         </div>

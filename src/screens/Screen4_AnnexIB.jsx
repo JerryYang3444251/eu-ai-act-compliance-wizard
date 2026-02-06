@@ -1,10 +1,15 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
 import { HIGH_RISK_SECTORS_B, CLASSIFICATIONS } from "../data/checklist";
 
 export default function Screen4() {
   const navigate = useNavigate();
-  const { answers, saveAnswer, setClassificationWithPrecedence, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules } = useWizard();
+  const { answers, saveAnswer, setClassificationWithPrecedence, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+
+  useEffect(() => {
+    pushHistory("/screen4");
+  }, [pushHistory]);
   const sectors = answers.highRiskSectorsB || [];
 
   const handleToggle = (id) => {

@@ -1,10 +1,15 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
 import { CLASSIFICATIONS } from "../data/checklist";
 
 export default function Screen11b_FRIA() {
   const navigate = useNavigate();
-  const { answers, saveAnswer, setIsFria, navigateBack, classification, shouldReevaluateRules, setShouldReevaluateRules } = useWizard();
+  const { answers, saveAnswer, setIsFria, navigateBack, classification, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+
+  useEffect(() => {
+    pushHistory("/screen11b");
+  }, [pushHistory]);
   const isPublicBody = answers.is_public_body;
 
   // Determine if FRIA should be required based on public body status and high-risk classification

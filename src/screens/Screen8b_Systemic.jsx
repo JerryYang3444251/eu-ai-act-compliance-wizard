@@ -1,10 +1,15 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
 import { CLASSIFICATIONS } from "../data/checklist";
 
 export default function Screen8b_Systemic() {
   const navigate = useNavigate();
-  const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules } = useWizard();
+  const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+
+  useEffect(() => {
+    pushHistory("/screen8b");
+  }, [pushHistory]);
   const hasSystemicRisk = answers.hasSystemicRisk || null;
 
   const handleNext = () => {
@@ -37,7 +42,7 @@ export default function Screen8b_Systemic() {
 
       <div className="screen-content">
         <div className="helper-box alert-info">
-          <strong>⚠️ Systemic Risk Threshold (Article 55):</strong>
+          <strong>⚠️ Systemic Risk Threshold (Article 51):</strong>
           <p>
             A GPAI model has systemic risk if its cumulative computational capacity during training equals or exceeds
             <strong> 10<sup>25</sup> floating-point operations (FLOPs)</strong>, or meets other criteria like:
@@ -81,7 +86,7 @@ export default function Screen8b_Systemic() {
         {hasSystemicRisk === "yes" ? (
           <div className="info-box alert-warning" style={{ marginTop: "24px" }}>
             <strong>⚠️ Systemic Risk Classification:</strong>
-            <p>Your GPAI model will be classified as <strong>GPAI_SYSTEMIC</strong>. Enhanced obligations (K1-K13) apply, including red-teaming, adversarial testing, and systemic risk mitigation.</p>
+            <p>Your GPAI model will be classified as General-purpose AI Model with Systemic Risk (Article 51). Enhanced obligations apply (Article 55).</p>
           </div>
         ) : (
           hasSystemicRisk === "no" && (

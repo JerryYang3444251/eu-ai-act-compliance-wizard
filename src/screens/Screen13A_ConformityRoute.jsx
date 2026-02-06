@@ -15,9 +15,12 @@ export default function Screen13A() {
     navigateBack,
     shouldReevaluateRules,
     setShouldReevaluateRules,
+    pushHistory,
   } = useWizard();
 
-  // -------------------------------------------------------------------------
+  useEffect(() => {
+    pushHistory("/screen13a");
+  }, [pushHistory]);
   // RULE ENGINE: Conformity Assessment ONLY for Providers with High-Risk
   // -------------------------------------------------------------------------
   const isProvider = roles.includes("Provider");

@@ -1,10 +1,15 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
 import { PROHIBITED_PRACTICES, CLASSIFICATIONS } from "../data/checklist";
 
 export default function Screen10_Prohibited() {
   const navigate = useNavigate();
-  const { answers, toggleAnswer, saveAnswer, setClassificationWithPrecedence, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules } = useWizard();
+  const { answers, toggleAnswer, saveAnswer, setClassificationWithPrecedence, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+
+  useEffect(() => {
+    pushHistory("/screen10");
+  }, [pushHistory]);
   const selectedItems = answers.prohibitedPractices || [];
 
   // None-exclusive toggle: if "none" selected, deselect all others; if any other selected, deselect "none"

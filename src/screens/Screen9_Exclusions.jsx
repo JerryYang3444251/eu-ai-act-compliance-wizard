@@ -1,10 +1,15 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
 import { EXCLUSIONS, CLASSIFICATIONS } from "../data/checklist";
 
 export default function Screen9_Exclusions() {
   const navigate = useNavigate();
-  const { answers, toggleAnswer, saveAnswer, setClassificationWithPrecedence, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules } = useWizard();
+  const { answers, toggleAnswer, saveAnswer, setClassificationWithPrecedence, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+
+  useEffect(() => {
+    pushHistory("/screen9");
+  }, [pushHistory]);
   const selectedItems = answers.exclusions || [];
 
   // None-exclusive toggle: if "none" selected, deselect all others; if any other selected, deselect "none"
