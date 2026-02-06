@@ -29,7 +29,7 @@ export default function Screen0_Information() {
         </div>
 
         <div className="info-box">
-          <strong>What to Expect</strong>
+          <h3>What to Expect</h3>
           <p>
             The wizard consists of 14 parts that guide you through the EU AI Act assessment process:
           </p>
@@ -44,7 +44,7 @@ export default function Screen0_Information() {
         </div>
 
         <div className="info-box">
-          <strong>Support & Questions</strong>
+          <h3>Support & Questions</h3>
           <p>
             For questions about this wizard or to provide feedback, please contact [Your Contact Information].
           </p>
