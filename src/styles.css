@@ -1,0 +1,1219 @@
+/* EU AI Act Wizard - Comprehensive Styling */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-color: #0f62fe;
+  --primary-dark: #0043ce;
+  --primary-light: #d0e2ff;
+  --success-color: #24a148;
+  --warning-color: #f1c21b;
+  --danger-color: #da1e28;
+  --info-color: #0043ce;
+  --secondary-color: #525252;
+  --light-bg: #f4f4f4;
+  --border-color: #e0e0e0;
+  --text-color: #161616;
+  --text-light: #525252;
+  --text-lighter: #8d8d8d;
+  --bg-white: #ffffff;
+  --bg-light: #f4f4f4;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: white;
+  min-height: 100vh;
+  padding: 0;
+  color: var(--text-color);
+}
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: white;
+}
+
+.main-content {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+}
+
+.screen-container {
+  max-width: 900px;
+  margin: 20px auto;
+  background: var(--bg-white);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+  border: 1px solid var(--border-color);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.screen-header {
+  background: linear-gradient(135deg, #0f62fe 0%, #0043ce 100%);
+  color: white;
+  padding: 48px 40px;
+  text-align: center;
+}
+
+.screen-header h1 {
+  font-size: 1.875rem;
+  margin-bottom: 12px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.screen-header .subtitle {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  opacity: 0.9;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.screen-header .info-text {
+  font-size: 0.875rem;
+  opacity: 0.85;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.progress-bar {
+  margin-top: 20px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 18px;
+  height: 40px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar .progress {
+  background: linear-gradient(90deg, #2ecc71, #28a745);
+  height: 100%;
+  transition: width 0.35s ease;
+}
+
+.progress-bar .progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.95em;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.15);
+}
+
+/* Larger header progress variant (used in Part 13/14 headers) */
+.screen-header .progress-bar {
+  margin-top: 18px;
+  background: rgba(255, 255, 255, 0.18);
+  height: 42px;
+  border-radius: 24px;
+}
+.screen-header .progress-bar .progress-text {
+  font-size: 0.95rem;
+}
+
+.screen-content {
+  padding: 40px;
+  background: var(--bg-white);
+}
+
+.form-section {
+  margin-bottom: 32px;
+}
+
+.form-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-color);
+  letter-spacing: -0.2px;
+}
+
+.form-section .subtle {
+  font-size: 0.875rem;
+  color: var(--text-light);
+  margin-bottom: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Form Elements */
+.options-group {
+  margin: 24px 0;
+}
+
+.radio-group,
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.radio-option,
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--bg-white);
+}
+
+.radio-option:hover,
+.checkbox-option:hover {
+  background: var(--bg-light);
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.radio-option input[type="radio"],
+.checkbox-option input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-right: 14px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.radio-option span,
+.checkbox-option span {
+  font-size: 0.9375rem;
+  color: var(--text-color);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.radio-option input:checked + span,
+.checkbox-option input:checked + span {
+  font-weight: 500;
+  color: var(--primary-color);
+}
+
+/* Info Boxes */
+.helper-box,
+.info-box {
+  margin: 24px 0;
+  padding: 20px;
+  border-left: 4px solid var(--primary-color);
+  background: var(--primary-light);
+  border-radius: 6px;
+  text-align: left;
+}
+
+.helper-box.alert-success,
+.info-box.alert-success {
+  border-left-color: var(--success-color);
+  background: #dffcf0;
+}
+
+.helper-box.alert-warning,
+.info-box.alert-warning {
+  border-left-color: var(--warning-color);
+  background: #fef3c7;
+}
+
+.helper-box.alert-danger,
+.info-box.alert-danger {
+  border-left-color: var(--danger-color);
+  background: #fce4e6;
+}
+
+.helper-box strong,
+.info-box strong {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: -0.2px;
+}
+
+.helper-box p,
+.info-box p {
+  margin: 0 0 12px 0;
+  color: var(--text-color);
+  line-height: 1.6;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.helper-box ul,
+.info-box ul {
+  margin: 12px 0 0 0;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.helper-box li,
+.info-box li {
+  margin: 6px 0;
+  color: var(--text-color);
+  line-height: 1.5;
+  font-size: 0.875rem;
+}
+
+.helper-box sup {
+  font-size: 0.7em;
+}
+
+.alert-info {
+  border-left-color: var(--info-color);
+  background: var(--primary-light);
+}
+
+.alert-success {
+  border-left-color: var(--success-color);
+  background: #dffcf0;
+}
+
+.alert-warning {
+  border-left-color: var(--warning-color);
+  background: #fef3c7;
+}
+
+.alert-danger {
+  border-left-color: var(--danger-color);
+  background: #fce4e6;
+}
+
+/* Buttons */
+.screen-navigation {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 40px;
+  flex-wrap: wrap;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 0.3px;
+  text-transform: none;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: var(--light-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: white;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-success {
+  background: var(--success-color);
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #1f6e42;
+  box-shadow: var(--shadow-md);
+}
+
+/* Classification Result */
+.classification-result {
+  text-align: center;
+  margin: 30px 0;
+}
+
+.classification-badge {
+  background: linear-gradient(135deg, #0f62fe 0%, #0043ce 100%);
+  color: white;
+  padding: 40px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+}
+
+.classification-badge h2 {
+  font-size: 1.75rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.classification-details {
+  background: var(--bg-light);
+  padding: 24px;
+  border-radius: 6px;
+  text-align: left;
+  margin-bottom: 24px;
+  border: 1px solid var(--border-color);
+}
+
+.classification-details p {
+  margin: 8px 0;
+  font-size: 0.9375rem;
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+/* Obligation Groups */
+.obligation-groups {
+  margin: 30px 0;
+}
+
+.obligation-list {
+  list-style: none;
+  padding: 0;
+}
+
+.obligation-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  background: var(--bg-light);
+  margin: 12px 0;
+  border-radius: 6px;
+  border-left: 4px solid var(--success-color);
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--success-color);
+}
+
+.obligation-item:hover {
+  background: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.obligation-badge {
+  display: inline-flex;
+  background: var(--success-color);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+/* Conformity Steps */
+.conformity-steps {
+  margin: 30px 0;
+}
+
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.step-item {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  background: var(--bg-light);
+  border-radius: 6px;
+  border-left: 4px solid var(--primary-color);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--primary-color);
+}
+
+.step-number {
+  display: inline-flex;
+  background: var(--primary-color);
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+  font-size: 0.875rem;
+}
+
+.step-content h4 {
+  margin-bottom: 8px;
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.step-content p {
+  color: var(--text-light);
+  line-height: 1.6;
+  font-size: 0.875rem;
+}
+
+/* Checklist */
+.checklist {
+  margin: 15px 0;
+}
+
+.checklist-category {
+  margin-bottom: 12px;
+}
+
+.category-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0 0 8px 0;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--primary-light);
+  letter-spacing: -0.2px;
+}
+
+/* Checklist item content */
+.checklist-item .step-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.checklist-item .item-number {
+  display: inline-block;
+  background: var(--primary-color);
+  color: white;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 0.7rem;
+  min-width: 38px;
+  text-align: center;
+  flex-shrink: 0;
+  margin-right: 5px;
+}
+
+.checklist-item .item-title {
+  display: inline;
+  font-weight: 600;
+  font-size: 0.93rem;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.checklist-item .item-description {
+  display: block;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.checklist-item.sub-item .item-title {
+  font-weight: 400;
+  font-size: 0.91rem;
+}
+
+.checklist-item {
+  padding: 8px 12px;
+  margin-bottom: 3px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.checklist-item:hover {
+  background: white;
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Parent checklist items (have sub-items) */
+.checklist-item.parent {
+  background: white;
+  border: 1px solid var(--border-color);
+  font-weight: 500;
+  padding: 9px 12px;
+}
+
+.checklist-item.parent:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-color);
+}
+
+/* Sub-item styling */
+.checklist-item.sub-item {
+  padding: 6px 10px 6px 10px;
+  margin-bottom: 1px;
+  background: #f9f9f9;
+  margin-left: 20px;
+  font-size: 0.91rem;
+}
+
+.checklist-item.sub-item:hover {
+  background: var(--primary-light);
+}
+
+/* Sub-items container */
+.sub-items-container {
+  width: 100%;
+  margin-top: 0;
+  border-left: 2px solid var(--border-color);
+  margin-left: 44px;
+  padding-left: 0;
+}
+
+/* Single sub-item (inline, not as checkbox) */
+.single-sub-item {
+  padding: 4px 0 0 40px;
+  margin: 0;
+  font-size: 0.91rem;
+  color: var(--text-light);
+}
+
+.single-sub-text {
+  margin: 0;
+  font-size: 0.91rem;
+  line-height: 1.3;
+}
+
+.sub-items-count {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--text-light);
+  background: var(--bg-light);
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.sub-item-text {
+  margin: 0;
+  font-size: 0.91rem;
+}
+
+.source-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  color: #999;
+  font-weight: 600;
+  background: #e8e8e8;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-left: 4px;
+  cursor: help;
+  vertical-align: super;
+  position: relative;
+}
+
+.source-badge:hover {
+  color: #666;
+  background: #d0d0d0;
+}
+
+.source-badge::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: normal;
+  white-space: nowrap;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.source-badge:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.item-source {
+  display: none;
+}
+
+/* Show source on hover */
+.checklist-item:hover .item-source {
+  display: block;
+  font-size: 0.7rem;
+  color: #666;
+  font-weight: 500;
+  margin-top: 1px;
+  padding: 1px 4px;
+  background: #f5f5f5;
+  border-radius: 2px;
+  width: fit-content;
+}
+
+.checklist-item-wrapper {
+  width: 100%;
+}
+
+/* Compact checklist variant used in Part 13 and Part 14 */
+.checklist-item.compact {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.checklist-item.compact input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+.checklist-item.compact .step-content p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.checklist-item.compact.completed {
+  opacity: 0.85;
+}
+
+.conformity-details-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--primary-light);
+  border-left: 4px solid var(--primary-color);
+  border-radius: 6px;
+}
+
+/* Progress bar component styles */
+.progressbar-container {
+  padding: 20px 30px;
+  background: transparent;
+}
+.progressbar-nodes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.progress-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  flex: 1 1 0;
+}
+.progress-node .node-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  color: var(--primary-color);
+  font-weight: 700;
+}
+.progress-node.done .node-circle {
+  background: var(--primary-color);
+  color: white;
+}
+.progress-node.active .node-circle {
+  background: white;
+  box-shadow: 0 0 0 6px rgba(0,102,204,0.08);
+}
+.progress-node .node-label {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+.progressbar-meter {
+  padding: 10px 0 0 0;
+}
+.progressbar-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.progress-text {
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+.progress-percent {
+  font-weight: 700;
+  color: var(--primary-color);
+}
+.progress-track {
+  width: 100%;
+  height: 12px;
+  background: #e9eef9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), #5ea0ff);
+  transition: width 0.35s ease;
+}
+
+/* Compact progress bar with nodes over the track */
+.progressbar-wrapper {
+  width: 280px;
+  background: var(--bg-white);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+}
+
+.sidebar-wrapper {
+  width: 280px;
+  background: var(--bg-white);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: hidden;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+}
+
+.sidebar-header {
+  padding: 24px 20px;
+  background: linear-gradient(135deg, #0f62fe 0%, #0043ce 100%);
+  color: white;
+  text-align: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.progress-percentage {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.progress-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
+}
+
+.steps-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.step-node {
+  position: relative;
+}
+
+.step-button {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 12px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  position: relative;
+}
+
+.step-button:hover:not(:disabled) {
+  background: var(--bg-light);
+}
+
+.step-button:disabled {
+  cursor: default;
+}
+
+.step-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary-color);
+  font-weight: 700;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.step-icon {
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.step-number {
+  font-size: 0.875rem;
+}
+
+.step-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-label {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 0.8125rem;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+}
+
+.step-title {
+  font-weight: 400;
+  color: var(--text-light);
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Active step styling */
+.step-node.active .step-button {
+  background: var(--primary-light);
+  font-weight: 600;
+}
+
+.step-node.active .step-marker {
+  background: var(--primary-color);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(15, 98, 254, 0.12);
+}
+
+.step-node.active .step-label {
+  color: var(--primary-color);
+}
+
+/* Done step styling */
+.step-node.done .step-marker {
+  background: var(--success-color);
+  color: white;
+  font-weight: 700;
+}
+
+.step-node.done .step-label {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+/* Skipped step styling (waived) */
+.step-node.skipped .step-marker {
+  background: #d0d5dd;
+  color: #8d8d8d;
+}
+
+.step-node.skipped .step-button {
+  opacity: 0.6;
+  color: var(--text-lighter);
+}
+
+.step-node.skipped .step-label {
+  color: var(--text-lighter);
+}
+
+.step-node.skipped .step-title {
+  color: #a8aeb8;
+}
+
+.sidebar-footer {
+  padding: 0;
+  background: transparent;
+  border-top: none;
+  height: 0;
+  display: none;
+  flex-shrink: 0;
+}
+
+.progress-track {
+  display: none;
+}
+
+.progress-fill {
+  display: none;
+}
+
+.checklist-item.completed {
+  background: #e8f5e9;
+  border-left-color: var(--success-color);
+}
+
+.checklist-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-right: 5px;
+  cursor: pointer;
+  accent-color: var(--success-color);
+  vertical-align: middle;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.checklist-item.sub-item input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+}
+
+.checklist-item label {
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.sub-items {
+  margin-top: 8px;
+  margin-left: 0;
+  list-style: none;
+  padding: 0;
+}
+
+.sub-items li {
+  padding: 4px 0;
+  color: var(--text-light);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Route Summary */
+.route-summary {
+  margin: 30px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #e7f3ff, #f0f8ff);
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.route-summary p {
+  margin: 0;
+}
+
+.route-name {
+  font-size: 1.3em;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-top: 10px;
+}
+
+/* Form Groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin: 25px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .sidebar-wrapper {
+    width: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .sidebar-wrapper {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    position: static;
+    flex-direction: row;
+    max-height: 120px;
+  }
+
+  .sidebar-header {
+    flex-direction: column;
+    padding: 12px 20px;
+    min-width: 120px;
+    border-right: 1px solid var(--border-color);
+    border-bottom: none;
+  }
+
+  .progress-percentage {
+    font-size: 1.5rem;
+  }
+
+  .progress-label {
+    font-size: 0.7rem;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 8px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .steps-list {
+    display: flex;
+    gap: 0;
+  }
+
+  .step-node {
+    flex-shrink: 0;
+    border-right: 1px solid var(--border-color);
+  }
+
+  .step-button {
+    padding: 8px 12px;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 80px;
+  }
+
+  .step-marker {
+    width: 28px;
+    height: 28px;
+  }
+
+  .step-info {
+    text-align: center;
+  }
+
+  .step-label {
+    font-size: 0.7rem;
+    margin-bottom: 0;
+  }
+
+  .step-title {
+    display: none;
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+
+  .screen-container {
+    border-radius: 0;
+    margin: 0;
+    box-shadow: none;
+    border: none;
+  }
+
+  .screen-header {
+    padding: 30px 20px;
+  }
+
+  .screen-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .screen-content {
+    padding: 25px;
+  }
+
+  .screen-navigation {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .step-item {
+    flex-direction: column;
+  }
+
+  .classification-badge {
+    padding: 25px;
+  }
+
+  .classification-badge h2 {
+    font-size: 1.5rem;
+  }
+}
