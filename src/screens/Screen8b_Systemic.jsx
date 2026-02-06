@@ -24,7 +24,7 @@ export default function Screen8b_Systemic() {
     }
 
     // Radio selection determines systemic risk classification
-    if (hasSystemicRisk === "yes") {
+    if (hasSystemicRisk === "yes" || hasSystemicRisk === "commission_determined") {
       setClassificationWithPrecedence(CLASSIFICATIONS.GPAI_SYSTEMIC);
     } else {
       setClassificationWithPrecedence(CLASSIFICATIONS.GPAI);
@@ -37,7 +37,7 @@ export default function Screen8b_Systemic() {
     <div className="screen-container">
       <div className="screen-header">
         <h1>Part 8: GPAI Systemic Risk Assessment</h1>
-        <p className="subtitle">Assess whether your GPAI model presents systemic risk. (Rules GPAI_003-004)</p>
+        <p className="subtitle">Assess whether your GPAI model presents systemic risk.</p>
       </div>
 
       <div className="screen-content">
@@ -45,17 +45,12 @@ export default function Screen8b_Systemic() {
           <strong>⚠️ Systemic Risk Threshold (Article 51):</strong>
           <p>
             A GPAI model has systemic risk if its cumulative computational capacity during training equals or exceeds
-            <strong> 10<sup>25</sup> floating-point operations (FLOPs)</strong>, or meets other criteria like:
+            10<sup>25</sup> floating-point operations (FLOPs), or is designated by the Commission based on equivalent high-impact capabilities
           </p>
-          <ul>
-            <li>Affecting democratic processes or fundamental rights</li>
-            <li>Potential for critical infrastructure disruption</li>
-            <li>Capability for significant cybersecurity impacts</li>
-          </ul>
         </div>
 
         <div className="form-section" style={{ marginTop: "24px" }}>
-          <h3>Systemic Risk Assessment (Rule GPAI_004)</h3>
+          <h3>Systemic Risk Assessment</h3>
           <p style={{ fontSize: "0.9em", color: "#666", marginBottom: "16px" }}>
             Based on FLOPS and other risk indicators, does your model have systemic risk?
           </p>
@@ -68,7 +63,17 @@ export default function Screen8b_Systemic() {
                 checked={hasSystemicRisk === "yes"}
                 onChange={() => saveAnswer("hasSystemicRisk", "yes")}
               />
-              <span>Yes, systemic risk identified (FLOPS ≥ 10<sup>25</sup> or other criteria met)</span>
+              <span>Yes, systemic risk identified (FLOPS ≥ 10<sup>25</sup>)</span>
+            </label>
+            <label className="radio-option">
+              <input
+                type="radio"
+                name="has_systemic_risk"
+                value="commission_determined"
+                checked={hasSystemicRisk === "commission_determined"}
+                onChange={() => saveAnswer("hasSystemicRisk", "commission_determined")}
+              />
+              <span>Yes, as determined by the Commission</span>
             </label>
             <label className="radio-option">
               <input
@@ -83,7 +88,7 @@ export default function Screen8b_Systemic() {
           </div>
         </div>
 
-        {hasSystemicRisk === "yes" ? (
+        {hasSystemicRisk === "yes" || hasSystemicRisk === "commission_determined" ? (
           <div className="info-box alert-warning" style={{ marginTop: "24px" }}>
             <strong>⚠️ Systemic Risk Classification:</strong>
             <p>Your GPAI model will be classified as General-purpose AI Model with Systemic Risk (Article 51). Enhanced obligations apply (Article 55).</p>
