@@ -21,8 +21,8 @@ export default function Screen14() {
 
   // Register this screen in navigation history (handle both /screen14 and /screenFinal routes)
   useEffect(() => {
-    // Always register as /screen14 for consistency, even if accessed via /screenFinal
-    pushHistory("/screen14");
+    // Always register as /screen13 for consistency - the previous screen
+    pushHistory("/screen13");
   }, [pushHistory, navigate]);
 
   // obligations: persisted array of categories (e.g., ["A","C","O","H"])

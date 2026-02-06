@@ -8,7 +8,7 @@ export default function Screen7_AnnexIII() {
   const { answers, toggleAnswer, saveAnswer, setClassificationWithPrecedence, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen7");
+    pushHistory("/screen4");
   }, [pushHistory]);
   const selectedItems = answers.annexIIIUsecases || [];
 

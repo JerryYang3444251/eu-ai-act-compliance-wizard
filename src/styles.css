@@ -511,19 +511,19 @@ body {
 
 /* Checklist */
 .checklist {
-  margin: 15px 0;
+  margin: 10px 0;
 }
 
 .checklist-category {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .category-title {
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--primary-color);
-  margin: 0 0 8px 0;
-  padding-bottom: 6px;
+  margin: 0 0 6px 0;
+  padding-bottom: 4px;
   border-bottom: 2px solid var(--primary-light);
   letter-spacing: -0.2px;
 }
@@ -553,8 +553,8 @@ body {
   display: block;
   font-weight: 600;
   font-size: 0.93rem;
-  margin: 0 0 3px 0;
-  line-height: 1.35;
+  margin: 0 0 2px 0;
+  line-height: 1.3;
   word-wrap: break-word;
 }
 
@@ -563,7 +563,7 @@ body {
   color: var(--text-light);
   font-size: 0.85rem;
   margin: 0;
-  line-height: 1.35;
+  line-height: 1.3;
   word-wrap: break-word;
 }
 
@@ -573,15 +573,15 @@ body {
 }
 
 .checklist-item {
-  padding: 12px 12px;
-  margin-bottom: 6px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
   background: white;
   border-radius: 6px;
   border: 1px solid var(--border-color);
   transition: all 0.2s ease;
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 6px;
 }
 
 .checklist-item:hover {
@@ -595,7 +595,8 @@ body {
   background: white;
   border: 1px solid var(--border-color);
   font-weight: 500;
-  padding: 10px 12px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
 }
 
 .checklist-item.parent:hover {
@@ -605,10 +606,10 @@ body {
 
 /* Sub-item styling */
 .checklist-item.sub-item {
-  padding: 8px 10px 8px 10px;
-  margin-bottom: 4px;
+  padding: 6px 8px 6px 8px;
+  margin-bottom: 3px;
   background: #f9f9f9;
-  margin-left: 20px;
+  margin-left: 16px;
   font-size: 0.91rem;
 }
 
@@ -621,13 +622,13 @@ body {
   width: 100%;
   margin-top: 0;
   border-left: 2px solid var(--border-color);
-  margin-left: 44px;
+  margin-left: 36px;
   padding-left: 0;
 }
 
 /* Single sub-item (inline, not as checkbox) */
 .single-sub-item {
-  padding: 4px 0 0 40px;
+  padding: 2px 0 0 32px;
   margin: 0;
   font-size: 0.91rem;
   color: var(--text-light);
@@ -722,11 +723,11 @@ body {
 
 /* Compact checklist variant used in Part 13 and Part 14 */
 .checklist-item.compact {
-  padding: 10px 12px;
-  margin-bottom: 8px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 .checklist-item.compact input[type="checkbox"] {
   width: 16px;

@@ -5,10 +5,10 @@ import { CLASSIFICATIONS } from "../data/checklist";
 
 export default function Screen12() {
   const navigate = useNavigate();
-  const { classification, roles, resolvePrecedenceOrder, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+  const { classification, roles, resolvePrecedenceOrder, navigateBack, markStepsAsCompleted, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen12");
+    pushHistory("/screen11");
   }, [pushHistory]);
 
   // Use the global precedence resolver from context
@@ -32,9 +32,11 @@ export default function Screen12() {
       finalClassification === CLASSIFICATIONS.PROHIBITED ||
       finalClassification === CLASSIFICATIONS.OUT_OF_SCOPE
     ) {
+      // Mark Screen13 as completed since we're skipping it due to classification logic
+      markStepsAsCompleted(["/screen13"]);
       navigate("/screenFinal");
     }
-  }, [finalClassification, navigate]);
+  }, [finalClassification, navigate, markStepsAsCompleted]);
 
   // =====================================================================
   // RULE ENGINE COMPLIANCE FIX #2:
@@ -59,7 +61,7 @@ export default function Screen12() {
             </p>
           </div>
           <div className="screen-navigation">
-            <button className="btn btn-secondary" onClick={() => navigate(-1)}>
+            <button className="btn btn-secondary" onClick={() => navigateBack(navigate)}>
               ← Back
             </button>
           </div>
@@ -147,7 +149,7 @@ export default function Screen12() {
         <div className="screen-navigation">
           <button
             className="btn btn-secondary"
-            onClick={() => navigate(-1)}
+            onClick={() => navigateBack(navigate)}
           >
             ← Back
           </button>

@@ -56,9 +56,7 @@ export default function Screen1() {
         • import AND rebrand the AI system (Article 25), or
         • distribute AND rebrand the AI system (Article 26), or
         • manufacture a product where the AI is a safety component (Article 24).
-      `,
-      articles: "Articles 3, 16, 24, 25, 26"
-    },
+      `},
     Importer: {
       title: "Importer",
       description: `
@@ -177,10 +175,6 @@ export default function Screen1() {
 
                     <p style={{ margin: "0 0 8px", whiteSpace: "pre-line" }}>
                       {def?.description || "Legal role under EU AI Act"}
-                    </p>
-
-                    <p style={{ margin: "0", fontSize: "0.85em", color: "#888", fontStyle: "italic" }}>
-                      {def?.articles || ""}
                     </p>
                   </div>
                 );

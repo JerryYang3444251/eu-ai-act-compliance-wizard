@@ -8,7 +8,7 @@ export default function Screen4() {
   const { answers, saveAnswer, setClassificationWithPrecedence, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen4");
+    pushHistory("/screen3");
   }, [pushHistory]);
   const sectors = answers.highRiskSectorsB || [];
 

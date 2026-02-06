@@ -5,10 +5,10 @@ import { EXCLUSIONS, CLASSIFICATIONS } from "../data/checklist";
 
 export default function Screen1_Exclusions() {
   const navigate = useNavigate();
-  const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+  const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, markStepsAsCompleted, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen1");
+    pushHistory("/screen0");
   }, [pushHistory]);
   const selectedItems = answers.exclusions || [];
 
@@ -44,6 +44,8 @@ export default function Screen1_Exclusions() {
 
     if (hasNonNone) {
       setClassificationWithPrecedence(CLASSIFICATIONS.EXCLUDED);
+      // Mark all intermediate screens as completed since we're skipping them due to exclusion
+      markStepsAsCompleted(["/screen2", "/screen3", "/screen4", "/screen5", "/screen6", "/screen7", "/screen8", "/screen9", "/screen10", "/screen11"]);
       // Skip directly to classification when exclusion detected
       navigate("/screen12");
     } else {

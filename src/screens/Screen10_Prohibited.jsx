@@ -8,7 +8,7 @@ export default function Screen10_Prohibited() {
   const { answers, toggleAnswer, saveAnswer, setClassificationWithPrecedence, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen10");
+    pushHistory("/screen8");
   }, [pushHistory]);
   const selectedItems = answers.prohibitedPractices || [];
 
@@ -45,8 +45,7 @@ export default function Screen10_Prohibited() {
     if (hasProhibited) {
       setClassificationWithPrecedence(CLASSIFICATIONS.PROHIBITED);
       // Rule PROHIB_001: Prohibited classification routes directly to SCREEN_FINAL (checklist output)
-      // Skip to final checklist output at /screenFinal
-      navigate("/screenFinal");
+      navigate("/screen12");
     } else {
       // No prohibited practices - proceed to Screen 10 (Transparency)
       navigate("/screen10");

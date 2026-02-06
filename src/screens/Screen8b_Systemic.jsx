@@ -8,7 +8,7 @@ export default function Screen8b_Systemic() {
   const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen8b");
+    pushHistory("/screen7");
   }, [pushHistory]);
   const hasSystemicRisk = answers.hasSystemicRisk || null;
 

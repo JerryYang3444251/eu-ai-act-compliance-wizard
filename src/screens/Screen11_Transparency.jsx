@@ -8,7 +8,7 @@ export default function Screen11_Transparency() {
   const { answers, saveAnswer, classification, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen11");
+    pushHistory("/screen9");
   }, [pushHistory]);
   const selectedItems = answers.transparencyTriggers || [];
   const is_public_body = answers.is_public_body; // Rule OBL_009 gating: is_public_body + high-risk → FRIA
@@ -55,23 +55,15 @@ export default function Screen11_Transparency() {
       setShouldReevaluateRules(false);
     }
 
-    // Validate that user answered both transparency and public body questions
+    // Validate that user answered transparency questions
     if (!selectedItems.length) {
       alert("Please select transparency obligations.");
       return;
     }
 
-    // Rule TRANS_006: Route based on public body + high-risk classification
-    // If public body (or will be determined in next screen) + high-risk → FRIA required (Screen 11b)
-    // Otherwise → Skip to Final Classification (Screen 12)
-    const isHighRisk = classification && [
-      CLASSIFICATIONS.HIGH_RISK_IB,
-      CLASSIFICATIONS.HIGH_RISK_IA,
-      CLASSIFICATIONS.HIGH_RISK_III,
-    ].includes(classification);
-
-    // Always go to FRIA screen to collect public_body and deployment_sector info
-    // Screen11b will determine if FRIA is actually required
+    // Check if we need to collect FRIA information
+    // Always route to FRIA screen to collect public_body status and deployment_sector info
+    // The FRIA screen will determine if FRIA is actually required based on rule engine logic
     navigate("/screen11");
   };
 

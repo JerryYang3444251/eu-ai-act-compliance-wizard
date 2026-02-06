@@ -8,7 +8,7 @@ export default function Screen8_GPAI() {
   const { answers, saveAnswer, setClassificationWithPrecedence, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen8");
+    pushHistory("/screen6");
   }, [pushHistory]);
 
   const isGPAI = answers.isGPAI || null;
@@ -22,7 +22,6 @@ export default function Screen8_GPAI() {
     if (isGPAI === "yes") {
       // GPAI_002: is_gpai == true → SCREEN_8b (systemic risk check)
       console.log("GPAI_002: User selected YES - is GPAI");
-      setClassificationWithPrecedence(CLASSIFICATIONS.GPAI);
       navigate("/screen8");
     } else if (isGPAI === "no") {
       // GPAI_001: is_gpai == false → SCREEN_9 (Prohibited)

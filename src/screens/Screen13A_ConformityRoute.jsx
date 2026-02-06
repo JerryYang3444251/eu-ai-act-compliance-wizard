@@ -19,7 +19,7 @@ export default function Screen13A() {
   } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen13a");
+    pushHistory("/screen12");
   }, [pushHistory]);
   // RULE ENGINE: Conformity Assessment ONLY for Providers with High-Risk
   // -------------------------------------------------------------------------

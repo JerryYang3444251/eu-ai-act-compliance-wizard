@@ -111,7 +111,6 @@ export const DEPLOYMENT_SECTORS = [
   { id: "migration", label: "Migration and asylum" },
   { id: "border_control", label: "Border control" },
   { id: "justice", label: "Justice system" },
-  { id: "other", label: "Other sector" },
   { id: "none", label: "None of the above" },
 ];
 

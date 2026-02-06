@@ -8,7 +8,7 @@ export default function Screen5() {
   const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen5");
+    pushHistory("/screen2");
   }, [pushHistory]);
 
   const categories = answers.annexIACategories || [];

@@ -13,6 +13,10 @@ function NavigationTracker() {
   useEffect(() => {
     // Map /screenFinal to /screen14 for history tracking consistency
     const pathToTrack = location.pathname === "/screenFinal" ? "/screen14" : location.pathname;
+    
+    // Only track navigation changes, not duplicate calls from individual screen components
+    // The screen components will handle their own pushHistory calls in useEffect
+    // This tracker is mainly for direct URL navigation or progress bar clicks
     pushHistory(pathToTrack);
   }, [location.pathname, pushHistory]);
 

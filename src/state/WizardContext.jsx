@@ -7,7 +7,6 @@ export function WizardProvider({ children }) {
   // Core wizard state
   const [roles_raw, setRoles_raw] = useState([]); // Module 2: Raw org_actions (user input)
   const [roles, setRoles] = useState([]); // Module 2B: Legal roles after reclassification
-  const [role, setRole] = useState(null); // Legacy - deprecated, will be removed
   const [answers, setAnswers] = useState({});
   const [classification, setClassification] = useState(null);
   const [obligations, setObligations] = useState([]);
@@ -283,7 +282,6 @@ export function WizardProvider({ children }) {
   const resetWizard = () => {
     setRoles_raw([]);
     setRoles([]);
-    setRole(null);
     setAnswers({});
     setClassification(null);
     setObligations([]);
@@ -331,6 +329,19 @@ export function WizardProvider({ children }) {
     });
   };
 
+  // Mark steps as completed in navigation history (for legitimately skipped steps)
+  const markStepsAsCompleted = (stepPaths) => {
+    setNavigationHistory(prev => {
+      const updated = [...prev];
+      stepPaths.forEach(stepPath => {
+        if (!updated.includes(stepPath)) {
+          updated.push(stepPath);
+        }
+      });
+      return updated;
+    });
+  };
+
   const getPreviousScreen = () => {
     // If we have navigation history with 2+ items, use the actual previous screen
     if (navigationHistory.length > 1) {
@@ -369,7 +380,7 @@ export function WizardProvider({ children }) {
   const ANSWER_KEYS_BY_STEP = {
     "/screen0": [],
     "/screen1": ["exclusions"],
-    "/screen2": ["roles_raw", "role"],
+    "/screen2": ["roles_raw"],
     "/screen3": ["annexIACategories"],
     "/screen4": ["highRiskSectorsB"],
     "/screen5": ["annexIIIUsecases"],
@@ -499,8 +510,6 @@ export function WizardProvider({ children }) {
     setRoles_raw,
     roles,
     setRoles,
-    role, // Legacy - deprecated
-    setRole, // Legacy - deprecated
     answers,
     saveAnswer,
     toggleAnswer,
@@ -518,6 +527,7 @@ export function WizardProvider({ children }) {
     navigationHistory,
     pushHistory,
     getPreviousScreen,
+    markStepsAsCompleted,
     clearAnswersAfter,
     clearAnswers,
     navigateBack,

@@ -67,8 +67,18 @@ export default function ProgressBar() {
             const isVisited = isStepVisited(step.path);
             const isSkipped = isDone && !isVisited;
 
+            // Determine the primary state - avoid applying both done and skipped
+            let stepClass = '';
+            if (isActive) {
+              stepClass = 'active';
+            } else if (isSkipped) {
+              stepClass = 'skipped';
+            } else if (isDone) {
+              stepClass = 'done';
+            }
+
             return (
-              <li key={step.path} className={`step-node ${isDone ? 'done' : ''} ${isActive ? 'active' : ''} ${isSkipped ? 'skipped' : ''}`}>
+              <li key={step.path} className={`step-node ${stepClass}`}>
                 <button
                   className="step-button"
                   onClick={() => handleClick(step)}

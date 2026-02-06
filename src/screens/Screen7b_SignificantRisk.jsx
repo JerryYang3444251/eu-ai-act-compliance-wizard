@@ -8,7 +8,7 @@ export default function Screen7b_SignificantRisk() {
   const { answers, saveAnswer, toggleAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen7b");
+    pushHistory("/screen5");
   }, [pushHistory]);
 
   const impactChecks = answers.impact_checks || [];
@@ -122,16 +122,18 @@ export default function Screen7b_SignificantRisk() {
               <span>{opt.label}</span>
             </label>
           ))}
+          
+          <div style={{ margin: "24px 0 8px 0", borderTop: "1px solid var(--border-color)", paddingTop: "16px" }}>
+            <label className="checkbox-option">
+              <input
+                type="checkbox"
+                checked={hasNone}
+                onChange={() => handleToggle(NONE_OPTION)}
+              />
+              <span>No significant-risk indicators apply</span>
+            </label>
+          </div>
         </div>
-
-        <label className="checkbox-option" style={{ marginTop: "32px" }}>
-          <input
-            type="checkbox"
-            checked={hasNone}
-            onChange={() => handleToggle(NONE_OPTION)}
-          />
-          <span>No significant-risk indicators apply</span>
-        </label>
 
         {hasConflict && (
           <div className="info-box alert-danger" style={{ marginTop: "20px" }}>
