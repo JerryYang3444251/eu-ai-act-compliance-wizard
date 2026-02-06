@@ -532,6 +532,7 @@ body {
 .checklist-item .step-content {
   flex: 1;
   min-width: 0;
+  display: block;
 }
 
 .checklist-item .item-number {
@@ -549,19 +550,21 @@ body {
 }
 
 .checklist-item .item-title {
-  display: inline;
+  display: block;
   font-weight: 600;
   font-size: 0.93rem;
-  margin: 0;
-  line-height: 1.4;
+  margin: 0 0 3px 0;
+  line-height: 1.35;
+  word-wrap: break-word;
 }
 
 .checklist-item .item-description {
   display: block;
   color: var(--text-light);
   font-size: 0.85rem;
-  margin-top: 4px;
-  line-height: 1.4;
+  margin: 0;
+  line-height: 1.35;
+  word-wrap: break-word;
 }
 
 .checklist-item.sub-item .item-title {
@@ -1032,9 +1035,9 @@ body {
   margin-right: 5px;
   cursor: pointer;
   accent-color: var(--success-color);
-  vertical-align: middle;
+  vertical-align: top;
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .checklist-item.sub-item input[type="checkbox"] {
