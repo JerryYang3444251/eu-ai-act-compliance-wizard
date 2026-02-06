@@ -570,14 +570,14 @@ body {
 }
 
 .checklist-item {
-  padding: 8px 12px;
+  padding: 10px 12px;
   margin-bottom: 3px;
   background: white;
   border-radius: 6px;
   border: 1px solid var(--border-color);
   transition: all 0.2s ease;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
 }
 
@@ -592,7 +592,7 @@ body {
   background: white;
   border: 1px solid var(--border-color);
   font-weight: 500;
-  padding: 9px 12px;
+  padding: 10px 12px;
 }
 
 .checklist-item.parent:hover {
