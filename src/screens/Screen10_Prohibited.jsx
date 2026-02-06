@@ -44,8 +44,9 @@ export default function Screen10_Prohibited() {
 
     if (hasProhibited) {
       setClassificationWithPrecedence(CLASSIFICATIONS.PROHIBITED);
-      // Skip directly to Screen 12 (FinalClassification) when prohibited practices detected
-      navigate("/screen12");
+      // Rule PROHIB_001: Prohibited classification routes directly to SCREEN_FINAL (checklist output)
+      // Skip to final checklist output at /screenFinal
+      navigate("/screenFinal");
     } else {
       // No prohibited practices - proceed to Screen 10 (Transparency)
       navigate("/screen10");

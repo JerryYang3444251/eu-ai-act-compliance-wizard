@@ -233,6 +233,12 @@ export function WizardProvider({ children }) {
       obs.push("L");
     }
 
+    // OBL_016: Prohibited product manufacturer obligations (L' specific handling)
+    // If prohibited AND is product manufacturer, add specific prohibited product manufacturer obligations
+    if (classification === "prohibited" && roles.includes("Product_Manufacturer")) {
+      obs.push("L_ProductManufacturer");
+    }
+
     return obs;
   };
 
