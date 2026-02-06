@@ -105,6 +105,16 @@ export const TRANSPARENCY_TRIGGERS = [
   { id: "none", label: "None" },
 ];
 
+// Deployment sectors for FRIA scope determination (Rule FRIA_001)
+export const DEPLOYMENT_SECTORS = [
+  { id: "law_enforcement", label: "Law enforcement" },
+  { id: "migration", label: "Migration and asylum" },
+  { id: "border_control", label: "Border control" },
+  { id: "justice", label: "Justice system" },
+  { id: "other", label: "Other sector" },
+  { id: "none", label: "None of the above" },
+];
+
 // Classifications
 export const CLASSIFICATIONS = {
   OUT_OF_SCOPE: "out_of_scope",

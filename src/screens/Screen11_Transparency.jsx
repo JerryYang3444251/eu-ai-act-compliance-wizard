@@ -61,7 +61,17 @@ export default function Screen11_Transparency() {
       return;
     }
 
-    // Always navigate to Part 11 (FRIA) - user will answer public body question there
+    // Rule TRANS_006: Route based on public body + high-risk classification
+    // If public body (or will be determined in next screen) + high-risk → FRIA required (Screen 11b)
+    // Otherwise → Skip to Final Classification (Screen 12)
+    const isHighRisk = classification && [
+      CLASSIFICATIONS.HIGH_RISK_IB,
+      CLASSIFICATIONS.HIGH_RISK_IA,
+      CLASSIFICATIONS.HIGH_RISK_III,
+    ].includes(classification);
+
+    // Always go to FRIA screen to collect public_body and deployment_sector info
+    // Screen11b will determine if FRIA is actually required
     navigate("/screen11");
   };
 

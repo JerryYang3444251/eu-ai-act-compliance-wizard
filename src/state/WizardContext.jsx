@@ -170,8 +170,8 @@ export function WizardProvider({ children }) {
       obs.push("A");
     }
 
-    // Handover (C1-C15): Always add if Provider (handover to deployers/others)
-    if (roles.includes("Provider")) {
+    // OBL_017: Handover (C1-C15) only if Provider AND high-risk classification
+    if (roles.includes("Provider") && classification && ["high_risk_ia", "high_risk_ib", "high_risk_iii"].includes(classification)) {
       obs.push("C");
     }
 
@@ -206,15 +206,20 @@ export function WizardProvider({ children }) {
       // Note: O obligations filtered by route in screen rendering
     }
 
-    // OBL_008: Transparency obligations (H1-H9) if transparency_triggers not empty
-    if (answers.transparencyTriggers && answers.transparencyTriggers.length > 0 && !answers.transparencyTriggers.includes("none")) {
+    // OBL_008: Transparency obligations (H1-H9) if transparency_triggers not empty AND role is Provider or Deployer
+    const hasTransparencyTriggers = answers.transparencyTriggers && answers.transparencyTriggers.length > 0 && !answers.transparencyTriggers.includes("none");
+    const isProviderOrDeployer = roles.includes("Provider") || roles.includes("Deployer");
+    if (hasTransparencyTriggers && isProviderOrDeployer) {
       obs.push("H");
     }
 
-    // OBL_009: FRIA obligations (G1-G15) if is_public_body AND high-risk
+    // OBL_009: FRIA obligations (G1-G15) if (is_public_body OR sensitive_deployment_sector) AND high-risk
     const isPublicBody = answers.is_public_body === true;
-    const isHighRisk = classification && ["high_risk_ia", "high_risk_ib", "high_risk_iii", "gpai_systemic"].includes(classification);
-    if (isPublicBody && isHighRisk) {
+    const hasSensitiveDeploymentSector = answers.deploymentSectors && 
+      answers.deploymentSectors.length > 0 && 
+      answers.deploymentSectors.some(s => ['law_enforcement', 'migration', 'border_control', 'justice'].includes(s));
+    const requiresFRIA = (isPublicBody || hasSensitiveDeploymentSector) && isHighRisk;
+    if (requiresFRIA) {
       obs.push("G");
     }
 
@@ -367,7 +372,7 @@ export function WizardProvider({ children }) {
     "/screen8": ["hasSystemicRisk", "flopsValue"],
     "/screen9": ["prohibitedPractices"],
     "/screen10": ["transparencyTriggers"],
-    "/screen11": ["requiresFRIA"],
+    "/screen11": ["is_public_body", "deploymentSectors"],
     "/screen12": ["finalClassification"],
     "/screen13": ["conformity_section_a", "conformity_section_b", "conformity_section_c", "conformity_section_d", "conformity_section_e", "conformityRoute"],
     "/screen14": ["obligationDetails"],
