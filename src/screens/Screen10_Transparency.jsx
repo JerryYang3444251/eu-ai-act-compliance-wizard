@@ -115,7 +115,13 @@ export default function Screen11_Transparency() {
                 checked={selectedItems.includes(option.id)}
                 onChange={() => handleToggle(option.id)}
               />
-              <span>{option.label}</span>
+              <span>
+                {option.label}{option.source && (
+                  <span className="source-tag" title={option.source}>
+                    Source
+                  </span>
+                )}
+              </span>
             </label>
           ))}
         </div>
@@ -186,7 +192,7 @@ export default function Screen11_Transparency() {
           <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border-color)" }}>
             <h3 style={{ marginBottom: "16px" }}>Does generated content resemble real persons, objects, places or events?</h3>
           <p style={{ marginBottom: "16px", fontSize: "0.95em", color: "#666" }}>
-            This identifies deepfake-like capabilities requiring enhanced transparency obligations (Article 50).
+            This identifies deepfake-like capabilities requiring enhanced transparency obligations. <span className="source-tag" title="Article 50">Source</span>
           </p>
           
           <div className="options-group radio-group">
@@ -221,18 +227,19 @@ export default function Screen11_Transparency() {
               <div className="info-box alert-warning">
                 <strong>Transparency Obligations Identified:</strong>
                 <p>
-                  Your AI system triggers transparency obligations (Article 50). Transparency checklist items will apply.
+                  You selected one or more transparency-triggering functionalities. Your AI system has transparency disclosure obligations. Transparency checklist items will apply.
                   {contentCharacteristics?.includes("realistic") && 
                     (systemFunctionality?.includes("images") || systemFunctionality?.includes("video") || systemFunctionality?.includes("audio")) ? 
                     " Enhanced disclosure requirements apply for realistic synthetic content (deepfake labeling required)." : ""}
                   {systemFunctionality && systemFunctionality.length > 0 && !systemFunctionality.includes("none") ? 
                     " Content generation labeling requirements apply." : ""}
+                  {" "}<span className="source-tag" title="Article 50">Source</span>
                 </p>
               </div>
             ) : (
               <div className="info-box alert-success">
                 <strong>✓ No Transparency Obligations:</strong>
-                <p>Your system does not trigger specific transparency obligations under Article 50.</p>
+                You selected "None of the above." Your system does not trigger specific transparency obligations. <span className="source-tag" title="Article 50">Source</span>
               </div>
             )}
           </div>

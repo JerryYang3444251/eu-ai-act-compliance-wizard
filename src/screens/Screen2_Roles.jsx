@@ -7,7 +7,7 @@ export default function Screen1() {
   const { roles_raw, setRoles_raw, navigateBack, reclassifyRoles, setRoles, saveAnswer, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen1");
+    pushHistory("/screen2");
   }, [pushHistory]);
 
   // ----------------------------------------------------------------------
@@ -53,10 +53,12 @@ export default function Screen1() {
         • or place it on the EU market.
 
         You are also a Provider if you:
-        • import AND rebrand the AI system (Article 25), or
-        • distribute AND rebrand the AI system (Article 26), or
-        • manufacture a product where the AI is a safety component (Article 24).
-      `},
+        • import AND rebrand the AI system, or
+        • distribute AND rebrand the AI system, or
+        • manufacture a product where the AI is a safety component.
+      `,
+      articles: "Articles 3(3), 16, 24, 25, 26"
+    },
     Importer: {
       title: "Importer",
       description: `
@@ -86,7 +88,7 @@ export default function Screen1() {
       description: `
         You are a Product Manufacturer if you manufacture a product that contains the AI system.
         If the AI system fulfils a safety function under sectoral product law, you will be
-        reclassified as a Provider automatically (Article 24).
+        reclassified as a Provider automatically.
       `,
       articles: "Article 24"
     }
@@ -150,36 +152,59 @@ export default function Screen1() {
 
         {/* REAL-TIME LEGAL ROLE OUTPUT */}
         {computedRoles.length > 0 && (
-          <div className="roles-summary" style={{ marginTop: "32px" }}>
-            <h3 style={{ marginBottom: "16px", color: "#2c3e50" }}>
-              ✓ Your Legal Role(s) under the EU AI Act:
-            </h3>
+          <div style={{ marginTop: "24px" }}>
+            {(() => {
+              // Detect reclassifications
+              const hasProductManufacturer = roles_raw.includes("product_manufacturer");
+              const hasImporter = roles_raw.includes("import");
+              const hasDistributor = roles_raw.includes("distribute");
+              const hasDeployer = roles_raw.includes("deploy");
+              const hasBranding = roles_raw.includes("brand");
+              const hasModification = roles_raw.some(a => ["develop", "modify", "fine_tune", "retrain", "change_purpose"].includes(a));
+              
+              const isProviderNow = computedRoles.includes("Provider");
+              const wasReclassified = isProviderNow && (
+                (hasImporter && hasBranding) ||
+                (hasDistributor && hasBranding) ||
+                (hasProductManufacturer && hasBranding) ||
+                (hasDeployer && hasModification)
+              );
 
-            <div className="roles-grid" style={{ display: "grid", gap: "12px" }}>
-              {computedRoles.map((role) => {
-                const def = legalRoleDefinitions[role];
-                return (
-                  <div
-                    key={role}
-                    className="role-card"
-                    style={{
-                      border: "2px solid #27ae60",
-                      borderRadius: "8px",
-                      padding: "16px",
-                      backgroundColor: "#f0fef4"
-                    }}
-                  >
-                    <h4 style={{ color: "#27ae60", margin: "0 0 8px" }}>
-                      {def?.title || role}
-                    </h4>
+              // Build role sentence
+              const roleNames = computedRoles.map(r => legalRoleDefinitions[r]?.title || r);
+              const roleSentence = roleNames.length === 1 
+                ? roleNames[0]
+                : roleNames.slice(0, -1).join(", ") + " and " + roleNames[roleNames.length - 1];
 
-                    <p style={{ margin: "0 0 8px", whiteSpace: "pre-line" }}>
-                      {def?.description || "Legal role under EU AI Act"}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
+              return (
+                <>
+                  {wasReclassified ? (
+                    <div className="info-box alert-warning">
+                      <strong>Role Reclassification:</strong>
+                      {hasImporter && hasBranding && "As an Importer placing the system under your own name, you have been reclassified to Provider. "}
+                      {hasDistributor && hasBranding && "As a Distributor placing the system under your own name, you have been reclassified to Provider. "}
+                      {hasProductManufacturer && hasBranding && "As a Product Manufacturer placing the AI system under your own name, you have been reclassified to Provider. "}
+                      {hasDeployer && hasModification && "As a Deployer making substantial modifications, you have been reclassified to Provider. "}
+                      Your legal role under the EU AI Act is now: <strong>{roleSentence}</strong>. You have full Provider obligations.
+                      <span className="source-tag" title={hasImporter && hasBranding ? "Article 3(3), Article 25" : hasDistributor && hasBranding ? "Article 3(3), Article 26" : hasProductManufacturer && hasBranding ? "Article 3(3), Article 24" : "Article 3(3), Article 16(2)"}>Source</span>
+                    </div>
+                  ) : (
+                    <div className="info-box alert-success">
+                      <strong>Legal Role Determined:</strong>
+                      Your legal role(s) under the EU AI Act: <strong>{roleSentence}</strong>.
+                      {computedRoles.map((r, idx) => {
+                        const arts = legalRoleDefinitions[r]?.articles;
+                        return arts ? (
+                          <span key={idx} className="source-tag" title={`Article ${arts}`}>
+                            Source
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
 

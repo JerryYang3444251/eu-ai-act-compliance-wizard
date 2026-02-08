@@ -8,7 +8,7 @@ export default function Screen7b_SignificantRisk() {
   const { answers, saveAnswer, toggleAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen5");
+    pushHistory("/screen6");
   }, [pushHistory]);
 
   const impactChecks = answers.impact_checks || [];
@@ -147,15 +147,15 @@ export default function Screen7b_SignificantRisk() {
 
         {hasSignificant && !hasConflict && (
           <div className="info-box alert-warning" style={{ marginTop: "20px" }}>
-            <strong>⚠️ High-Risk Annex III:</strong>
-            <p>You selected at least one risk indicator. Full high-risk requirements will apply.</p>
+            <strong>⚠️ High-Risk Classification:</strong>
+            You selected at least one significant risk indicator. Your system is classified as High-Risk. Full high-risk obligations will apply. <span className="source-tag" title="Article 6(2) and Annex III">Source</span>
           </div>
         )}
 
         {hasNone && !hasConflict && (
           <div className="info-box alert-success" style={{ marginTop: "20px" }}>
-            <strong>✓ Annex III Non-Significant:</strong>
-            <p>No significant risk identified. Reduced obligations will apply.</p>
+            <strong>✓ Non-Significant Risk:</strong>
+            You selected "None of the above." Your system is classified as Non-Significant Risk. Reduced obligations will apply. <span className="source-tag" title="Article 6(2) and Annex III">Source</span>
           </div>
         )}
 

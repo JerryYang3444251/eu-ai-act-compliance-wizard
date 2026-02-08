@@ -8,7 +8,7 @@ export default function Screen1_Exclusions() {
   const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, markStepsAsCompleted, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen0");
+    pushHistory("/screen1");
   }, [pushHistory]);
   const selectedItems = answers.exclusions || [];
 
@@ -70,7 +70,13 @@ export default function Screen1_Exclusions() {
                 checked={selectedItems.includes(option.id)}
                 onChange={() => handleToggle(option.id)}
               />
-              <span>{option.label}</span>
+              <span>
+                {option.label}{option.source && (
+                  <span className="source-tag" title={option.source}>
+                    Source
+                  </span>
+                )}
+              </span>
             </label>
           ))}
         </div>
@@ -78,7 +84,7 @@ export default function Screen1_Exclusions() {
         {hasNonNone && (
           <div className="info-box alert-success">
             <strong>✓ Exclusion Applied:</strong>
-            <p>Your AI system is excluded from EU AI Act scope.</p>
+            You selected one or more exclusion categories. Your AI system is excluded from the EU AI Act scope. <span className="source-tag" title="Article 2 — Material Scope">Source</span>
           </div>
         )}
 

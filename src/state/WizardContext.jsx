@@ -14,8 +14,21 @@ export function WizardProvider({ children }) {
   const [isFria, setIsFria] = useState(false);
   const [completedItems, setCompletedItems] = useState({});
   const [navigationHistory, setNavigationHistory] = useState([]);
-  const [shouldReevaluateRules, setShouldReevaluateRules] = useState(false); // Flag to force re-evaluation after Back navigation
-  const [isNavigatingBack, setIsNavigatingBack] = useState(false); // Flag to prevent history push during back navigation
+  const [shouldReevaluateRules, setShouldReevaluateRules] = useState(false);
+  const [isNavigatingBack, setIsNavigatingBack] = useState(false);
+
+  // ========== NEW: FRIA-SPECIFIC STATE (FRIA_001 rule requirements) ==========
+  const [isPublicServiceProvider, setIsPublicServiceProvider] = useState(null);
+  const [deploymentSector, setDeploymentSector] = useState([]);
+  const [annexIIIPoint, setAnnexIIIPoint] = useState(null);
+
+  // ========== NEW: TRANSPARENCY-SPECIFIC STATE (TRANS_001-005 requirements) ==========
+  const [systemFunctionality, setSystemFunctionality] = useState([]);
+  const [contentCharacteristics, setContentCharacteristics] = useState([]);
+
+  // ========== NEW: GPAI-SPECIFIC STATE (GPAI_003-005 requirements) ==========
+  const [commissionDesignation, setCommissionDesignation] = useState(false);
+
   // Track modifications
   const hasModifications = answers.modifications && 
     answers.modifications.some(m => m !== "none");
@@ -40,129 +53,199 @@ export function WizardProvider({ children }) {
   const hasProhibited = answers.prohibitedPractices && 
     answers.prohibitedPractices.some(p => p !== "none");
 
+  // ========== NEW: HIGH-RISK FLAG (Optimization from redundancy analysis) ==========
+  const isHighRisk = classification && [
+    CLASSIFICATIONS.HIGH_RISK_IA,
+    CLASSIFICATIONS.HIGH_RISK_IB,
+    CLASSIFICATIONS.HIGH_RISK_III,
+  ].includes(classification);
+
+  // ========== MODULE 2: RAW ROLE IDENTIFICATION ==========
+  // Phase 1: org_actions → roles_raw (intermediate tags)
+  // Rules ROLE_001-008 per Rule Engine v03
+  const identifyRawRoles = (org_actions) => {
+    const raw_role_tags = new Set();
+
+    // RULE ROLE_001: Development/Modification tag
+    if (org_actions.some(a => ['develop','modify','change_purpose','fine_tune','retrain'].includes(a))) {
+      raw_role_tags.add('Development_Modification');
+    }
+
+    // RULE ROLE_002: Branding tag
+    if (org_actions.includes('brand')) {
+      raw_role_tags.add('Branding');
+    }
+
+    // RULE ROLE_003: Importer tag
+    if (org_actions.includes('import')) {
+      raw_role_tags.add('Importer');
+    }
+
+    // RULE ROLE_004: Distributor tag
+    if (org_actions.includes('distribute')) {
+      raw_role_tags.add('Distributor');
+    }
+
+    // RULE ROLE_005: Market_Placer tag
+    if (org_actions.includes('place_on_market')) {
+      raw_role_tags.add('Market_Placer');
+    }
+
+    // RULE ROLE_006: Deployer tag
+    if (org_actions.includes('deploy')) {
+      raw_role_tags.add('Deployer');
+    }
+
+    // RULE ROLE_007: Product_Manufacturer tag
+    if (org_actions.includes('product_manufacturer')) {
+      raw_role_tags.add('Product_Manufacturer');
+    }
+
+    // RULE ROLE_008: Validation
+    if (raw_role_tags.size === 0) {
+      console.warn("ROLE_008: No raw roles identified from org_actions", { org_actions });
+    }
+
+    return Array.from(raw_role_tags);
+  };
+
   // ========== MODULE 2B: LEGAL ROLE RECLASSIFICATION ==========
-  // Converts org_actions (raw) → legal roles per EU AI Act
-  // Rules ROLE_RECLASS_001-014 per Specification
+  // Phase 2: roles_raw (tags) → roles (legal)
+  // Rules ROLE_RECLASS_001-014 per Rule Engine v03
   const reclassifyRoles = (raw_actions) => {
+    // First, get raw role tags from org_actions (MODULE 2)
+    const roles_raw_tags = identifyRawRoles(raw_actions);
+    
     const legal_roles = new Set();
     let provider_assigned = false;
 
     // RULE RECLASS_FLAG_INIT: Initialize tracking
     // (provider_assigned = false is initialized above)
 
-    // ========== BLOCK 1 - DEVELOPMENT/MODIFICATION → PROVIDER ==========
-    // RULE RECLASS_001: develop/modify/retrain/fine_tune/change_purpose → Provider (Art. 3, 16)
-    if (raw_actions.includes("develop") || raw_actions.includes("modify") || raw_actions.includes("retrain") || raw_actions.includes("fine_tune") || raw_actions.includes("change_purpose")) {
+    // ========== RULE RECLASS_001: Development_Modification → PROVIDER ==========
+    if (roles_raw_tags.includes('Development_Modification')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // ========== BLOCK 2 - BRANDING → PROVIDER ==========
-    // RULE RECLASS_002: brand → Provider (Art. 3)
-    if (raw_actions.includes("brand")) {
+    // ========== RULE RECLASS_002: Branding → PROVIDER ==========
+    if (roles_raw_tags.includes('Branding')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // ========== BLOCK 3 - MARKET PLACER → PROVIDER ==========
-    // RULE RECLASS_003: place_on_market → Provider (Art. 16)
-    if (raw_actions.includes("place_on_market")) {
+    // ========== RULE RECLASS_003: Market_Placer → PROVIDER ==========
+    if (roles_raw_tags.includes('Market_Placer')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // ========== BLOCK 4 - PRODUCT MANUFACTURER (SAFETY COMPONENT) → PROVIDER ==========
-    // RULE RECLASS_004: product_manufacturer + ai_is_safety_component → Provider (Art. 24)
-    // Note: ai_is_safety_component would come from answers object if needed
-    // For now, if product_manufacturer is selected, we treat as potential Provider
-    if (raw_actions.includes("product_manufacturer")) {
-      // Check if there's a safety_function flag in answers
+    // ========== RULE RECLASS_004: Product_Manufacturer + safety component → PROVIDER ==========
+    // Uses ai_is_safety_component (answers.safety_function === "yes")
+    if (roles_raw_tags.includes('Product_Manufacturer')) {
       if (answers.safety_function === "yes") {
         legal_roles.add("Provider");
         provider_assigned = true;
       }
     }
 
-    // ========== BLOCK 5 - IMPORTER WHO REBRANDS OR MODIFIES → PROVIDER ==========
-    // RULE RECLASS_005: (importer) + (brand OR modify/retrain/fine_tune/change_purpose) → Provider (Art. 25)
-    if (raw_actions.includes("import") && (raw_actions.includes("brand") || raw_actions.includes("modify") || raw_actions.includes("retrain") || raw_actions.includes("fine_tune") || raw_actions.includes("change_purpose"))) {
+    // ========== RULE RECLASS_005: Importer + placing_under_own_name → PROVIDER ==========
+    // Note: placing_under_own_name is implied by presence of 'Branding' tag
+    if (roles_raw_tags.includes('Importer') && roles_raw_tags.includes('Branding')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // ========== BLOCK 6 - DISTRIBUTOR WHO REBRANDS OR MODIFIES → PROVIDER ==========
-    // RULE RECLASS_006: (distributor) + (brand OR modify/retrain/fine_tune/change_purpose) → Provider (Art. 26)
-    if (raw_actions.includes("distribute") && (raw_actions.includes("brand") || raw_actions.includes("modify") || raw_actions.includes("retrain") || raw_actions.includes("fine_tune") || raw_actions.includes("change_purpose"))) {
+    // ========== RULE RECLASS_006: Distributor + placing_under_own_name → PROVIDER ==========
+    if (roles_raw_tags.includes('Distributor') && roles_raw_tags.includes('Branding')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // ========== BLOCK 7 - DEPLOYER WHO MODIFIES → PROVIDER ==========
-    // RULE RECLASS_007: (deployer) + (modifications: develop/modify/retrain/fine_tune) → Provider (Art. 16(2))
-    if (raw_actions.includes("deploy") && (raw_actions.includes("modify") || raw_actions.includes("develop") || raw_actions.includes("retrain") || raw_actions.includes("fine_tune"))) {
+    // ========== RULE RECLASS_007: Deployer + modifications → PROVIDER ==========
+    // Check if Deployer tag AND Development_Modification tag both present
+    if (roles_raw_tags.includes('Deployer') && roles_raw_tags.includes('Development_Modification')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // ========== BLOCK 8 - NON-MODIFYING DEPLOYER → DEPLOYER ==========
-    // RULE RECLASS_008: deployer without modifications → Deployer (Art. 29)
-    if (raw_actions.includes("deploy") && !provider_assigned) {
+    // ========== RULE RECLASS_008: Deployer without modifications → DEPLOYER ==========
+    if (roles_raw_tags.includes('Deployer') && !provider_assigned) {
       legal_roles.add("Deployer");
     }
 
-    // ========== BLOCK 9 - IMPORTER (UNBRANDED) → IMPORTER ==========
-    // RULE RECLASS_009: (importer) without brand AND not provider → Importer (Art. 25)
-    if (raw_actions.includes("import") && !provider_assigned) {
+    // ========== RULE RECLASS_009: Importer without provider status → IMPORTER ==========
+    if (roles_raw_tags.includes('Importer') && !provider_assigned) {
       legal_roles.add("Importer");
     }
 
-    // ========== BLOCK 10 - DISTRIBUTOR (UNBRANDED) → DISTRIBUTOR ==========
-    // RULE RECLASS_010: (distributor) without brand AND not provider → Distributor (Art. 26)
-    if (raw_actions.includes("distribute") && !provider_assigned) {
+    // ========== RULE RECLASS_010: Distributor without provider status → DISTRIBUTOR ==========
+    if (roles_raw_tags.includes('Distributor') && !provider_assigned) {
       legal_roles.add("Distributor");
     }
 
-    // ========== BLOCK 11 - PRODUCT MANUFACTURER (NOT SAFETY COMPONENT) ==========
-    // RULE RECLASS_011: product_manufacturer + NOT ai_is_safety_component → Product_Manufacturer
-    if (raw_actions.includes("product_manufacturer") && !provider_assigned) {
-      // Only add Product_Manufacturer if it wasn't converted to Provider in Block 4
+    // ========== RULE RECLASS_011: Product_Manufacturer without safety component → PRODUCT_MANUFACTURER ==========
+    if (roles_raw_tags.includes('Product_Manufacturer') && !provider_assigned) {
       if (answers.safety_function !== "yes") {
         legal_roles.add("Product_Manufacturer");
       }
     }
 
-    // ========== BLOCK 12 - FINAL CONSOLIDATION ==========
-    // RULE RECLASS_012: Deduplicate roles
+    // ========== RULE RECLASS_012: Deduplicate roles ==========
     const deduplicated = Array.from(legal_roles);
 
-    // ========== BLOCK 13 - ERROR IF EMPTY ==========
-    // RULE RECLASS_013: Error if no roles determined
+    // ========== RULE RECLASS_013: Error if empty ==========
     if (deduplicated.length === 0) {
-      console.warn("ROLE_RECLASS_013: No legal roles determined from org_actions", { raw_actions });
+      console.warn("ROLE_RECLASS_013: No legal roles determined from roles_raw", { roles_raw_tags, raw_actions });
       return [];
     }
 
-    // ========== BLOCK 14 - DISPLAY/RETURN COMPUTED ROLES ==========
-    // RULE RECLASS_014: Return and display computed roles
-    console.log("ROLE_RECLASS_014: Computed legal roles:", deduplicated);
+    // ========== RULE RECLASS_014: Return roles for SCREEN_3 ==========
+    console.log("ROLE_RECLASS_014: Computed legal roles:", deduplicated, "from raw tags:", roles_raw_tags);
     return deduplicated;
   };
 
-  // Automatically persist computed obligations whenever inputs change
-  useEffect(() => {
-    try {
-      const obs = computeObligations();
-      setObligations(obs);
-    } catch (e) {
-      console.warn("Error computing obligations:", e);
-    }
-  // Recompute when legal roles, classification, conformityRoute, or relevant answers change
-  }, [roles, classification, conformityRoute, answers.transparencyTriggers, answers.is_public_body, answers.flopsValue, answers.annexIIIUsecases, answers.prohibitedPractices]);
-
   // ========== MODULE 11: OBLIGATION ENGINE ==========
-  // Computes applicable obligations per Rules OBL_001-011
+  // Computes applicable obligations per Rules OBL_001-017 + OBL_PRECEDENCE_001
+  // UPDATED per Rule Engine v04: OBL_PRECEDENCE_001 - Prohibited takes absolute precedence
   const computeObligations = () => {
     const obs = [];
+
+    // ========== OBL_PRECEDENCE_001: PROHIBITED CLASSIFICATION TAKES ABSOLUTE PRECEDENCE ==========
+    // Article 5 (Prohibited) supersedes ALL other obligations
+    // When prohibited, ONLY L-series (and P for Product_Manufacturer) apply
+    if (classification === CLASSIFICATIONS.PROHIBITED) {
+      // OBL_011: Provider prohibited obligations
+      if (roles.includes("Provider")) {
+        obs.push("L");
+      }
+      
+      // OBL_012: Importer prohibited obligations
+      if (roles.includes("Importer")) {
+        obs.push("L");
+      }
+      
+      // OBL_013: Distributor prohibited obligations
+      if (roles.includes("Distributor")) {
+        obs.push("L");
+      }
+      
+      // OBL_014: Deployer prohibited obligations
+      if (roles.includes("Deployer")) {
+        obs.push("L");
+      }
+      
+      // OBL_016: Product manufacturer must not integrate prohibited AI
+      if (roles.includes("Product_Manufacturer")) {
+        obs.push("L"); // Gets L category for common prohibited obligations
+        obs.push("P"); // Plus specific P obligations
+      }
+      
+      // Return ONLY prohibited obligations - no A, C, D, E, F, G, H, I, J, K, N, O
+      return obs;
+    }
+
+    // ========== NORMAL OBLIGATIONS (NON-PROHIBITED SYSTEMS ONLY) ==========
 
     // OBL_001: Provider obligations (A1-A16)
     if (roles.includes("Provider")) {
@@ -170,7 +253,7 @@ export function WizardProvider({ children }) {
     }
 
     // OBL_017: Handover (C1-C15) only if Provider AND high-risk classification
-    if (roles.includes("Provider") && classification && ["high_risk_ia", "high_risk_ib", "high_risk_iii"].includes(classification)) {
+    if (roles.includes("Provider") && isHighRisk) {
       obs.push("C");
     }
 
@@ -189,57 +272,113 @@ export function WizardProvider({ children }) {
       obs.push("F");
     }
 
-    // OBL_005: GPAI obligations (J1-J16)
-    if (classification === "gpai") {
-      obs.push("J");
-    }
-
-    // OBL_006: GPAI Systemic obligations (K1-K13)
-    if (classification === "gpai_systemic") {
-      obs.push("K");
-    }
-
-    // OBL_007: Conformity Assessment obligations (O1-O50 by route)
-    if (classification && ["high_risk_ia", "high_risk_ib", "high_risk_iii"].includes(classification)) {
-      obs.push("O");
-      // Note: O obligations filtered by route in screen rendering
-    }
-
-    // OBL_008: Transparency obligations (H1-H9) if transparency_triggers not empty AND role is Provider or Deployer
-    const hasTransparencyTriggers = answers.transparencyTriggers && answers.transparencyTriggers.length > 0 && !answers.transparencyTriggers.includes("none");
-    const isProviderOrDeployer = roles.includes("Provider") || roles.includes("Deployer");
-    if (hasTransparencyTriggers && isProviderOrDeployer) {
-      obs.push("H");
-    }
-
-    // OBL_009: FRIA obligations (G1-G15) if (is_public_body OR sensitive_deployment_sector) AND high-risk
-    const isPublicBody = answers.is_public_body === true;
-    const hasSensitiveDeploymentSector = answers.deploymentSectors && 
-      answers.deploymentSectors.length > 0 && 
-      answers.deploymentSectors.some(s => ['law_enforcement', 'migration', 'border_control', 'justice'].includes(s));
-    const requiresFRIA = (isPublicBody || hasSensitiveDeploymentSector) && isHighRisk;
+    // OBL_009: FRIA obligations (G1-G15) - UPDATED LOGIC per FRIA_001
+    const isPublicAuthority = roles.includes("Public_Authority");
+    const hasSensitiveDeploymentSector = deploymentSector?.some(sector => 
+      ['law_enforcement', 'migration', 'asylum', 'border_control', 'justice'].includes(sector)
+    );
+    
+    // FRIA required if: (Public Authority OR Public Service Provider OR Sensitive Sector) 
+    // AND High-Risk AND NOT Annex III point 2 (employment)
+    const requiresFRIA = 
+      isHighRisk &&
+      annexIIIPoint !== 2 &&
+      (isPublicAuthority || isPublicServiceProvider || hasSensitiveDeploymentSector);
+    
     if (requiresFRIA) {
       obs.push("G");
     }
 
+    // OBL_008: Transparency obligations (H1-H9) - Article 50 only
+    // Triggered by: specific system functionalities that require disclosure/labeling
+    // NOTE: Article 13 high-risk transparency is separate and included in A/F categories
+    const hasArticle50Triggers = 
+      (systemFunctionality && systemFunctionality.length > 0 && !systemFunctionality.includes("none")) || 
+      (answers.transparencyTriggers && answers.transparencyTriggers.length > 0 && !answers.transparencyTriggers.includes("none"));
+    
+    const isProviderOrDeployer = roles.includes("Provider") || roles.includes("Deployer");
+    
+    if (hasArticle50Triggers && isProviderOrDeployer) {
+      obs.push("H");
+    }
+
     // OBL_010: Non-Significant Risk obligations (I1-I7)
-    if (classification === "annex_iii_non_significant") {
+    // Only for Providers per Article 6(2)
+    if (classification === CLASSIFICATIONS.ANNEX_III_NON_SIGNIFICANT && roles.includes("Provider")) {
       obs.push("I");
     }
 
-    // OBL_011: Prohibited obligations (L1-L9) if classification == Prohibited
-    if (classification === "prohibited") {
-      obs.push("L");
+    // OBL_005: GPAI obligations (J1-J18)
+    if (classification === CLASSIFICATIONS.GPAI) {
+      obs.push("J");
     }
 
-    // OBL_016: Prohibited product manufacturer obligations (L' specific handling)
-    // If prohibited AND is product manufacturer, add specific prohibited product manufacturer obligations
-    if (classification === "prohibited" && roles.includes("Product_Manufacturer")) {
-      obs.push("L_ProductManufacturer");
+    // OBL_006: GPAI Systemic obligations (K1-K13)
+    if (classification === CLASSIFICATIONS.GPAI_SYSTEMIC) {
+      obs.push("K");
+    }
+
+    // OBL_015: Product Manufacturer obligations (N1-N4)
+    // Only when AI is safety component (NOT prohibited - already returned above)
+    if (roles.includes("Product_Manufacturer")) {
+      obs.push("N");
+    }
+
+    // OBL_007: Conformity Assessment obligations (O1-O50 by route)
+    // Only for Providers with high-risk classification per Article 43
+    if (roles.includes("Provider") && isHighRisk) {
+      obs.push("O");
+      // Note: O obligations filtered by conformityRoute in screen rendering
+    }
+
+    // M: Exclusion Documentation (Article 2)
+    // Added when system is excluded from scope
+    if (classification === CLASSIFICATIONS.EXCLUDED) {
+      obs.push("M");
     }
 
     return obs;
   };
+
+  // Re-run role reclassification when safety_function changes (ROLE_RECLASS_004)
+  // This handles the case where Product_Manufacturer role changes based on ai_is_safety_component
+  useEffect(() => {
+    if (roles_raw.length > 0) {
+      try {
+        const recomputedRoles = reclassifyRoles(roles_raw);
+        // Only update if roles actually changed to avoid infinite loops
+        if (JSON.stringify(recomputedRoles) !== JSON.stringify(roles)) {
+          setRoles(recomputedRoles);
+        }
+      } catch (e) {
+        console.warn("Error re-classifying roles:", e);
+      }
+    }
+  }, [answers.safety_function, roles_raw]);
+
+  // Automatically persist computed obligations whenever inputs change
+  useEffect(() => {
+    try {
+      const obs = computeObligations();
+      setObligations(obs);
+    } catch (e) {
+      console.warn("Error computing obligations:", e);
+    }
+  // Recompute when legal roles, classification, conformityRoute, or relevant context changes
+  }, [
+    roles, 
+    classification, 
+    conformityRoute, 
+    systemFunctionality,
+    answers.transparencyTriggers, 
+    isPublicServiceProvider,
+    deploymentSector,
+    annexIIIPoint,
+    answers.flopsValue,
+    commissionDesignation,
+    answers.annexIIIUsecases, 
+    answers.prohibitedPractices
+  ]);
 
   // Save answer to wizard state
   const saveAnswer = (field, value) => {
@@ -289,6 +428,12 @@ export function WizardProvider({ children }) {
     setIsFria(false);
     setCompletedItems({});
     setNavigationHistory([]);
+    setIsPublicServiceProvider(null);
+    setDeploymentSector([]);
+    setAnnexIIIPoint(null);
+    setSystemFunctionality([]);
+    setContentCharacteristics([]);
+    setCommissionDesignation(false);
   };
 
   // Clear all answers and reset to home page state
@@ -302,6 +447,12 @@ export function WizardProvider({ children }) {
     setNavigationHistory([]);
     setRoles_raw([]);
     setRoles([]);
+    setIsPublicServiceProvider(null);
+    setDeploymentSector([]);
+    setAnnexIIIPoint(null);
+    setSystemFunctionality([]);
+    setContentCharacteristics([]);
+    setCommissionDesignation(false);
   };
 
   // Navigation history management
@@ -359,7 +510,7 @@ export function WizardProvider({ children }) {
   
   // Step ordering for proper back navigation
   const STEP_ORDER = [
-    "/screen0",  // Screen 0: Information
+    "/",         // Home
     "/screen1",  // Screen 1: Exclusions
     "/screen2",  // Screen 2: Role
     "/screen3",  // Screen 3: AnnexIA
@@ -373,12 +524,11 @@ export function WizardProvider({ children }) {
     "/screen11", // Screen 11: FRIA
     "/screen12", // Screen 12: Final Classification
     "/screen13", // Screen 13: CA Route
-    "/screen14", // Screen 14: CA Details
-    "/screen15", // Screen 15: Checklist Output
+    "/screen14", // Screen 14: Checklist Output
   ];
 
   const ANSWER_KEYS_BY_STEP = {
-    "/screen0": [],
+    "/": [],
     "/screen1": ["exclusions"],
     "/screen2": ["roles_raw"],
     "/screen3": ["annexIACategories"],
@@ -386,14 +536,13 @@ export function WizardProvider({ children }) {
     "/screen5": ["annexIIIUsecases"],
     "/screen6": ["impact_checks"],
     "/screen7": ["isGPAI"],
-    "/screen8": ["hasSystemicRisk", "flopsValue"],
+    "/screen8": ["hasSystemicRisk", "flopsValue", "commissionDesignation"],
     "/screen9": ["prohibitedPractices"],
-    "/screen10": ["transparencyTriggers"],
-    "/screen11": ["is_public_body", "deploymentSectors"],
+    "/screen10": ["transparencyTriggers", "systemFunctionality", "contentCharacteristics"],
+    "/screen11": ["is_public_body", "isPublicServiceProvider", "deploymentSectors", "annexIIIPoint"],
     "/screen12": ["finalClassification"],
     "/screen13": ["conformity_section_a", "conformity_section_b", "conformity_section_c", "conformity_section_d", "conformity_section_e", "conformityRoute"],
-    "/screen14": ["obligationDetails"],
-    "/screen15": ["completedItems"],
+    "/screen14": ["completedItems"],
   };
 
   const clearAnswersAfter = (screenPath) => {
@@ -416,6 +565,28 @@ export function WizardProvider({ children }) {
       });
       return copy;
     });
+
+    // Also clear state variables associated with later steps
+    const stateVariablesToClear = {
+      "/screen8": () => setCommissionDesignation(false),
+      "/screen10": () => {
+        setSystemFunctionality([]);
+        setContentCharacteristics([]);
+      },
+      "/screen11": () => {
+        setIsPublicServiceProvider(null);
+        setDeploymentSector([]);
+        setAnnexIIIPoint(null);
+      },
+    };
+
+    // Clear state for all steps after the target step
+    for (let i = idx + 1; i < STEP_ORDER.length; i++) {
+      const stepPath = STEP_ORDER[i];
+      if (stateVariablesToClear[stepPath]) {
+        stateVariablesToClear[stepPath]();
+      }
+    }
   };
   
   // ========== GLOBAL CLASSIFICATION PRECEDENCE RESOLVER ==========
@@ -505,7 +676,7 @@ export function WizardProvider({ children }) {
   };
 
   const value = {
-    // State
+    // ========== STATE ==========
     roles_raw,
     setRoles_raw,
     roles,
@@ -534,20 +705,39 @@ export function WizardProvider({ children }) {
     shouldReevaluateRules,
     setShouldReevaluateRules,
     
-    // Computed
+    // ========== NEW: FRIA CONTEXT (Article 27) ==========
+    isPublicServiceProvider,
+    setIsPublicServiceProvider,
+    deploymentSector,
+    setDeploymentSector,
+    annexIIIPoint,
+    setAnnexIIIPoint,
+
+    // ========== NEW: TRANSPARENCY CONTEXT (Article 50) ==========
+    systemFunctionality,
+    setSystemFunctionality,
+    contentCharacteristics,
+    setContentCharacteristics,
+
+    // ========== NEW: GPAI CONTEXT (Articles 51, 55) ==========
+    commissionDesignation,
+    setCommissionDesignation,
+
+    // ========== COMPUTED FLAGS ==========
     hasModifications,
     hasHighRiskB,
     hasAnnexIA,
     hasAnnexIII,
     hasExclusions,
     hasProhibited,
+    isHighRisk, // NEW: Commonly used flag
     
-    // Module 2B & Module 11 Engines
+    // ========== MODULE 2B & MODULE 11 ENGINES ==========
     reclassifyRoles,
     computeObligations,
     resolvePrecedenceOrder,
     
-    // Utils
+    // ========== UTILS ==========
     resetWizard
   };
 

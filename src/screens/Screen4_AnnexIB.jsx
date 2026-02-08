@@ -8,7 +8,7 @@ export default function Screen4() {
   const { answers, saveAnswer, setClassificationWithPrecedence, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen3");
+    pushHistory("/screen4");
   }, [pushHistory]);
   const sectors = answers.highRiskSectorsB || [];
 
@@ -40,9 +40,12 @@ export default function Screen4() {
     const hasHighRisk = sectors.length > 0 && !sectors.includes("none");
     if (hasHighRisk) {
       setClassificationWithPrecedence(CLASSIFICATIONS.HIGH_RISK_IB);
+      // Rule A1B_001: High-risk detected → skip to SCREEN_7 (GPAI)
+      navigate("/screen7");
+    } else {
+      // Rule A1B_002: No high-risk → continue to SCREEN_5 (Annex III)
+      navigate("/screen5");
     }
-    // Continue sequentially to AnnexIII (Screen5)
-    navigate("/screen5");
   };
 
   return (
@@ -68,8 +71,7 @@ export default function Screen4() {
 
         {sectors.length > 0 && !sectors.includes("none") && (
           <div className="info-box alert-warning">
-            <strong>🚨 High-Risk Classification:</strong>
-            <p>Your AI system is classified as High-Risk under Annex I Section B. You will skip to detailed obligations.</p>
+            <strong>🚨 High-Risk Classification:</strong> You selected one or more regulated sectors. Your AI system is classified as High-Risk. <span className="source-tag" title="Article 6(1) and Annex I, Section B">Source</span>
           </div>
         )}
 

@@ -44,65 +44,98 @@ export const HIGH_RISK_SECTORS_B = [
 
 // Annex I A categories
 export const ANNEX_IA_CATEGORIES = [
-  { id: "machinery", label: "Machinery" },
-  { id: "toys", label: "Toys" },
-  { id: "recreational_craft", label: "Recreational craft / watercraft" },
-  { id: "lifts", label: "Lifts" },
-  { id: "atex", label: "ATEX equipment" },
-  { id: "radio", label: "Radio equipment" },
-  { id: "pressure", label: "Pressure equipment" },
-  { id: "cableway", label: "Cableway installations" },
-  { id: "ppe", label: "Personal protective equipment" },
-  { id: "gas", label: "Gas appliances" },
-  { id: "medical_devices", label: "Medical devices" },
-  { id: "ivd_devices", label: "IVD medical devices" },
+  { id: "machinery", label: "Machinery", source: "Annex I(A)(1) - Directive 2006/42/EC" },
+  { id: "toys", label: "Toys", source: "Annex I(A)(2) - Directive 2009/48/EC" },
+  { id: "recreational_craft", label: "Recreational craft / watercraft", source: "Annex I(A)(3) - Directive 2013/53/EU" },
+  { id: "lifts", label: "Lifts", source: "Annex I(A)(4) - Directive 2014/33/EU" },
+  { id: "atex", label: "ATEX equipment", source: "Annex I(A)(5) - Directive 2014/34/EU" },
+  { id: "radio", label: "Radio equipment", source: "Annex I(A)(6) - Directive 2014/53/EU" },
+  { id: "pressure", label: "Pressure equipment", source: "Annex I(A)(7) - Directive 2014/68/EU" },
+  { id: "cableway", label: "Cableway installations", source: "Annex I(A)(8) - Regulation (EU) 2016/424" },
+  { id: "ppe", label: "Personal protective equipment", source: "Annex I(A)(9) - Regulation (EU) 2016/425" },
+  { id: "gas", label: "Gas appliances", source: "Annex I(A)(10) - Regulation (EU) 2016/426" },
+  { id: "medical_devices", label: "Medical devices", source: "Annex I(A)(11) - Regulation (EU) 2017/745" },
+  { id: "ivd_devices", label: "IVD medical devices", source: "Annex I(A)(12) - Regulation (EU) 2017/746" },
   { id: "none", label: "None of these" },
 ];
 
-// Annex III use cases
+// Annex III use cases - All 29 specific use cases
 export const ANNEX_III_USECASES = [
-  { id: "biometric", label: "Biometric identification or categorisation" },
-  { id: "critical_infra", label: "Critical infrastructure" },
-  { id: "education", label: "Education or vocational training" },
-  { id: "employment", label: "Employment and worker management" },
-  { id: "essential_services", label: "Access to essential services" },
-  { id: "law_enforcement", label: "Law enforcement" },
-  { id: "migration", label: "Migration, asylum, border control" },
-  { id: "justice", label: "Justice and democratic processes" },
-  { id: "none", label: "None of the above" },
+  // 1. BIOMETRICS (3 sub-cases)
+  { id: "biometric_rbi", label: "Remote biometric identification systems", source: "Annex III(1)(a) - Remote biometric identification systems", category: "Biometrics" },
+  { id: "biometric_categorisation", label: "Biometric categorisation based on sensitive attributes", source: "Annex III(1)(b) - Biometric categorisation according to sensitive or protected attributes", category: "Biometrics" },
+  { id: "emotion_recognition", label: "Emotion recognition", source: "Annex III(1)(c) - Emotion recognition", category: "Biometrics" },
+  
+  // 2. CRITICAL INFRASTRUCTURE (1 case)
+  { id: "critical_infrastructure", label: "Safety components in critical digital infrastructure, road traffic, water, gas, heating, or electricity", source: "Annex III(2) - Safety components in management and operation of critical infrastructure", category: "Critical Infrastructure" },
+  
+  // 3. EDUCATION (4 sub-cases)
+  { id: "education_access", label: "Determining access or admission to educational institutions", source: "Annex III(3)(a) - Determining access or admission to educational and vocational training institutions", category: "Education and Vocational Training" },
+  { id: "education_outcomes", label: "Evaluating learning outcomes", source: "Annex III(3)(b) - Evaluating learning outcomes in educational and vocational training institutions", category: "Education and Vocational Training" },
+  { id: "education_level", label: "Assessing appropriate education level", source: "Annex III(3)(c) - Assessing the appropriate level of education for individuals", category: "Education and Vocational Training" },
+  { id: "education_monitoring", label: "Monitoring and detecting prohibited student behaviour during tests", source: "Annex III(3)(d) - Monitoring and detecting prohibited behaviour of students during tests", category: "Education and Vocational Training" },
+  
+  // 4. EMPLOYMENT (2 sub-cases)
+  { id: "employment_recruitment", label: "Recruitment or selection (job ads, filtering applications, evaluating candidates)", source: "Annex III(4)(a) - Recruitment or selection of natural persons", category: "Employment, Workers Management and Access to Self-Employment" },
+  { id: "employment_management", label: "Decisions on work terms, promotion, termination, task allocation, or performance monitoring", source: "Annex III(4)(b) - Decisions affecting work-related relationships, promotion, termination, task allocation, or performance monitoring", category: "Employment, Workers Management and Access to Self-Employment" },
+  
+  // 5. ESSENTIAL SERVICES (4 sub-cases)
+  { id: "services_public_benefits", label: "Evaluating eligibility for essential public assistance benefits and services", source: "Annex III(5)(a) - Evaluating eligibility for essential public assistance benefits and services", category: "Access to Essential Private Services and Essential Public Services and Benefits" },
+  { id: "services_creditworthiness", label: "Evaluating creditworthiness or establishing credit score (except fraud detection)", source: "Annex III(5)(b) - Evaluating creditworthiness or establishing credit score", category: "Access to Essential Private Services and Essential Public Services and Benefits" },
+  { id: "services_insurance", label: "Risk assessment and pricing for life and health insurance", source: "Annex III(5)(c) - Risk assessment and pricing in relation to life and health insurance", category: "Access to Essential Private Services and Essential Public Services and Benefits" },
+  { id: "services_emergency", label: "Emergency call evaluation, dispatch prioritisation, or patient triage", source: "Annex III(5)(d) - Evaluating and classifying emergency calls or dispatching emergency first response services", category: "Access to Essential Private Services and Essential Public Services and Benefits" },
+  
+  // 6. LAW ENFORCEMENT (5 sub-cases)
+  { id: "law_victim_risk", label: "Assessing risk of becoming a victim of crime", source: "Annex III(6)(a) - Assessing the risk of a natural person becoming the victim of criminal offences", category: "Law Enforcement" },
+  { id: "law_polygraph", label: "Polygraphs or similar tools", source: "Annex III(6)(b) - Polygraphs and similar tools", category: "Law Enforcement" },
+  { id: "law_evidence", label: "Evaluating reliability of evidence", source: "Annex III(6)(c) - Evaluating the reliability of evidence in investigation or prosecution of criminal offences", category: "Law Enforcement" },
+  { id: "law_offending_risk", label: "Assessing risk of offending or re-offending", source: "Annex III(6)(d) - Assessing the risk of a natural person offending or re-offending", category: "Law Enforcement" },
+  { id: "law_profiling", label: "Profiling in detection, investigation, or prosecution of crimes", source: "Annex III(6)(e) - Profiling of natural persons in the course of detection, investigation or prosecution of criminal offences", category: "Law Enforcement" },
+  
+  // 7. MIGRATION (4 sub-cases)
+  { id: "migration_polygraph", label: "Polygraphs or similar tools in migration context", source: "Annex III(7)(a) - Polygraphs and similar tools in migration, asylum and border control", category: "Migration, Asylum and Border Control Management" },
+  { id: "migration_risk", label: "Assessing security, irregular migration, or health risk", source: "Annex III(7)(b) - Assessing a risk, including security risk, irregular migration risk, or health risk", category: "Migration, Asylum and Border Control Management" },
+  { id: "migration_applications", label: "Examining asylum, visa, or residence permit applications", source: "Annex III(7)(c) - Assisting in the examination of applications for asylum, visa or residence permits", category: "Migration, Asylum and Border Control Management" },
+  { id: "migration_identification", label: "Detecting, recognising, or identifying persons in border control", source: "Annex III(7)(d) - Detecting, recognising or identifying natural persons in migration, asylum or border control context", category: "Migration, Asylum and Border Control Management" },
+  
+  // 8. JUSTICE (2 sub-cases)
+  { id: "justice_assistance", label: "Assisting judicial authorities in researching and interpreting facts and law", source: "Annex III(8)(a) - Assisting a judicial authority in researching and interpreting facts and the law", category: "Administration of Justice and Democratic Processes" },
+  { id: "justice_elections", label: "Influencing election/referendum outcomes or voting behaviour", source: "Annex III(8)(b) - Influencing the outcome of an election or referendum or the voting behaviour of natural persons", category: "Administration of Justice and Democratic Processes" },
+  
+  // NONE OPTION
+  { id: "none", label: "None of the above", source: null, category: null },
 ];
 
 // Exclusions - Article 2
 export const EXCLUSIONS = [
-  { id: "military", label: "Military, defence or national security use" },
-  { id: "research", label: "Research and development only" },
-  { id: "open_source", label: "Free/open-source components not placed on market" },
-  { id: "personal", label: "Purely personal, non‑professional use" },
-  { id: "third_country_le", label: "Use by third‑country authority for law enforcement or judicial cooperation" },
-  { id: "none", label: "None" },
+  { id: "military", label: "Military, defence or national security use", source: "Article 2(3)(a)" },
+  { id: "research", label: "Research and development only", source: "Article 2(6)" },
+  { id: "open_source", label: "Free/open-source components not placed on market", source: "Article 2(7)" },
+  { id: "personal", label: "Purely personal, non‑professional use", source: "Article 2(4)" },
+  { id: "third_country_le", label: "Use by third‑country authority for law enforcement or judicial cooperation", source: "Article 2(3)(c)" },
+  { id: "none", label: "None", source: null },
 ];
 
 // Prohibited practices - Article 5
 export const PROHIBITED_PRACTICES = [
-  { id: "subliminal", label: "Subliminal manipulation causing harm" },
-  { id: "vulnerability", label: "Exploiting vulnerabilities to cause harm" },
-  { id: "social_scoring", label: "Social scoring by public authorities" },
-  { id: "risk_assessment", label: "Risk assessment based solely on profiling or personality traits" },
-  { id: "biometric_cat_sensitive", label: "Biometric categorisation inferring sensitive attributes" },
-  { id: "face_scraping", label: "Untargeted scraping for facial recognition databases" },
-  { id: "emotion_recognition", label: "Emotion recognition in workplace or education (with exceptions)" },
-  { id: "real_time_biometric", label: "Real-time remote biometric identification in public spaces by law enforcement (with exceptions)" },
-  { id: "predictive_policing", label: "Predictive policing based solely on profiling" },
-  { id: "none", label: "None" },
+  { id: "subliminal", label: "Subliminal techniques beyond consciousness or manipulative/deceptive techniques that materially distort behavior and cause significant harm", source: "Article 5(1)(a)" },
+  { id: "vulnerability", label: "Exploiting vulnerabilities due to age, disability, or social/economic situation to materially distort behavior and cause significant harm", source: "Article 5(1)(b)" },
+  { id: "social_scoring", label: "Social scoring leading to detrimental treatment unrelated to context or unjustified/disproportionate to behavior", source: "Article 5(1)(c)" },
+  { id: "criminal_risk", label: "Risk assessment to predict criminal offence risk based solely on profiling or personality traits", source: "Article 5(1)(d)" },
+  { id: "face_scraping", label: "Untargeted scraping of facial images from internet or CCTV for facial recognition databases", source: "Article 5(1)(e)" },
+  { id: "emotion_workplace_education", label: "Inferring emotions in workplace or education", source: "Article 5(1)(f)" },
+  { id: "biometric_categorisation", label: "Biometric categorisation to infer race, political opinions, trade union membership, religious/philosophical beliefs, sex life or sexual orientation", source: "Article 5(1)(g)" },
+  { id: "real_time_rbi", label: "Real-time remote biometric identification in publicly accessible spaces for law enforcement", source: "Article 5(1)(h)" },
+  { id: "none", label: "None of the above", source: null },
 ];
 
 // Transparency triggers - Article 50
 export const TRANSPARENCY_TRIGGERS = [
-  { id: "direct_interaction", label: "Interacts directly with people" },
-  { id: "synthetic_content", label: "Generates synthetic audio, image, video or text content" },
-  { id: "deepfakes", label: "Generates deepfakes" },
-  { id: "emotion_recognition", label: "Performs emotion recognition or biometric categorisation" },
-  { id: "none", label: "None" },
+  { id: "direct_interaction", label: "Interacts directly with people", source: "Article 50(1)" },
+  { id: "synthetic_content", label: "Generates synthetic audio, image, video or text content", source: "Article 50(2)" },
+  { id: "deepfakes", label: "Generates deepfakes", source: "Article 50(4)" },
+  { id: "emotion_recognition", label: "Performs emotion recognition or biometric categorisation", source: "Article 50(2)" },
+  { id: "none", label: "None", source: null },
 ];
 
 // Deployment sectors for FRIA scope determination (Rule FRIA_001)

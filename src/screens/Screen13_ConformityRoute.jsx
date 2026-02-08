@@ -19,7 +19,7 @@ export default function Screen13A() {
   } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen12");
+    pushHistory("/screen13");
   }, [pushHistory]);
   // RULE ENGINE: Conformity Assessment ONLY for Providers with High-Risk
   // -------------------------------------------------------------------------
@@ -242,7 +242,7 @@ export default function Screen13A() {
           {[
             ["common_specifications_exist", "Common Specifications exist for this system"],
             ["commit_full_cs", "Organisation commits to full Common Specifications compliance"],
-            ["cs_cover_requirements", "Common Specifications cover all requirements in Articles 9–15"],
+            ["cs_cover_requirements", "Common Specifications cover all requirements"],
             ["none", "None of the above"],
           ].map(([id, label]) => (
             <label key={id} className="checkbox-option">

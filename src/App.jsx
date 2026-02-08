@@ -20,6 +20,11 @@ function NavigationTracker() {
     pushHistory(pathToTrack);
   }, [location.pathname, pushHistory]);
 
+  // Scroll to top only when pathname changes (not on every render)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return null;
 }
 

@@ -1,6 +1,54 @@
 rules_engine:
 
   ###########################################################
+  # DATA STRUCTURE REFERENCE — ANNEX III USE CASES
+  ###########################################################
+  # The following 29 specific use cases from Annex III are available:
+  #
+  # BIOMETRICS (3):
+  #   - biometric_rbi: Remote biometric identification systems [III(1)(a)]
+  #   - biometric_categorisation: Biometric categorisation based on sensitive attributes [III(1)(b)]
+  #   - emotion_recognition: Emotion recognition [III(1)(c)]
+  #
+  # CRITICAL INFRASTRUCTURE (1):
+  #   - critical_infrastructure: Safety components in critical infrastructure [III(2)]
+  #
+  # EDUCATION AND VOCATIONAL TRAINING (4):
+  #   - education_access: Determining access or admission to educational institutions [III(3)(a)]
+  #   - education_outcomes: Evaluating learning outcomes [III(3)(b)]
+  #   - education_level: Assessing appropriate education level [III(3)(c)]
+  #   - education_monitoring: Monitoring prohibited student behaviour during tests [III(3)(d)]
+  #
+  # EMPLOYMENT (2):
+  #   - employment_recruitment: Recruitment or selection of natural persons [III(4)(a)]
+  #   - employment_management: Work-related decisions, promotion, termination, monitoring [III(4)(b)]
+  #
+  # ESSENTIAL SERVICES (4):
+  #   - services_public_benefits: Evaluating eligibility for public assistance benefits [III(5)(a)]
+  #   - services_creditworthiness: Evaluating creditworthiness or credit score [III(5)(b)]
+  #   - services_insurance: Risk assessment for life and health insurance [III(5)(c)]
+  #   - services_emergency: Emergency call evaluation and dispatch prioritisation [III(5)(d)]
+  #
+  # LAW ENFORCEMENT (5):
+  #   - law_victim_risk: Assessing risk of becoming a victim of crime [III(6)(a)]
+  #   - law_polygraph: Polygraphs or similar tools [III(6)(b)]
+  #   - law_evidence: Evaluating reliability of evidence [III(6)(c)]
+  #   - law_offending_risk: Assessing risk of offending or re-offending [III(6)(d)]
+  #   - law_profiling: Profiling in criminal investigations [III(6)(e)]
+  #
+  # MIGRATION, ASYLUM AND BORDER CONTROL (4):
+  #   - migration_polygraph: Polygraphs in migration context [III(7)(a)]
+  #   - migration_risk: Assessing security, irregular migration, or health risk [III(7)(b)]
+  #   - migration_applications: Examining asylum/visa/residence applications [III(7)(c)]
+  #   - migration_identification: Detecting/identifying persons in border control [III(7)(d)]
+  #
+  # ADMINISTRATION OF JUSTICE AND DEMOCRATIC PROCESSES (2):
+  #   - justice_assistance: Assisting judicial authorities [III(8)(a)]
+  #   - justice_elections: Influencing elections or voting behaviour [III(8)(b)]
+  #
+  ###########################################################
+
+  ###########################################################
   # MODULE 1 — EXCLUSIONS
   ###########################################################
 
@@ -281,21 +329,27 @@ rules_engine:
   ###########################################################
   # MODULE 5 — ANNEX III + SIGNIFICANT IMPACT
   ###########################################################
+  # Note: Annex III expanded from 8 high-level categories to 29 specific use cases
+  # Categories: Biometrics (3), Critical Infrastructure (1), Education (4), 
+  # Employment (2), Essential Services (4), Law Enforcement (5), 
+  # Migration (4), Justice & Democracy (2)
 
   A3_001:
     rule_id: A3_001
     namespace: annex_III
     inputs: [annexIII_usecases]
-    condition: "annexIII_usecases empty"
+    condition: "annexIII_usecases empty OR annexIII_usecases == ['none']"
     action:
       classification: "In-scope_non-high-risk"
     next: SCREEN_8
+    notes: "No Annex III use cases selected; 29 specific use cases available"
 
   A3_002:
     rule_id: A3_002
     namespace: annex_III
-    condition: "annexIII_usecases not empty"
+    condition: "annexIII_usecases not empty AND annexIII_usecases != ['none']"
     next: SCREEN_6b
+    notes: "At least one of 29 Annex III specific use cases selected"
 
   # SIGNIFICANT IMPACT CHECK
   A3_IMPACT_001:
@@ -359,22 +413,57 @@ rules_engine:
 
 
   ###########################################################
-  # MODULE 7 — PROHIBITED PRACTICES
+  # MODULE 7 — PROHIBITED PRACTICES (WITH ARTICLE 5 EXCEPTIONS)
   ###########################################################
 
   PROHIB_001:
     rule_id: PROHIB_001
     namespace: prohibited
-    inputs: [prohibited_actions]
+    inputs: [prohibited_actions, prohibited_exceptions]
     condition: "prohibited_actions not empty"
-    action:
-      classification: "Prohibited"
-    next: SCREEN_FINAL
+    action: "evaluate_exceptions"
+    notes: "Article 5 prohibited practices with exceptions evaluation"
+    next: PROHIB_EXCEPTION_EVAL
+
+  PROHIB_EXCEPTION_EVAL:
+    rule_id: PROHIB_EXCEPTION_EVAL
+    namespace: prohibited
+    inputs: [prohibited_actions, prohibited_exceptions]
+    logic: |
+      # Check if any selected practice remains prohibited after exception evaluation
+      # Practices with exceptions: criminal_risk, emotion_workplace_education, biometric_categorisation, real_time_rbi
+      # Exception applies when prohibited_exceptions[practice_id] == true
+      
+      truly_prohibited = []
+      
+      for practice in prohibited_actions:
+        if practice == 'none':
+          continue
+        
+        # Check if practice has exception and if exception applies
+        if practice in ['criminal_risk', 'emotion_workplace_education', 'biometric_categorisation', 'real_time_rbi']:
+          if prohibited_exceptions.get(practice) != true:
+            truly_prohibited.append(practice)
+        else:
+          # No exception available for this practice
+          truly_prohibited.append(practice)
+      
+      if truly_prohibited is not empty:
+        classification = "Prohibited"
+        next = SCREEN_FINAL
+      else:
+        next = SCREEN_10
+    notes: |
+      Article 5 Exception Logic:
+      - criminal_risk (Art 5(1)(d)): Exception if system supports human assessment with objective facts
+      - emotion_workplace_education (Art 5(1)(f)): Exception if for medical or safety reasons
+      - biometric_categorisation (Art 5(1)(g)): Exception if lawful law enforcement dataset labeling
+      - real_time_rbi (Art 5(1)(h)): Exception if victim search, threat prevention, or serious crime
 
   PROHIB_002:
     rule_id: PROHIB_002
     namespace: prohibited
-    condition: "prohibited_actions empty"
+    condition: "prohibited_actions empty OR prohibited_actions == ['none']"
     next: SCREEN_10
 
 
@@ -397,10 +486,33 @@ rules_engine:
   FRIA_001:
     rule_id: FRIA_001
     namespace: fria
-    inputs: [roles, classification]
-    condition: "roles contains 'Public_Authority' AND classification contains_any ['High-risk_Annex_I_A','High-risk_Annex_I_B','High-risk_Annex_III']"
+    inputs: [roles, classification, is_public_body, is_public_service_provider, deployment_sectors, annex_iii_usecases, annex_iii_point]
+    condition: |
+      classification contains_any ['High-risk_Annex_I_A','High-risk_Annex_I_B','High-risk_Annex_III']
+      AND annex_iii_point != 2
+      AND (
+        Public_Authority OR 
+        Public_Service_Provider OR 
+        deployment_sectors intersects ['biometrics','education','employment','essential_services','law_enforcement','migration_asylum_border','justice'] OR
+        annex_iii_usecases intersects ['services_creditworthiness','services_insurance']
+      )
     action: "add_obligation('FRIA_required')"
     next: SCREEN_11
+    notes: |
+      Article 27: Fundamental Rights Impact Assessment requirements:
+      1. Public bodies/authorities deploying high-risk systems in any Annex III area (except Point 2)
+      2. Private entities providing public services deploying high-risk in any Annex III area (except Point 2)
+      3. Deployment sectors covered (Annex III Points 1,3-8):
+         - biometrics (Point 1)
+         - education (Point 3)
+         - employment (Point 4)
+         - essential_services (Point 5)
+         - law_enforcement (Point 6)
+         - migration_asylum_border (Point 7)
+         - justice (Point 8)
+      4. ALL deployers (public and private) of Annex III Point 5(b) creditworthiness systems
+      5. ALL deployers (public and private) of Annex III Point 5(c) life/health insurance systems
+      EXEMPTION: Annex III Point 2 (Critical Infrastructure) is exempt from FRIA per Article 27(1)
 
 
 

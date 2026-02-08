@@ -8,7 +8,7 @@ export default function Screen8_GPAI() {
   const { answers, saveAnswer, setClassificationWithPrecedence, getPreviousScreen, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen6");
+    pushHistory("/screen7");
   }, [pushHistory]);
 
   const isGPAI = answers.isGPAI || null;
@@ -72,8 +72,8 @@ export default function Screen8_GPAI() {
 
         {isGPAI === "yes" && (
           <div className="info-box alert-info">
-            <strong>ℹ️ Next Step:</strong>
-            <p>We will now assess whether your GPAI model presents systemic risks.</p>
+            <strong>ℹ️ GPAI Identified:</strong>
+            You confirmed this is a general-purpose AI model. Next, we will assess whether your model presents systemic risks. <span className="source-tag" title="Article 3(44) and Chapter V">Source</span>
           </div>
         )}
 

@@ -8,7 +8,7 @@ export default function Screen12() {
   const { classification, roles, resolvePrecedenceOrder, navigateBack, markStepsAsCompleted, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen11");
+    pushHistory("/screen12");
   }, [pushHistory]);
 
   // Use the global precedence resolver from context

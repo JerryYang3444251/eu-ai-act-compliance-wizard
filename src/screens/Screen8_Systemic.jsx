@@ -5,10 +5,10 @@ import { CLASSIFICATIONS } from "../data/checklist";
 
 export default function Screen8b_Systemic() {
   const navigate = useNavigate();
-  const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+  const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory, setCommissionDesignation } = useWizard();
 
   useEffect(() => {
-    pushHistory("/screen7");
+    pushHistory("/screen8");
   }, [pushHistory]);
   const hasSystemicRisk = answers.hasSystemicRisk || null;
 
@@ -21,6 +21,11 @@ export default function Screen8b_Systemic() {
     if (!hasSystemicRisk) {
       alert("Please indicate systemic risk status.");
       return;
+    }
+
+    // Set commission designation flag if applicable
+    if (hasSystemicRisk === "commission_determined") {
+      setCommissionDesignation(true);
     }
 
     // Radio selection determines systemic risk classification
@@ -42,10 +47,10 @@ export default function Screen8b_Systemic() {
 
       <div className="screen-content">
         <div className="helper-box alert-info">
-          <strong>⚠️ Systemic Risk Threshold (Article 51):</strong>
+          <strong>Systemic Risk Threshold:</strong>
           <p>
             A GPAI model has systemic risk if its cumulative computational capacity during training equals or exceeds
-            10<sup>25</sup> floating-point operations (FLOPs), or is designated by the Commission based on equivalent high-impact capabilities
+            10<sup>25</sup> floating-point operations (FLOPs), or is designated by the Commission based on equivalent high-impact capabilities. <span className="source-tag" title="Article 51">Source</span>
           </p>
         </div>
 
@@ -90,15 +95,15 @@ export default function Screen8b_Systemic() {
 
         {hasSystemicRisk === "yes" || hasSystemicRisk === "commission_determined" ? (
           <div className="info-box alert-warning" style={{ marginTop: "24px" }}>
-            <strong>⚠️ Systemic Risk Classification:</strong>
-            <p>Your GPAI model will be classified as General-purpose AI Model with Systemic Risk (Article 51). Enhanced obligations apply (Article 55).</p>
+            <strong>Systemic Risk Classification:</strong>
+            You indicated systemic risk criteria are met (10²⁵ FLOPs threshold or Commission designation). Your model is classified as General-Purpose AI Model with Systemic Risk. Enhanced obligations apply. <span className="source-tag" title="Articles 51 and 55">Source</span>
           </div>
         ) : (
           hasSystemicRisk === "no" && (
-            <div className="info-box alert-success" style={{ marginTop: "24px" }}>
-              <strong>✓ Standard GPAI Classification:</strong>
-              <p>Your model is classified as standard GPAI without systemic risk. Standard obligations (J1-J16) apply.</p>
-            </div>
+              <div className="info-box alert-success" style={{ marginTop: "24px" }}>
+                <strong>Standard GPAI Classification:</strong>
+                You indicated systemic risk criteria are not met. Your model is classified as standard GPAI without systemic risk. Standard GPAI obligations apply. <span className="source-tag" title="Articles 52-53">Source</span>
+              </div>
           )
         )}
 

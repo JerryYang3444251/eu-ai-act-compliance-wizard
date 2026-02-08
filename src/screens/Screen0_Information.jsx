@@ -44,12 +44,11 @@ export default function Screen0_Information() {
         </div>
 
         <div className="info-box">
-          <h3>Support & Questions</h3>
+          <h3>Note</h3>
           <p>
-            For questions about this wizard or to provide feedback, please contact [Your Contact Information].
-          </p>
-          <p>
-            For legal questions about EU AI Act compliance, consult with your legal and compliance teams.
+          <ul>
+            <li> This tool concerns Articles over Recitals. Please refer to the Act for Recital guidances"</li>
+          </ul>
           </p>
         </div>
 
