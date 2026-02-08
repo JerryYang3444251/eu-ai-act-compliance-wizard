@@ -102,23 +102,17 @@ export default function Screen11b_FRIA() {
   const isAnnexIII_5b_or_5c = isAnnexIII_5b || isAnnexIII_5c;
 
   // FRIA_001: Article 27 requirements
-  // Required for: Public bodies/authorities, public service providers, sensitive sectors, OR Point 5(b)(c)
+  // Special case: Point 5(b)/5(c) ALWAYS requires FRIA (regardless of high-risk classification)
+  // Normal case: High-risk systems require FRIA if public authority/service provider OR sensitive sectors
   // Exempt: Annex III Point 2 (Critical Infrastructure)
   const friaRequired = 
-    isHighRisk && 
     annexIIIPoint !== 2 && // Point 2 = Critical Infrastructure = EXEMPT per Article 27(1)
-    (isPublicAuthority || isPublicServiceProvider || hasSensitiveDeploymentSector || isAnnexIII_5b_or_5c);
-
-  // Debug logging
-  console.log("Screen11b_FRIA - Classification check:", {
-    classification,
-    isHighRisk,
-    isPublicBody,
-    friaRequired,
-    HIGH_RISK_IB: CLASSIFICATIONS.HIGH_RISK_IB,
-    HIGH_RISK_IA: CLASSIFICATIONS.HIGH_RISK_IA,
-    HIGH_RISK_III: CLASSIFICATIONS.HIGH_RISK_III,
-  });
+    (
+      // Special provision: Point 5(b)/5(c) systems always require FRIA
+      isAnnexIII_5b_or_5c ||
+      // Standard provision: High-risk systems in sensitive contexts require FRIA
+      (isHighRisk && (isPublicAuthority || isPublicServiceProvider || hasSensitiveDeploymentSector))
+    );
 
   // Handle deployment sector toggle
   const handleSectorToggle = (sectorId) => {
@@ -289,7 +283,7 @@ export default function Screen11b_FRIA() {
                 checked={deploymentSectors.includes("employment")}
                 onChange={() => handleSectorToggle("employment")}
               />
-              <span>Employment, Workers Management and Self-Employment<span className="source-tag" title="Annex III(4) - Employment, workers management and access to self-employment">Source</span></span>
+              <span>Employment, Workers Management and access to Self-Employment<span className="source-tag" title="Annex III(4) - Employment, workers management and access to self-employment">Source</span></span>
             </label>
             <label className="checkbox-option">
               <input

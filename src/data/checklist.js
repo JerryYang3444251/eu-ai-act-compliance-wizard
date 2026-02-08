@@ -1110,6 +1110,61 @@ export const PRODUCT_MANUFACTURER_OBLIGATIONS = {
   }
 };
 
+// EXCLUSION OBLIGATIONS (M1-M5) - Article 2
+// Documentation requirements for systems excluded from AI Act scope
+export const EXCLUSION_OBLIGATIONS = {
+  M1: {
+    category: "M", number: "M1", title: "Document Exclusion Basis",
+    source: { article: "Article 2" },
+    items: [{ text: "Document the specific exclusion ground(s) under Article 2 that applies to your AI system", source: "Article 2" }]
+  },
+  M2: {
+    category: "M", number: "M2", title: "Maintain Exclusion Justification",
+    source: { article: "Article 2" },
+    items: [{ text: "Maintain documentation justifying why the system falls under the exclusion", source: "Article 2" }]
+  },
+  M3: {
+    category: "M", number: "M3", title: "Monitor Exclusion Applicability",
+    source: { article: "Article 2" },
+    items: [{ text: "Regularly review whether the exclusion grounds continue to apply as the system evolves", source: "Article 2" }]
+  },
+  M4: {
+    category: "M", number: "M4", title: "Update Classification if Needed",
+    source: { article: "Article 2" },
+    items: [{ text: "If exclusion grounds no longer apply, re-classify system and apply appropriate AI Act requirements", source: "Article 2" }]
+  },
+  M5: {
+    category: "M", number: "M5", title: "Exclusion Documentation Record",
+    source: { article: "Article 2" },
+    items: [{ text: "Keep records of exclusion determination and any reviews performed", source: "Article 2" }]
+  }
+};
+
+// PROHIBITED PRODUCT MANUFACTURER OBLIGATIONS (P1-P4) - Article 5 & 24
+// Special obligations when Product Manufacturer integrates prohibited AI as safety component
+export const PROHIBITED_PRODUCT_MANUFACTURER_OBLIGATIONS = {
+  P1: {
+    category: "P", number: "P1", title: "Do Not Integrate Prohibited AI",
+    source: { article: "Article 5, Article 24" },
+    items: [{ text: "Do not place on market or put into service products containing prohibited AI systems", source: "Article 5(1)" }]
+  },
+  P2: {
+    category: "P", number: "P2", title: "Verify AI Component Compliance",
+    source: { article: "Article 24" },
+    items: [{ text: "Verify that AI components do not engage in prohibited practices before integration", source: "Article 5, Article 24" }]
+  },
+  P3: {
+    category: "P", number: "P3", title: "Withdraw Integrated Products",
+    source: { article: "Article 5, Article 20" },
+    items: [{ text: "If prohibited AI discovered post-integration, immediately withdraw product from market", source: "Article 20" }]
+  },
+  P4: {
+    category: "P", number: "P4", title: "Notify Sectoral Authorities",
+    source: { article: "Article 5, Article 73" },
+    items: [{ text: "Notify both AI Act authorities and sectoral product safety authorities of prohibited integration", source: "Article 73" }]
+  }
+};
+
 // All obligations merged
 export const ALL_OBLIGATIONS = {
   ...PROVIDER_OBLIGATIONS,
@@ -1123,24 +1178,8 @@ export const ALL_OBLIGATIONS = {
   ...GPAI_OBLIGATIONS,
   ...GPAI_SYSTEMIC_OBLIGATIONS,
   ...PROHIBITED_OBLIGATIONS,
+  ...EXCLUSION_OBLIGATIONS,
+  ...PROHIBITED_PRODUCT_MANUFACTURER_OBLIGATIONS,
   ...PRODUCT_MANUFACTURER_OBLIGATIONS,
   ...CONFORMITY_ASSESSMENT_OBLIGATIONS,
-};
-
-// Legacy Checklist export for backwards compatibility
-export const Checklist = {
-  A: { title: "Provider Obligations", items: [] },
-  C: { title: "Handover Obligations", items: [] },
-  D: { title: "Importer Obligations", items: [] },
-  E: { title: "Distributor Obligations", items: [] },
-  F: { title: "Deployer Obligations", items: [] },
-  G: { title: "FRIA Obligations", items: [] },
-  H: { title: "Transparency Obligations", items: [] },
-  I: { title: "Non-Significant Risk Obligations", items: [] },
-  J: { title: "GPAI Obligations", items: [] },
-  K: { title: "GPAI Systemic Obligations", items: [] },
-  L: { title: "Prohibited System Obligations", items: [] },
-  M: { title: "Exclusion Rules", items: [] },
-  N: { title: "Product Manufacturer Obligations", items: [] },
-  O: { title: "Conformity Assessment Obligations", items: [] }
 };

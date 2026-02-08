@@ -17,16 +17,16 @@ export function WizardProvider({ children }) {
   const [shouldReevaluateRules, setShouldReevaluateRules] = useState(false);
   const [isNavigatingBack, setIsNavigatingBack] = useState(false);
 
-  // ========== NEW: FRIA-SPECIFIC STATE (FRIA_001 rule requirements) ==========
+  // FRIA-specific state (FRIA_001 rule requirements)
   const [isPublicServiceProvider, setIsPublicServiceProvider] = useState(null);
   const [deploymentSector, setDeploymentSector] = useState([]);
   const [annexIIIPoint, setAnnexIIIPoint] = useState(null);
 
-  // ========== NEW: TRANSPARENCY-SPECIFIC STATE (TRANS_001-005 requirements) ==========
+  // Transparency-specific state (TRANS_001-005 requirements)
   const [systemFunctionality, setSystemFunctionality] = useState([]);
   const [contentCharacteristics, setContentCharacteristics] = useState([]);
 
-  // ========== NEW: GPAI-SPECIFIC STATE (GPAI_003-005 requirements) ==========
+  // GPAI-specific state (GPAI_003-005 requirements)
   const [commissionDesignation, setCommissionDesignation] = useState(false);
 
   // Track modifications
@@ -53,55 +53,54 @@ export function WizardProvider({ children }) {
   const hasProhibited = answers.prohibitedPractices && 
     answers.prohibitedPractices.some(p => p !== "none");
 
-  // ========== NEW: HIGH-RISK FLAG (Optimization from redundancy analysis) ==========
+  // High-risk flag for optimization
   const isHighRisk = classification && [
     CLASSIFICATIONS.HIGH_RISK_IA,
     CLASSIFICATIONS.HIGH_RISK_IB,
     CLASSIFICATIONS.HIGH_RISK_III,
   ].includes(classification);
 
-  // ========== MODULE 2: RAW ROLE IDENTIFICATION ==========
+  // MODULE 2: RAW ROLE IDENTIFICATION
   // Phase 1: org_actions → roles_raw (intermediate tags)
-  // Rules ROLE_001-008 per Rule Engine v03
   const identifyRawRoles = (org_actions) => {
     const raw_role_tags = new Set();
 
-    // RULE ROLE_001: Development/Modification tag
+    // ROLE_001: Development/Modification tag
     if (org_actions.some(a => ['develop','modify','change_purpose','fine_tune','retrain'].includes(a))) {
       raw_role_tags.add('Development_Modification');
     }
 
-    // RULE ROLE_002: Branding tag
+    // ROLE_002: Branding tag
     if (org_actions.includes('brand')) {
       raw_role_tags.add('Branding');
     }
 
-    // RULE ROLE_003: Importer tag
+    // ROLE_003: Importer tag
     if (org_actions.includes('import')) {
       raw_role_tags.add('Importer');
     }
 
-    // RULE ROLE_004: Distributor tag
+    // ROLE_004: Distributor tag
     if (org_actions.includes('distribute')) {
       raw_role_tags.add('Distributor');
     }
 
-    // RULE ROLE_005: Market_Placer tag
+    // ROLE_005: Market_Placer tag
     if (org_actions.includes('place_on_market')) {
       raw_role_tags.add('Market_Placer');
     }
 
-    // RULE ROLE_006: Deployer tag
+    // ROLE_006: Deployer tag
     if (org_actions.includes('deploy')) {
       raw_role_tags.add('Deployer');
     }
 
-    // RULE ROLE_007: Product_Manufacturer tag
+    // ROLE_007: Product_Manufacturer tag
     if (org_actions.includes('product_manufacturer')) {
       raw_role_tags.add('Product_Manufacturer');
     }
 
-    // RULE ROLE_008: Validation
+    // ROLE_008: Validation
     if (raw_role_tags.size === 0) {
       console.warn("ROLE_008: No raw roles identified from org_actions", { org_actions });
     }
@@ -109,9 +108,8 @@ export function WizardProvider({ children }) {
     return Array.from(raw_role_tags);
   };
 
-  // ========== MODULE 2B: LEGAL ROLE RECLASSIFICATION ==========
+  // MODULE 2B: Legal role reclassification
   // Phase 2: roles_raw (tags) → roles (legal)
-  // Rules ROLE_RECLASS_001-014 per Rule Engine v03
   const reclassifyRoles = (raw_actions) => {
     // First, get raw role tags from org_actions (MODULE 2)
     const roles_raw_tags = identifyRawRoles(raw_actions);
@@ -119,29 +117,25 @@ export function WizardProvider({ children }) {
     const legal_roles = new Set();
     let provider_assigned = false;
 
-    // RULE RECLASS_FLAG_INIT: Initialize tracking
-    // (provider_assigned = false is initialized above)
-
-    // ========== RULE RECLASS_001: Development_Modification → PROVIDER ==========
+    // RECLASS_001: Development_Modification → PROVIDER
     if (roles_raw_tags.includes('Development_Modification')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // ========== RULE RECLASS_002: Branding → PROVIDER ==========
+    // RECLASS_002: Branding → PROVIDER
     if (roles_raw_tags.includes('Branding')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // ========== RULE RECLASS_003: Market_Placer → PROVIDER ==========
+    // RECLASS_003: Market_Placer → PROVIDER
     if (roles_raw_tags.includes('Market_Placer')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // ========== RULE RECLASS_004: Product_Manufacturer + safety component → PROVIDER ==========
-    // Uses ai_is_safety_component (answers.safety_function === "yes")
+    // RECLASS_004: Product_Manufacturer + safety component → PROVIDER
     if (roles_raw_tags.includes('Product_Manufacturer')) {
       if (answers.safety_function === "yes") {
         legal_roles.add("Provider");
@@ -149,70 +143,67 @@ export function WizardProvider({ children }) {
       }
     }
 
-    // ========== RULE RECLASS_005: Importer + placing_under_own_name → PROVIDER ==========
-    // Note: placing_under_own_name is implied by presence of 'Branding' tag
+    // RECLASS_005: Importer + placing_under_own_name → PROVIDER
     if (roles_raw_tags.includes('Importer') && roles_raw_tags.includes('Branding')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // ========== RULE RECLASS_006: Distributor + placing_under_own_name → PROVIDER ==========
+    // RECLASS_006: Distributor + placing_under_own_name → PROVIDER
     if (roles_raw_tags.includes('Distributor') && roles_raw_tags.includes('Branding')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // ========== RULE RECLASS_007: Deployer + modifications → PROVIDER ==========
-    // Check if Deployer tag AND Development_Modification tag both present
+    // RECLASS_007: Deployer + modifications → PROVIDER
     if (roles_raw_tags.includes('Deployer') && roles_raw_tags.includes('Development_Modification')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // ========== RULE RECLASS_008: Deployer without modifications → DEPLOYER ==========
+    // RECLASS_008: Deployer without modifications → DEPLOYER
     if (roles_raw_tags.includes('Deployer') && !provider_assigned) {
       legal_roles.add("Deployer");
     }
 
-    // ========== RULE RECLASS_009: Importer without provider status → IMPORTER ==========
+    // RECLASS_009: Importer without provider status → IMPORTER
     if (roles_raw_tags.includes('Importer') && !provider_assigned) {
       legal_roles.add("Importer");
     }
 
-    // ========== RULE RECLASS_010: Distributor without provider status → DISTRIBUTOR ==========
+    // RECLASS_010: Distributor without provider status → DISTRIBUTOR
     if (roles_raw_tags.includes('Distributor') && !provider_assigned) {
       legal_roles.add("Distributor");
     }
 
-    // ========== RULE RECLASS_011: Product_Manufacturer without safety component → PRODUCT_MANUFACTURER ==========
+    // RECLASS_011: Product_Manufacturer without safety component → PRODUCT_MANUFACTURER
     if (roles_raw_tags.includes('Product_Manufacturer') && !provider_assigned) {
       if (answers.safety_function !== "yes") {
         legal_roles.add("Product_Manufacturer");
       }
     }
 
-    // ========== RULE RECLASS_012: Deduplicate roles ==========
+    // RECLASS_012: Deduplicate roles
     const deduplicated = Array.from(legal_roles);
 
-    // ========== RULE RECLASS_013: Error if empty ==========
+    // RECLASS_013: Error if empty
     if (deduplicated.length === 0) {
       console.warn("ROLE_RECLASS_013: No legal roles determined from roles_raw", { roles_raw_tags, raw_actions });
       return [];
     }
 
-    // ========== RULE RECLASS_014: Return roles for SCREEN_3 ==========
-    console.log("ROLE_RECLASS_014: Computed legal roles:", deduplicated, "from raw tags:", roles_raw_tags);
+    // Return computed legal roles for next screen
     return deduplicated;
   };
 
-  // ========== MODULE 11: OBLIGATION ENGINE ==========
+  // MODULE 11: OBLIGATION ENGINE
   // Computes applicable obligations per Rules OBL_001-017 + OBL_PRECEDENCE_001
-  // UPDATED per Rule Engine v04: OBL_PRECEDENCE_001 - Prohibited takes absolute precedence
+  // OBL_PRECEDENCE_001: Prohibited takes absolute precedence
   const computeObligations = () => {
     const obs = [];
 
-    // ========== OBL_PRECEDENCE_001: PROHIBITED CLASSIFICATION TAKES ABSOLUTE PRECEDENCE ==========
-    // Article 5 (Prohibited) supersedes ALL other obligations
+    // OBL_PRECEDENCE_001: Prohibited classification takes absolute precedence
+    // Article 5 (Prohibited) supersedes all other obligations
     // When prohibited, ONLY L-series (and P for Product_Manufacturer) apply
     if (classification === CLASSIFICATIONS.PROHIBITED) {
       // OBL_011: Provider prohibited obligations
@@ -245,7 +236,7 @@ export function WizardProvider({ children }) {
       return obs;
     }
 
-    // ========== NORMAL OBLIGATIONS (NON-PROHIBITED SYSTEMS ONLY) ==========
+    // Normal obligations (non-prohibited systems only)
 
     // OBL_001: Provider obligations (A1-A16)
     if (roles.includes("Provider")) {
@@ -272,18 +263,23 @@ export function WizardProvider({ children }) {
       obs.push("F");
     }
 
-    // OBL_009: FRIA obligations (G1-G15) - UPDATED LOGIC per FRIA_001
+    // OBL_009: FRIA obligations (G1-G15) - Article 27
     const isPublicAuthority = roles.includes("Public_Authority");
     const hasSensitiveDeploymentSector = deploymentSector?.some(sector => 
-      ['law_enforcement', 'migration', 'asylum', 'border_control', 'justice'].includes(sector)
+      ['biometrics', 'education', 'employment', 'essential_services', 'law_enforcement', 'migration', 'asylum', 'border_control', 'migration_asylum_border', 'justice'].includes(sector)
     );
     
-    // FRIA required if: (Public Authority OR Public Service Provider OR Sensitive Sector) 
-    // AND High-Risk AND NOT Annex III point 2 (employment)
+    // Check for specific Annex III Point 5(b) and 5(c) use cases (creditworthiness and insurance)
+    const hasAnnexIII_5b_5c = answers.annexIIIUsecases?.some(usecase => 
+      ['services_creditworthiness', 'services_insurance'].includes(usecase)
+    );
+    
+    // FRIA required if: (Public Authority OR Public Service Provider OR Sensitive Sector OR Point 5b/5c)
+    // AND High-Risk AND NOT Annex III point 2 (critical infrastructure)
     const requiresFRIA = 
       isHighRisk &&
       annexIIIPoint !== 2 &&
-      (isPublicAuthority || isPublicServiceProvider || hasSensitiveDeploymentSector);
+      (isPublicAuthority || isPublicServiceProvider || hasSensitiveDeploymentSector || hasAnnexIII_5b_5c);
     
     if (requiresFRIA) {
       obs.push("G");
@@ -705,7 +701,7 @@ export function WizardProvider({ children }) {
     shouldReevaluateRules,
     setShouldReevaluateRules,
     
-    // ========== NEW: FRIA CONTEXT (Article 27) ==========
+    // FRIA context (Article 27)
     isPublicServiceProvider,
     setIsPublicServiceProvider,
     deploymentSector,
@@ -713,17 +709,17 @@ export function WizardProvider({ children }) {
     annexIIIPoint,
     setAnnexIIIPoint,
 
-    // ========== NEW: TRANSPARENCY CONTEXT (Article 50) ==========
+    // Transparency context (Article 50)
     systemFunctionality,
     setSystemFunctionality,
     contentCharacteristics,
     setContentCharacteristics,
 
-    // ========== NEW: GPAI CONTEXT (Articles 51, 55) ==========
+    // GPAI context (Articles 51, 55)
     commissionDesignation,
     setCommissionDesignation,
 
-    // ========== COMPUTED FLAGS ==========
+    // Computed flags
     hasModifications,
     hasHighRiskB,
     hasAnnexIA,

@@ -398,17 +398,27 @@ rules_engine:
   GPAI_003:
     rule_id: GPAI_003
     namespace: gpai
-    inputs: [flops]
-    condition: "flops >= 1e25"
+    inputs: [has_systemic_risk]
+    condition: "has_systemic_risk == 'yes' OR has_systemic_risk == 'commission_determined'"
     action: "add_classification('GPAI_systemic_risk')"
     next: SCREEN_9
+    notes: |
+      Systemic risk determined by:
+      1. FLOPs >= 10^25 (1e25 floating-point operations during training), OR
+      2. Commission designation based on equivalent high-impact capabilities
+      
+      Implementation: Screen8_Systemic.jsx offers three options:
+      - "yes" (FLOPS threshold met)
+      - "commission_determined" (Commission designated)
+      - "no" (neither applies)
 
   GPAI_004:
     rule_id: GPAI_004
     namespace: gpai
-    condition: "flops < 1e25"
+    condition: "has_systemic_risk == 'no'"
     action: "add_classification('GPAI')"
     next: SCREEN_9
+    notes: "Standard GPAI without systemic risk - FLOPS < 10^25 and no Commission designation"
 
 
 
@@ -442,23 +452,32 @@ rules_engine:
         
         # Check if practice has exception and if exception applies
         if practice in ['criminal_risk', 'emotion_workplace_education', 'biometric_categorisation', 'real_time_rbi']:
-          if prohibited_exceptions.get(practice) != true:
+          # Practice has potential exception - only prohibited if exception evaluated as false
+          if prohibited_exceptions.get(practice) == false:
             truly_prohibited.append(practice)
+          # If exception == true, practice is NOT prohibited
+          # If exception not yet evaluated, require evaluation before proceeding
         else:
-          # No exception available for this practice
+          # No exception available for this practice - always prohibited
           truly_prohibited.append(practice)
       
       if truly_prohibited is not empty:
         classification = "Prohibited"
-        next = SCREEN_FINAL
+        next = SCREEN_14  # Skip to checklist (terminal classification)
       else:
+        # All practices have valid exceptions or none selected
         next = SCREEN_10
     notes: |
-      Article 5 Exception Logic:
+      Article 5 Exception Logic (IMPLEMENTATION):
       - criminal_risk (Art 5(1)(d)): Exception if system supports human assessment with objective facts
       - emotion_workplace_education (Art 5(1)(f)): Exception if for medical or safety reasons
       - biometric_categorisation (Art 5(1)(g)): Exception if lawful law enforcement dataset labeling
       - real_time_rbi (Art 5(1)(h)): Exception if victim search, threat prevention, or serious crime
+      
+      Practices WITHOUT exceptions are ALWAYS prohibited:
+      - subliminal, vulnerability, social_scoring, face_scraping
+      
+      Logic: hasProhibited AND (has_non_exceptionable_practices OR has_exceptionable_practice_with_false_exception)
 
   PROHIB_002:
     rule_id: PROHIB_002
@@ -717,6 +736,24 @@ rules_engine:
     condition: "roles contains 'Product_Manufacturer'"
     action: "add_obligations('Product_Manufacturer')"
     notes: "Product manufacturer obligations (N1–N4) per Article 24 — only if AI is safety component"
+
+  OBL_016:
+    rule_id: OBL_016
+    namespace: obligations
+    inputs: [classification, roles]
+    condition: "classification == 'Prohibited' AND roles contains 'Product_Manufacturer'"
+    action: "add_obligations('Prohibited_Product_Manufacturer')"
+    notes: "Prohibited product manufacturer obligations (P1–P4) per Articles 5 & 24 — special obligations when prohibited AI integrated as safety component"
+
+  OBL_017:
+    rule_id: OBL_017
+    namespace: obligations
+    inputs: [roles, classification]
+    condition: >
+      roles contains 'Provider' AND
+      classification contains_any ['High-risk_Annex_I_A','High-risk_Annex_I_B','High-risk_Annex_III']
+    action: "add_obligations('Handover')"
+    notes: "Handover obligations (C1–C15) per Articles 13, 16, 23 — Provider must provide documentation to downstream actors for high-risk systems"
 
 
   ###########################################################
@@ -1171,6 +1208,48 @@ obligations checklist:
     N2: { title: "Apply Provider Obligations", source: {article: "Article 24"}, items: ["Apply all provider obligations"] }
     N3: { title: "Apply Sectoral Product Law", source: {article: "Article 24"}, items: ["Apply applicable product legislation"] }
     N4: { title: "Register High-Risk AI", source: {article: "Article 49"}, items: ["Register high-risk AI"] }
+
+  ###########################################################
+  # PROHIBITED PRODUCT MANUFACTURER OBLIGATIONS (P1–P4)
+  ###########################################################
+
+  ProhibitedProductManufacturer:
+
+    P1:
+      title: "Cease Prohibited AI Integration"
+      source:
+        article: "Article 5 + Article 24"
+      items:
+        - "Immediately cease integration of prohibited AI as safety component"
+        - "Halt all product manufacturing containing prohibited AI system"
+        - "Prevent placement on market of products containing prohibited AI"
+
+    P2:
+      title: "Notify Authorities and Supply Chain"
+      source:
+        article: "Article 24"
+      items:
+        - "Notify market surveillance authorities of prohibited AI integration"
+        - "Inform all supply chain actors (distributors, importers, retailers)"
+        - "Document all products affected by prohibited AI component"
+
+    P3:
+      title: "Product Recall and Withdrawal"
+      source:
+        article: "Article 24"
+      items:
+        - "Recall all products containing prohibited AI from market"
+        - "Withdraw products from distribution channels"
+        - "Provide remediation or refunds to affected customers"
+
+    P4:
+      title: "Corrective Action and Alternative Compliance"
+      source:
+        article: "Article 24"
+      items:
+        - "Replace prohibited AI with compliant AI system or alternative solution"
+        - "Re-assess product safety without prohibited AI component"
+        - "Document corrective measures and alternative compliance path"
 
   ###########################################################
   # CONFORMITY ASSESSMENT OBLIGATIONS (O1–O50)

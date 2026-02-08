@@ -93,9 +93,20 @@ export default function Screen11_Transparency() {
       return;
     }
 
-    // Check if we need to collect FRIA information
-    // Always route to FRIA screen to collect public_body status and deployment_sector info
-    // The FRIA screen will determine if FRIA is actually required based on rule engine logic
+    // =====================================================================
+    // TRANS_001 ROUTING LOGIC (Rule Engine Module 8)
+    // =====================================================================
+    // The rule engine specifies conditional routing based on Public_Authority status:
+    // - IF Public_Authority AND High-Risk → route to FRIA screen
+    // - ELSE → skip FRIA logic
+    //
+    // IMPLEMENTATION: We always route to Screen11 (FRIA screen) because:
+    // 1. Public authority status is determined IN Screen11 (is_public_body question)
+    // 2. Screen11 evaluates FRIA_001 rule and conditionally requires FRIA
+    // 3. If FRIA not required, Screen11 proceeds directly to classification
+    //
+    // This approach satisfies TRANS_001's intent while collecting necessary data.
+    // =====================================================================
     navigate("/screen11");
   };
 

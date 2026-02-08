@@ -40,8 +40,7 @@ export default function Screen14() {
     [CONFORMITY_ASSESSMENT_ROUTES.INTERNAL_CONTROL]: "Internal Control",
     [CONFORMITY_ASSESSMENT_ROUTES.NOTIFIED_BODY]: "Notified Body",
     [CONFORMITY_ASSESSMENT_ROUTES.COMMON_SPECIFICATIONS]: "Common Specifications",
-    [CONFORMITY_ASSESSMENT_ROUTES.SECTORAL_LAW]: "Sectoral Law",
-    [CONFORMITY_ASSESSMENT_ROUTES.SECTORAL_LEGISLATION]: "Sectoral Law", // Map both to same
+    [CONFORMITY_ASSESSMENT_ROUTES.SECTORAL_LEGISLATION]: "Sectoral Legislation",
   };
   const selectedRouteLabel = conformityRoute ? routeLabelMap[conformityRoute] : null;
 
@@ -50,7 +49,6 @@ export default function Screen14() {
     [CONFORMITY_ASSESSMENT_ROUTES.INTERNAL_CONTROL]: "Internal Control (Harmonised Standards)",
     [CONFORMITY_ASSESSMENT_ROUTES.NOTIFIED_BODY]: "Notified Body (Third-Party Assessment)",
     [CONFORMITY_ASSESSMENT_ROUTES.COMMON_SPECIFICATIONS]: "Common Specifications",
-    [CONFORMITY_ASSESSMENT_ROUTES.SECTORAL_LAW]: "Sectoral Legislation",
     [CONFORMITY_ASSESSMENT_ROUTES.SECTORAL_LEGISLATION]: "Sectoral Legislation",
   };
 
@@ -267,6 +265,7 @@ export default function Screen14() {
     M: "Exclusion Documentation",
     N: "Product Manufacturer Obligations",
     O: "Conformity Assessment Obligations",
+    P: "Prohibited Product Manufacturer Obligations",
   };
 
   // Category source citations
@@ -285,6 +284,7 @@ export default function Screen14() {
     M: "Article 2",
     N: "Article 24",
     O: "Article 43",
+    P: "Articles 5, 24",
   };
 
   // Category descriptions
@@ -303,6 +303,7 @@ export default function Screen14() {
     M: "Documentation for systems excluded from the AI Act",
     N: "Obligations when AI is integrated as a safety component in products",
     O: `Conformity assessment obligations via: ${routeDisplayMap[conformityRoute] || "Not Required"}`,
+    P: "Special obligations for product manufacturers integrating prohibited AI systems",
   };
 
   const completedCount = Object.values(completedItems).filter(Boolean).length;

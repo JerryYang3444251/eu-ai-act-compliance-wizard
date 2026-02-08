@@ -42,10 +42,14 @@ export default function Screen7_AnnexIII() {
 
     if (!selectedItems.length) return;
 
+    // A3_001: No Annex III use cases → In-scope non-high-risk → skip to GPAI
+    // A3_002: Annex III use cases present → route to impact assessment (NO classification yet)
     if (hasNonNone) {
-      setClassificationWithPrecedence(CLASSIFICATIONS.HIGH_RISK_III);
+      // Do NOT set classification here - wait for impact assessment in Screen6
       navigate("/screen6");
     } else {
+      // No Annex III use cases selected
+      setClassificationWithPrecedence(CLASSIFICATIONS.IN_SCOPE_NON_HIGH_RISK);
       navigate("/screen7");
     }
   };

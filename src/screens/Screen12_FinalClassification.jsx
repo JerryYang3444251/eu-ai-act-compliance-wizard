@@ -14,13 +14,6 @@ export default function Screen12() {
   // Use the global precedence resolver from context
   const finalClassification = resolvePrecedenceOrder(classification);
 
-  // Log classification resolution for debugging
-  if (classification !== finalClassification) {
-    console.log(
-      `Classification resolved: ${classification} → ${finalClassification} (precedence applied)`
-    );
-  }
-
   // =====================================================================
   // RULE ENGINE COMPLIANCE FIX #1:
   // Excluded, Prohibited, and Out-of-Scope classifications are terminal.

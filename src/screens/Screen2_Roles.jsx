@@ -37,9 +37,7 @@ export default function Screen1() {
     saveAnswer("roles_raw", updated);
   };
 
-  // ----------------------------------------------------------------------
-  // UPDATED: Full legal definitions with all MODULE 2B reclassification rules
-  // ----------------------------------------------------------------------
+  // Legal role definitions with MODULE 2B reclassification rules
   const legalRoleDefinitions = {
     Provider: {
       title: "Provider",
@@ -97,9 +95,7 @@ export default function Screen1() {
   // Preview of MODULE 2B (dynamic live reclassification)
   const computedRoles = roles_raw.length > 0 ? reclassifyRoles(roles_raw || []) : [];
 
-  // ----------------------------------------------------------------------
-  // NEXT SCREEN HANDLER
-  // ----------------------------------------------------------------------
+  // Next screen handler
   const handleNext = () => {
     // Clear re-evaluation flag if set
     if (shouldReevaluateRules) {
@@ -122,9 +118,6 @@ export default function Screen1() {
     navigate("/screen3");
   };
 
-  // ----------------------------------------------------------------------
-  // UI
-  // ----------------------------------------------------------------------
   return (
     <div className="screen-container">
       <div className="screen-header">
@@ -154,21 +147,43 @@ export default function Screen1() {
         {computedRoles.length > 0 && (
           <div style={{ marginTop: "24px" }}>
             {(() => {
-              // Detect reclassifications
+              // Detect reclassifications - ALL MODULE 2B scenarios
               const hasProductManufacturer = roles_raw.includes("product_manufacturer");
               const hasImporter = roles_raw.includes("import");
               const hasDistributor = roles_raw.includes("distribute");
               const hasDeployer = roles_raw.includes("deploy");
               const hasBranding = roles_raw.includes("brand");
               const hasModification = roles_raw.some(a => ["develop", "modify", "fine_tune", "retrain", "change_purpose"].includes(a));
+              const hasPlaceOnMarket = roles_raw.includes("place_on_market");
               
               const isProviderNow = computedRoles.includes("Provider");
-              const wasReclassified = isProviderNow && (
-                (hasImporter && hasBranding) ||
-                (hasDistributor && hasBranding) ||
-                (hasProductManufacturer && hasBranding) ||
-                (hasDeployer && hasModification)
-              );
+              
+              // Check each reclassification scenario from WizardContext.jsx
+              let reclassificationReason = null;
+              let reclassificationArticle = null;
+              
+              if (isProviderNow) {
+                // Check for reclassifications where user didn't directly select "develop"
+                const hasDirectProvider = hasModification || hasBranding || hasPlaceOnMarket;
+                
+                // RECLASS_005: Importer + Branding → Provider
+                if (hasImporter && hasBranding && !hasDirectProvider) {
+                  reclassificationReason = "As an Importer placing the system under your own name, you have been reclassified to Provider.";
+                  reclassificationArticle = "Article 3(3), Article 25";
+                }
+                // RECLASS_006: Distributor + Branding → Provider
+                else if (hasDistributor && hasBranding && !hasImporter && !hasDirectProvider) {
+                  reclassificationReason = "As a Distributor placing the system under your own name, you have been reclassified to Provider.";
+                  reclassificationArticle = "Article 3(3), Article 26";
+                }
+                // RECLASS_007: Deployer + modifications → Provider
+                else if (hasDeployer && hasModification && !hasBranding && !hasPlaceOnMarket) {
+                  reclassificationReason = "As a Deployer making substantial modifications, you have been reclassified to Provider.";
+                  reclassificationArticle = "Article 3(3), Article 16(2)";
+                }
+              }
+              
+              const wasReclassified = reclassificationReason !== null;
 
               // Build role sentence
               const roleNames = computedRoles.map(r => legalRoleDefinitions[r]?.title || r);
@@ -180,22 +195,17 @@ export default function Screen1() {
                 <>
                   {wasReclassified ? (
                     <div className="info-box alert-warning">
-                      <strong>Role Reclassification:</strong>
-                      {hasImporter && hasBranding && "As an Importer placing the system under your own name, you have been reclassified to Provider. "}
-                      {hasDistributor && hasBranding && "As a Distributor placing the system under your own name, you have been reclassified to Provider. "}
-                      {hasProductManufacturer && hasBranding && "As a Product Manufacturer placing the AI system under your own name, you have been reclassified to Provider. "}
-                      {hasDeployer && hasModification && "As a Deployer making substantial modifications, you have been reclassified to Provider. "}
-                      Your legal role under the EU AI Act is now: <strong>{roleSentence}</strong>. You have full Provider obligations.
-                      <span className="source-tag" title={hasImporter && hasBranding ? "Article 3(3), Article 25" : hasDistributor && hasBranding ? "Article 3(3), Article 26" : hasProductManufacturer && hasBranding ? "Article 3(3), Article 24" : "Article 3(3), Article 16(2)"}>Source</span>
+                      <strong>⚠️ Role Reclassification:</strong> {reclassificationReason} Your legal role under the EU AI Act is now: <strong>{roleSentence}</strong>. You have full Provider obligations.
+                      <span className="source-tag" title={reclassificationArticle}>Source</span>
                     </div>
                   ) : (
                     <div className="info-box alert-success">
-                      <strong>Legal Role Determined:</strong>
+                      <strong>✓ Legal Role Determined:</strong>
                       Your legal role(s) under the EU AI Act: <strong>{roleSentence}</strong>.
                       {computedRoles.map((r, idx) => {
                         const arts = legalRoleDefinitions[r]?.articles;
                         return arts ? (
-                          <span key={idx} className="source-tag" title={`Article ${arts}`}>
+                          <span key={idx} className="source-tag" title={arts}>
                             Source
                           </span>
                         ) : null;

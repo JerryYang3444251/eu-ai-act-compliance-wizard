@@ -21,8 +21,8 @@ export default function Screen13A() {
   useEffect(() => {
     pushHistory("/screen13");
   }, [pushHistory]);
-  // RULE ENGINE: Conformity Assessment ONLY for Providers with High-Risk
-  // -------------------------------------------------------------------------
+  
+  // Conformity Assessment only for Providers with High-Risk classification
   const isProvider = roles.includes("Provider");
   
   const requiresCA =
@@ -43,20 +43,15 @@ export default function Screen13A() {
 
   if (!requiresCA) return null;
 
-  // -----------------------------------------------------------------------
   // Retrieve answers for each section
-  // -----------------------------------------------------------------------
   const sectionA = answers.conformity_section_a || [];
   const sectionB = answers.conformity_section_b || [];
   const sectionC = answers.conformity_section_c || [];
   const sectionD = answers.conformity_section_d || [];
   const sectionE = answers.conformity_section_e || [];
 
-  // -----------------------------------------------------------------------
-  // Mutual Exclusivity Handler for Each Section
-  // When "none" is selected, deselect all others.
-  // When any option is selected, deselect "none".
-  // -----------------------------------------------------------------------
+  // Mutual exclusivity handler: when "none" is selected, deselect all others
+  // When any option is selected, deselect "none"
   const handleToggleSection = (field, optionId) => {
     const current = answers[field] || [];
     
@@ -85,9 +80,7 @@ export default function Screen13A() {
     }
   };
 
-  // ---------------------------------------------------------------------
-  // MODULE 10 — CA ROUTING (CA_001 → CA_004)
-  // ---------------------------------------------------------------------
+  // MODULE 10: CA ROUTING (CA_001 → CA_004)
   const determineRoute = () => {
     const A_sectoral = sectionA.length > 0 && !sectionA.includes("none");
     const B_thirdparty = sectionB.length > 0 && !sectionB.includes("none");
@@ -100,29 +93,19 @@ export default function Screen13A() {
     const E_safety_indicators =
       sectionE.length > 0 && !sectionE.includes("none");
 
-    // -------------------------------------------
-    // CA_001 — Sectoral Legislation (Highest Priority)
-    // -------------------------------------------
+    // CA_001: Sectoral Legislation (Highest Priority)
     if (A_sectoral && B_thirdparty) {
       return CONFORMITY_ASSESSMENT_ROUTES.SECTORAL_LEGISLATION;
     }
 
-    // -------------------------------------------
-    // CA_002 — Common Specifications Route
-    // -------------------------------------------
+    // CA_002: Common Specifications Route
     if (D_CS_available && D_CS_commit) {
       return CONFORMITY_ASSESSMENT_ROUTES.COMMON_SPECIFICATIONS;
     }
 
-    // -------------------------------------------
-    // CA_003 — Internal Control Route
-    // Conditions:
-    //  HS fully covers requirements AND
-    //  NOT sectoral AND
-    //  NOT third-party required AND
-    //  NO common specifications AND
-    //  NO safety/complexity indicators
-    // -------------------------------------------
+    // CA_003: Internal Control Route
+    // Conditions: HS fully covers requirements AND NOT sectoral AND
+    // NOT third-party required AND NO common specifications AND NO safety/complexity indicators
     if (
       C_HS_full_coverage &&
       !A_sectoral &&
@@ -133,17 +116,13 @@ export default function Screen13A() {
       return CONFORMITY_ASSESSMENT_ROUTES.INTERNAL_CONTROL;
     }
 
-    // -------------------------------------------
-    // CA_004 — Notified Body (Fallback)
+    // CA_004: Notified Body (Fallback)
     // If HS NOT full OR safety indicators present
-    // -------------------------------------------
     if (!C_HS_full_coverage || E_safety_indicators) {
       return CONFORMITY_ASSESSMENT_ROUTES.NOTIFIED_BODY;
     }
 
-    // -------------------------------------------
-    // CA_000 — Ultimate fallback
-    // -------------------------------------------
+    // CA_000: Ultimate fallback
     return CONFORMITY_ASSESSMENT_ROUTES.NOTIFIED_BODY;
   };
 

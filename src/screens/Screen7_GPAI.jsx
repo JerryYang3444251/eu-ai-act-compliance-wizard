@@ -21,11 +21,9 @@ export default function Screen8_GPAI() {
 
     if (isGPAI === "yes") {
       // GPAI_002: is_gpai == true → SCREEN_8b (systemic risk check)
-      console.log("GPAI_002: User selected YES - is GPAI");
       navigate("/screen8");
     } else if (isGPAI === "no") {
       // GPAI_001: is_gpai == false → SCREEN_9 (Prohibited)
-      console.log("GPAI_001: User selected NO - NOT GPAI");
       navigate("/screen9");
     }
   };
