@@ -1,5 +1,4 @@
 rules_engine:
-
   ###########################################################
   # DATA STRUCTURE REFERENCE — ANNEX III USE CASES
   ###########################################################
@@ -71,8 +70,6 @@ rules_engine:
     next: SCREEN_2
     notes: "Continue only if not excluded under Article 2"
 
-
-
   ###########################################################
   # MODULE 2 — RAW ROLE DETERMINATION (USER INPUT ONLY)
   ###########################################################
@@ -133,8 +130,6 @@ rules_engine:
     condition: "roles_raw is empty"
     action: "error('At least one role must be selected.')"
     next: SCREEN_2
-
-
 
   ###########################################################
   # MODULE 2B — LEGAL ROLE RECLASSIFICATION (EU AI ACT)
@@ -274,8 +269,6 @@ rules_engine:
     action: "display(roles)"
     next: SCREEN_3
 
-
-
   ###########################################################
   # MODULE 3 — ANNEX I A (Product Safety)
   ###########################################################
@@ -303,8 +296,6 @@ rules_engine:
     condition: "safety_function == 'no'"
     next: SCREEN_5
 
-
-
   ###########################################################
   # MODULE 4 — ANNEX I B (Regulated Sectors)
   ###########################################################
@@ -324,14 +315,12 @@ rules_engine:
     condition: "regulated_sectors empty"
     next: SCREEN_6
 
-
-
   ###########################################################
   # MODULE 5 — ANNEX III + SIGNIFICANT IMPACT
   ###########################################################
   # Note: Annex III expanded from 8 high-level categories to 29 specific use cases
-  # Categories: Biometrics (3), Critical Infrastructure (1), Education (4), 
-  # Employment (2), Essential Services (4), Law Enforcement (5), 
+  # Categories: Biometrics (3), Critical Infrastructure (1), Education (4),
+  # Employment (2), Essential Services (4), Law Enforcement (5),
   # Migration (4), Justice & Democracy (2)
 
   A3_001:
@@ -376,8 +365,6 @@ rules_engine:
     action: "error('Cannot select NONE together with other criteria.')"
     next: SCREEN_6b
 
-
-
   ###########################################################
   # MODULE 6 — GPAI + SYSTEMIC RISK
   ###########################################################
@@ -406,7 +393,7 @@ rules_engine:
       Systemic risk determined by:
       1. FLOPs >= 10^25 (1e25 floating-point operations during training), OR
       2. Commission designation based on equivalent high-impact capabilities
-      
+
       Implementation: Screen8_Systemic.jsx offers three options:
       - "yes" (FLOPS threshold met)
       - "commission_determined" (Commission designated)
@@ -419,8 +406,6 @@ rules_engine:
     action: "add_classification('GPAI')"
     next: SCREEN_9
     notes: "Standard GPAI without systemic risk - FLOPS < 10^25 and no Commission designation"
-
-
 
   ###########################################################
   # MODULE 7 — PROHIBITED PRACTICES (WITH ARTICLE 5 EXCEPTIONS)
@@ -443,9 +428,9 @@ rules_engine:
       # Check if any selected practice remains prohibited after exception evaluation
       # Practices with exceptions: criminal_risk, emotion_workplace_education, biometric_categorisation, real_time_rbi
       # Exception applies when prohibited_exceptions[practice_id] == true
-      
+
       truly_prohibited = []
-      
+
       for practice in prohibited_actions:
         if practice == 'none':
           continue
@@ -460,7 +445,7 @@ rules_engine:
         else:
           # No exception available for this practice - always prohibited
           truly_prohibited.append(practice)
-      
+
       if truly_prohibited is not empty:
         classification = "Prohibited"
         next = SCREEN_14  # Skip to checklist (terminal classification)
@@ -473,10 +458,10 @@ rules_engine:
       - emotion_workplace_education (Art 5(1)(f)): Exception if for medical or safety reasons
       - biometric_categorisation (Art 5(1)(g)): Exception if lawful law enforcement dataset labeling
       - real_time_rbi (Art 5(1)(h)): Exception if victim search, threat prevention, or serious crime
-      
+
       Practices WITHOUT exceptions are ALWAYS prohibited:
       - subliminal, vulnerability, social_scoring, face_scraping
-      
+
       Logic: hasProhibited AND (has_non_exceptionable_practices OR has_exceptionable_practice_with_false_exception)
 
   PROHIB_002:
@@ -484,8 +469,6 @@ rules_engine:
     namespace: prohibited
     condition: "prohibited_actions empty OR prohibited_actions == ['none']"
     next: SCREEN_10
-
-
 
   ###########################################################
   # MODULE 8 — TRANSPARENCY + FRIA
@@ -505,7 +488,16 @@ rules_engine:
   FRIA_001:
     rule_id: FRIA_001
     namespace: fria
-    inputs: [roles, classification, is_public_body, is_public_service_provider, deployment_sectors, annex_iii_usecases, annex_iii_point]
+    inputs:
+      [
+        roles,
+        classification,
+        is_public_body,
+        is_public_service_provider,
+        deployment_sectors,
+        annex_iii_usecases,
+        annex_iii_point,
+      ]
     condition: |
       classification contains_any ['High-risk_Annex_I_A','High-risk_Annex_I_B','High-risk_Annex_III']
       AND annex_iii_point != 2
@@ -533,8 +525,6 @@ rules_engine:
       5. ALL deployers (public and private) of Annex III Point 5(c) life/health insurance systems
       EXEMPTION: Annex III Point 2 (Critical Infrastructure) is exempt from FRIA per Article 27(1)
 
-
-
   ###########################################################
   # MODULE 9 — FINAL CLASSIFICATION SUMMARY
   ###########################################################
@@ -548,8 +538,6 @@ rules_engine:
       IF: "classification contains_any ['High-risk_Annex_I_A','High-risk_Annex_I_B','High-risk_Annex_III']"
       THEN: SCREEN_12
       ELSE: SCREEN_14
-
-
 
   ###########################################################
   # MODULE 10 — CONFORMITY ASSESSMENT ROUTING
@@ -586,7 +574,14 @@ rules_engine:
   CA_003:
     rule_id: CA_003
     namespace: CA
-    inputs: [C_HS_full_coverage, A_sectoral, B_thirdparty, D_CS_available, E_safety_complexity]
+    inputs:
+      [
+        C_HS_full_coverage,
+        A_sectoral,
+        B_thirdparty,
+        D_CS_available,
+        E_safety_complexity,
+      ]
     condition: >
       C_HS_full_coverage == true AND
       A_sectoral != true AND
@@ -604,8 +599,6 @@ rules_engine:
     condition: "C_HS_full_coverage == false OR E_safety_complexity == true"
     action: "CA_route = 'Notified_Body'"
     next: SCREEN_12B
-
-
 
   ###########################################################
   # MODULE 11 — ROLE + CLASSIFICATION → OBLIGATION SETS
@@ -755,7 +748,6 @@ rules_engine:
     action: "add_obligations('Handover')"
     notes: "Handover obligations (C1–C15) per Articles 13, 16, 23 — Provider must provide documentation to downstream actors for high-risk systems"
 
-
   ###########################################################
   # MODULE 12 — OUTPUT CHECKLIST
   ###########################################################
@@ -767,15 +759,12 @@ rules_engine:
     action: "render(all_obligations)"
     next: END
 
-
 obligations checklist:
-
   ###########################################################
   # PROVIDER OBLIGATIONS (A1–A16)
   ###########################################################
 
   Provider:
-
     A1:
       title: "Risk Management System"
       source:
@@ -1003,218 +992,840 @@ obligations checklist:
   ###########################################################
 
   Handover:
-
-    C1: { title: "Design Documentation", source: {article: "Articles 11 & 13"}, items: ["Provide design documentation"] }
-    C2: { title: "Architecture Diagrams", source: {article: "Article 11"}, items: ["Provide architecture diagrams"] }
-    C3: { title: "Model Documentation", source: {article: "Annex IV"}, items: ["Provide model documentation"] }
-    C4: { title: "Dataset Documentation", source: {article: "Article 10"}, items: ["Provide dataset documentation"] }
-    C5: { title: "Performance Metrics", source: {article: "Article 15"}, items: ["Provide performance metrics"] }
-    C6: { title: "Bias Assessments", source: {article: "Article 10"}, items: ["Provide bias assessment results"] }
-    C7: { title: "Logging Interfaces", source: {article: "Article 12"}, items: ["Provide logging interfaces"] }
-    C8: { title: "Risk Documentation", source: {article: "Article 9"}, items: ["Provide risk documentation"] }
-    C9: { title: "Human Oversight Design", source: {article: "Article 14"}, items: ["Provide human oversight design"] }
-    C10: { title: "Cybersecurity Information", source: {article: "Article 15"}, items: ["Provide cybersecurity information"] }
-    C11: { title: "Conformity Documents", source: {article: "Article 43"}, items: ["Provide conformity documents"] }
-    C12: { title: "Declarations of Conformity", source: {article: "Article 47"}, items: ["Provide Declarations of Conformity"] }
-    C13: { title: "Monitoring Data", source: {article: "Article 72"}, items: ["Provide monitoring data"] }
-    C14: { title: "Incident Reports", source: {article: "Article 73"}, items: ["Provide incident reports"] }
-    C15: { title: "Version/Data Lineage", source: {article: "Annex IV"}, items: ["Provide version and data lineage"] }
+    C1:
+      {
+        title: "Design Documentation",
+        source: { article: "Articles 11 & 13" },
+        items: ["Provide design documentation"],
+      }
+    C2:
+      {
+        title: "Architecture Diagrams",
+        source: { article: "Article 11" },
+        items: ["Provide architecture diagrams"],
+      }
+    C3:
+      {
+        title: "Model Documentation",
+        source: { article: "Annex IV" },
+        items: ["Provide model documentation"],
+      }
+    C4:
+      {
+        title: "Dataset Documentation",
+        source: { article: "Article 10" },
+        items: ["Provide dataset documentation"],
+      }
+    C5:
+      {
+        title: "Performance Metrics",
+        source: { article: "Article 15" },
+        items: ["Provide performance metrics"],
+      }
+    C6:
+      {
+        title: "Bias Assessments",
+        source: { article: "Article 10" },
+        items: ["Provide bias assessment results"],
+      }
+    C7:
+      {
+        title: "Logging Interfaces",
+        source: { article: "Article 12" },
+        items: ["Provide logging interfaces"],
+      }
+    C8:
+      {
+        title: "Risk Documentation",
+        source: { article: "Article 9" },
+        items: ["Provide risk documentation"],
+      }
+    C9:
+      {
+        title: "Human Oversight Design",
+        source: { article: "Article 14" },
+        items: ["Provide human oversight design"],
+      }
+    C10:
+      {
+        title: "Cybersecurity Information",
+        source: { article: "Article 15" },
+        items: ["Provide cybersecurity information"],
+      }
+    C11:
+      {
+        title: "Conformity Documents",
+        source: { article: "Article 43" },
+        items: ["Provide conformity documents"],
+      }
+    C12:
+      {
+        title: "Declarations of Conformity",
+        source: { article: "Article 47" },
+        items: ["Provide Declarations of Conformity"],
+      }
+    C13:
+      {
+        title: "Monitoring Data",
+        source: { article: "Article 72" },
+        items: ["Provide monitoring data"],
+      }
+    C14:
+      {
+        title: "Incident Reports",
+        source: { article: "Article 73" },
+        items: ["Provide incident reports"],
+      }
+    C15:
+      {
+        title: "Version/Data Lineage",
+        source: { article: "Annex IV" },
+        items: ["Provide version and data lineage"],
+      }
 
   ###########################################################
   # IMPORTER OBLIGATIONS (D1–D14)
   ###########################################################
 
   Importer:
-
-    D1: { title: "CE Marking Verification", source: {article: "Article 26"}, items: ["Verify CE marking"] }
-    D2: { title: "Declaration Verification", source: {article: "Article 26"}, items: ["Verify Declaration of Conformity"] }
-    D3: { title: "Technical File Availability", source: {article: "Article 26"}, items: ["Verify technical documentation availability"] }
-    D4: { title: "Instructions Verification", source: {article: "Article 26"}, items: ["Verify instructions supplied"] }
-    D5: { title: "Reject Unsafe Systems", source: {article: "Article 26"}, items: ["Reject unsafe systems"] }
-    D6: { title: "Storage Compliance", source: {article: "Article 26"}, items: ["Maintain compliance during storage"] }
-    D7: { title: "Importer Contact Info", source: {article: "Article 26"}, items: ["Add importer contact details"] }
-    D8: { title: "Retain Declaration", source: {article: "Article 26"}, items: ["Retain Declaration of Conformity"] }
-    D9: { title: "Traceability", source: {article: "Article 26"}, items: ["Maintain traceability"] }
-    D10: { title: "Provide Documents", source: {article: "Article 26"}, items: ["Provide documents on request"] }
-    D11: { title: "Cooperate with Authorities", source: {article: "Article 26"}, items: ["Cooperate with authorities"] }
-    D12: { title: "Corrective Actions", source: {article: "Article 26"}, items: ["Take corrective actions"] }
-    D13: { title: "Notify Risks", source: {article: "Article 26"}, items: ["Notify authorities of risks"] }
-    D14: { title: "Forward Complaints", source: {article: "Article 26"}, items: ["Forward complaints"] }
+    D1:
+      {
+        title: "CE Marking Verification",
+        source: { article: "Article 26" },
+        items: ["Verify CE marking"],
+      }
+    D2:
+      {
+        title: "Declaration Verification",
+        source: { article: "Article 26" },
+        items: ["Verify Declaration of Conformity"],
+      }
+    D3:
+      {
+        title: "Technical File Availability",
+        source: { article: "Article 26" },
+        items: ["Verify technical documentation availability"],
+      }
+    D4:
+      {
+        title: "Instructions Verification",
+        source: { article: "Article 26" },
+        items: ["Verify instructions supplied"],
+      }
+    D5:
+      {
+        title: "Reject Unsafe Systems",
+        source: { article: "Article 26" },
+        items: ["Reject unsafe systems"],
+      }
+    D6:
+      {
+        title: "Storage Compliance",
+        source: { article: "Article 26" },
+        items: ["Maintain compliance during storage"],
+      }
+    D7:
+      {
+        title: "Importer Contact Info",
+        source: { article: "Article 26" },
+        items: ["Add importer contact details"],
+      }
+    D8:
+      {
+        title: "Retain Declaration",
+        source: { article: "Article 26" },
+        items: ["Retain Declaration of Conformity"],
+      }
+    D9:
+      {
+        title: "Traceability",
+        source: { article: "Article 26" },
+        items: ["Maintain traceability"],
+      }
+    D10:
+      {
+        title: "Provide Documents",
+        source: { article: "Article 26" },
+        items: ["Provide documents on request"],
+      }
+    D11:
+      {
+        title: "Cooperate with Authorities",
+        source: { article: "Article 26" },
+        items: ["Cooperate with authorities"],
+      }
+    D12:
+      {
+        title: "Corrective Actions",
+        source: { article: "Article 26" },
+        items: ["Take corrective actions"],
+      }
+    D13:
+      {
+        title: "Notify Risks",
+        source: { article: "Article 26" },
+        items: ["Notify authorities of risks"],
+      }
+    D14:
+      {
+        title: "Forward Complaints",
+        source: { article: "Article 26" },
+        items: ["Forward complaints"],
+      }
 
   ###########################################################
   # DISTRIBUTOR OBLIGATIONS (E1–E9)
   ###########################################################
 
   Distributor:
-
-    E1: { title: "Verify CE Marking", source: {article: "Article 27"}, items: ["Verify CE marking"] }
-    E2: { title: "Verify Documentation", source: {article: "Article 27"}, items: ["Verify documentation availability"] }
-    E3: { title: "Reject Unsafe Systems", source: {article: "Article 27"}, items: ["Reject unsafe systems"] }
-    E4: { title: "Preserve Compliance", source: {article: "Article 27"}, items: ["Preserve compliance conditions"] }
-    E5: { title: "Maintain Records", source: {article: "Article 27"}, items: ["Maintain supplier and customer list"] }
-    E6: { title: "Provide Documents", source: {article: "Article 27"}, items: ["Provide documents on request"] }
-    E7: { title: "Cooperate", source: {article: "Article 27"}, items: ["Cooperate with authorities"] }
-    E8: { title: "Stop Distribution", source: {article: "Article 27"}, items: ["Stop distribution of unsafe systems"] }
-    E9: { title: "Report Risks", source: {article: "Article 27"}, items: ["Report risks"] }
+    E1:
+      {
+        title: "Verify CE Marking",
+        source: { article: "Article 27" },
+        items: ["Verify CE marking"],
+      }
+    E2:
+      {
+        title: "Verify Documentation",
+        source: { article: "Article 27" },
+        items: ["Verify documentation availability"],
+      }
+    E3:
+      {
+        title: "Reject Unsafe Systems",
+        source: { article: "Article 27" },
+        items: ["Reject unsafe systems"],
+      }
+    E4:
+      {
+        title: "Preserve Compliance",
+        source: { article: "Article 27" },
+        items: ["Preserve compliance conditions"],
+      }
+    E5:
+      {
+        title: "Maintain Records",
+        source: { article: "Article 27" },
+        items: ["Maintain supplier and customer list"],
+      }
+    E6:
+      {
+        title: "Provide Documents",
+        source: { article: "Article 27" },
+        items: ["Provide documents on request"],
+      }
+    E7:
+      {
+        title: "Cooperate",
+        source: { article: "Article 27" },
+        items: ["Cooperate with authorities"],
+      }
+    E8:
+      {
+        title: "Stop Distribution",
+        source: { article: "Article 27" },
+        items: ["Stop distribution of unsafe systems"],
+      }
+    E9:
+      {
+        title: "Report Risks",
+        source: { article: "Article 27" },
+        items: ["Report risks"],
+      }
 
   ###########################################################
   # DEPLOYER OBLIGATIONS (F1–F12)
   ###########################################################
 
   Deployer:
-
-    F1: { title: "Follow Instructions", source: {article: "Article 29"}, items: ["Follow provider instructions"] }
-    F2: { title: "Use as Intended", source: {article: "Article 29"}, items: ["Use system only for intended purpose"] }
-    F3: { title: "Ensure Input Data Quality", source: {article: "Article 29"}, items: ["Ensure input data quality"] }
-    F4: { title: "Maintain Logs", source: {article: "Article 29"}, items: ["Maintain logs"] }
-    F5: { title: "Assign Human Oversight", source: {article: "Article 29"}, items: ["Assign human oversight"] }
-    F6: { title: "Stop System if Needed", source: {article: "Article 29"}, items: ["Stop system when required"] }
-    F7: { title: "Conduct DPIA if Needed", source: {article: "Article 29"}, items: ["Conduct DPIA if required by law"] }
-    F8: { title: "Incident Reporting", source: {article: "Article 29"}, items: ["Report incidents"] }
-    F9: { title: "Provide Logs & Docs", source: {article: "Article 29"}, items: ["Provide documentation and logs"] }
-    F10: { title: "Cybersecurity Measures", source: {article: "Article 29"}, items: ["Follow cybersecurity requirements"] }
-    F11: { title: "Protect Vulnerable Persons", source: {article: "Article 29"}, items: ["Protect vulnerable persons"] }
-    F12: { title: "Transparency to Users", source: {article: "Article 29"}, items: ["Provide transparency to end‑users"] }
+    F1:
+      {
+        title: "Follow Instructions",
+        source: { article: "Article 29" },
+        items: ["Follow provider instructions"],
+      }
+    F2:
+      {
+        title: "Use as Intended",
+        source: { article: "Article 29" },
+        items: ["Use system only for intended purpose"],
+      }
+    F3:
+      {
+        title: "Ensure Input Data Quality",
+        source: { article: "Article 29" },
+        items: ["Ensure input data quality"],
+      }
+    F4:
+      {
+        title: "Maintain Logs",
+        source: { article: "Article 29" },
+        items: ["Maintain logs"],
+      }
+    F5:
+      {
+        title: "Assign Human Oversight",
+        source: { article: "Article 29" },
+        items: ["Assign human oversight"],
+      }
+    F6:
+      {
+        title: "Stop System if Needed",
+        source: { article: "Article 29" },
+        items: ["Stop system when required"],
+      }
+    F7:
+      {
+        title: "Conduct DPIA if Needed",
+        source: { article: "Article 29" },
+        items: ["Conduct DPIA if required by law"],
+      }
+    F8:
+      {
+        title: "Incident Reporting",
+        source: { article: "Article 29" },
+        items: ["Report incidents"],
+      }
+    F9:
+      {
+        title: "Provide Logs & Docs",
+        source: { article: "Article 29" },
+        items: ["Provide documentation and logs"],
+      }
+    F10:
+      {
+        title: "Cybersecurity Measures",
+        source: { article: "Article 29" },
+        items: ["Follow cybersecurity requirements"],
+      }
+    F11:
+      {
+        title: "Protect Vulnerable Persons",
+        source: { article: "Article 29" },
+        items: ["Protect vulnerable persons"],
+      }
+    F12:
+      {
+        title: "Transparency to Users",
+        source: { article: "Article 29" },
+        items: ["Provide transparency to end‑users"],
+      }
 
   ###########################################################
   # FRIA OBLIGATIONS (G1–G15)
   ###########################################################
 
   FRIA:
-
-    G1:  { title: "Identify Affected Persons", source: {article: "Article 27a"}, items: ["Identify affected persons"] }
-    G2:  { title: "Identify Rights Impacts", source: {article: "Article 27a"}, items: ["Identify rights impacts"] }
-    G3:  { title: "Assess Direct Impacts", source: {article: "Article 27a"}, items: ["Assess direct impacts"] }
-    G4:  { title: "Assess Indirect Impacts", source: {article: "Article 27a"}, items: ["Assess indirect impacts"] }
-    G5:  { title: "Assess Cumulative Impacts", source: {article: "Article 27a"}, items: ["Assess cumulative impacts"] }
-    G6:  { title: "Identify Vulnerabilities", source: {article: "Article 27a"}, items: ["Identify vulnerabilities"] }
-    G7:  { title: "Identify Safeguards", source: {article: "Article 27a"}, items: ["Identify safeguards"] }
-    G8:  { title: "Identify Mitigations", source: {article: "Article 27a"}, items: ["Identify mitigations"] }
-    G9:  { title: "Assess Human Oversight", source: {article: "Article 27a"}, items: ["Assess oversight effectiveness"] }
-    G10: { title: "Stakeholder Input", source: {article: "Article 27a"}, items: ["Gather stakeholder input"] }
-    G11: { title: "Prepare FRIA", source: {article: "Article 27a"}, items: ["Prepare FRIA"] }
-    G12: { title: "Submit FRIA", source: {article: "Article 27a"}, items: ["Submit FRIA"] }
-    G13: { title: "Publish FRIA", source: {article: "Article 27a"}, items: ["Publish FRIA unless exempt"] }
-    G14: { title: "Update FRIA", source: {article: "Article 27a"}, items: ["Update FRIA"] }
-    G15: { title: "Retain FRIA", source: {article: "Article 27a"}, items: ["Retain FRIA"] }
+    G1:
+      {
+        title: "Identify Affected Persons",
+        source: { article: "Article 27a" },
+        items: ["Identify affected persons"],
+      }
+    G2:
+      {
+        title: "Identify Rights Impacts",
+        source: { article: "Article 27a" },
+        items: ["Identify rights impacts"],
+      }
+    G3:
+      {
+        title: "Assess Direct Impacts",
+        source: { article: "Article 27a" },
+        items: ["Assess direct impacts"],
+      }
+    G4:
+      {
+        title: "Assess Indirect Impacts",
+        source: { article: "Article 27a" },
+        items: ["Assess indirect impacts"],
+      }
+    G5:
+      {
+        title: "Assess Cumulative Impacts",
+        source: { article: "Article 27a" },
+        items: ["Assess cumulative impacts"],
+      }
+    G6:
+      {
+        title: "Identify Vulnerabilities",
+        source: { article: "Article 27a" },
+        items: ["Identify vulnerabilities"],
+      }
+    G7:
+      {
+        title: "Identify Safeguards",
+        source: { article: "Article 27a" },
+        items: ["Identify safeguards"],
+      }
+    G8:
+      {
+        title: "Identify Mitigations",
+        source: { article: "Article 27a" },
+        items: ["Identify mitigations"],
+      }
+    G9:
+      {
+        title: "Assess Human Oversight",
+        source: { article: "Article 27a" },
+        items: ["Assess oversight effectiveness"],
+      }
+    G10:
+      {
+        title: "Stakeholder Input",
+        source: { article: "Article 27a" },
+        items: ["Gather stakeholder input"],
+      }
+    G11:
+      {
+        title: "Prepare FRIA",
+        source: { article: "Article 27a" },
+        items: ["Prepare FRIA"],
+      }
+    G12:
+      {
+        title: "Submit FRIA",
+        source: { article: "Article 27a" },
+        items: ["Submit FRIA"],
+      }
+    G13:
+      {
+        title: "Publish FRIA",
+        source: { article: "Article 27a" },
+        items: ["Publish FRIA unless exempt"],
+      }
+    G14:
+      {
+        title: "Update FRIA",
+        source: { article: "Article 27a" },
+        items: ["Update FRIA"],
+      }
+    G15:
+      {
+        title: "Retain FRIA",
+        source: { article: "Article 27a" },
+        items: ["Retain FRIA"],
+      }
 
   ###########################################################
   # TRANSPARENCY OBLIGATIONS (H1–H9)
   ###########################################################
 
   Transparency:
-
-    H1: { title: "Human Interaction Disclosure", source: {article: "Article 52"}, items: ["Disclose AI‑mediated interaction"] }
-    H2: { title: "Synthetic Content Labeling", source: {article: "Article 52"}, items: ["Label synthetic content"] }
-    H3: { title: "Deepfake Labeling", source: {article: "Article 52"}, items: ["Label deepfakes"] }
-    H4: { title: "Exceptions Documentation", source: {article: "Article 52"}, items: ["Document exceptions"] }
-    H5: { title: "Provide Transparency Guidance", source: {article: "Article 52"}, items: ["Provide transparency instructions"] }
-    H6: { title: "Ensure Detectability", source: {article: "Article 52"}, items: ["Ensure synthetic content is detectable"] }
-    H7: { title: "Biometric Categorisation Disclosure", source: {article: "Article 52"}, items: ["Disclose biometric categorisation use"] }
-    H8: { title: "Emotion Recognition Disclosure", source: {article: "Article 52"}, items: ["Disclose emotion recognition use"] }
-    H9: { title: "Update Transparency Measures", source: {article: "Article 52"}, items: ["Update transparency measures"] }
+    H1:
+      {
+        title: "Human Interaction Disclosure",
+        source: { article: "Article 52" },
+        items: ["Disclose AI‑mediated interaction"],
+      }
+    H2:
+      {
+        title: "Synthetic Content Labeling",
+        source: { article: "Article 52" },
+        items: ["Label synthetic content"],
+      }
+    H3:
+      {
+        title: "Deepfake Labeling",
+        source: { article: "Article 52" },
+        items: ["Label deepfakes"],
+      }
+    H4:
+      {
+        title: "Exceptions Documentation",
+        source: { article: "Article 52" },
+        items: ["Document exceptions"],
+      }
+    H5:
+      {
+        title: "Provide Transparency Guidance",
+        source: { article: "Article 52" },
+        items: ["Provide transparency instructions"],
+      }
+    H6:
+      {
+        title: "Ensure Detectability",
+        source: { article: "Article 52" },
+        items: ["Ensure synthetic content is detectable"],
+      }
+    H7:
+      {
+        title: "Biometric Categorisation Disclosure",
+        source: { article: "Article 52" },
+        items: ["Disclose biometric categorisation use"],
+      }
+    H8:
+      {
+        title: "Emotion Recognition Disclosure",
+        source: { article: "Article 52" },
+        items: ["Disclose emotion recognition use"],
+      }
+    H9:
+      {
+        title: "Update Transparency Measures",
+        source: { article: "Article 52" },
+        items: ["Update transparency measures"],
+      }
 
   ###########################################################
   # NON‑SIGNIFICANT RISK NOTIFICATION (I1–I7)
   ###########################################################
 
   NonSignificantRisk:
-
-    I1: { title: "Document Risk Assessment", source: {article: "Article 6(2)"}, items: ["Document risk assessment"] }
-    I2: { title: "Notify Authorities", source: {article: "Article 6(2)"}, items: ["Notify authorities"] }
-    I3: { title: "Register System", source: {article: "Article 6(2)"}, items: ["Register system"] }
-    I4: { title: "Maintain Evidence", source: {article: "Article 6(2)"}, items: ["Maintain evidence"] }
-    I5: { title: "Provide Evidence", source: {article: "Article 6(2)"}, items: ["Provide evidence"] }
-    I6: { title: "Reassess after Changes", source: {article: "Article 6(2)"}, items: ["Reassess after changes"] }
-    I7: { title: "Notify New Risks", source: {article: "Article 6(2)"}, items: ["Notify new risks"] }
+    I1:
+      {
+        title: "Document Risk Assessment",
+        source: { article: "Article 6(2)" },
+        items: ["Document risk assessment"],
+      }
+    I2:
+      {
+        title: "Notify Authorities",
+        source: { article: "Article 6(2)" },
+        items: ["Notify authorities"],
+      }
+    I3:
+      {
+        title: "Register System",
+        source: { article: "Article 6(2)" },
+        items: ["Register system"],
+      }
+    I4:
+      {
+        title: "Maintain Evidence",
+        source: { article: "Article 6(2)" },
+        items: ["Maintain evidence"],
+      }
+    I5:
+      {
+        title: "Provide Evidence",
+        source: { article: "Article 6(2)" },
+        items: ["Provide evidence"],
+      }
+    I6:
+      {
+        title: "Reassess after Changes",
+        source: { article: "Article 6(2)" },
+        items: ["Reassess after changes"],
+      }
+    I7:
+      {
+        title: "Notify New Risks",
+        source: { article: "Article 6(2)" },
+        items: ["Notify new risks"],
+      }
 
   ###########################################################
   # GPAI OBLIGATIONS (J1–J16)
   ###########################################################
 
   GPAI:
-
-    J1: { title: "Model Documentation", source: {article: "Article 53"}, items: ["Document model architecture"] }
-    J2: { title: "Capabilities Documentation", source: {article: "Article 53"}, items: ["Document model capabilities"] }
-    J3: { title: "Limitations Documentation", source: {article: "Article 53"}, items: ["Document model limitations"] }
-    J4: { title: "Performance Metrics", source: {article: "Article 53"}, items: ["Document performance metrics"] }
-    J5: { title: "Foreseeable Misuse Analysis", source: {article: "Article 53"}, items: ["Assess foreseeable misuse"] }
-    J6: { title: "Evaluation Methods", source: {article: "Article 53"}, items: ["Document evaluation methods"] }
-    J7: { title: "Integration Guidance", source: {article: "Article 53"}, items: ["Provide integration guidance"] }
-    J8: { title: "Cybersecurity Guidance", source: {article: "Article 53"}, items: ["Provide cybersecurity guidance"] }
-    J9: { title: "Data Summary", source: {article: "Article 53"}, items: ["Provide training data summary"] }
-    J10: { title: "Security Protections", source: {article: "Article 53"}, items: ["Implement security protections"] }
-    J11: { title: "Post-Market Monitoring", source: {article: "Article 53"}, items: ["Monitor post-market"] }
-    J12: { title: "Detect Emergent Behaviour", source: {article: "Article 53"}, items: ["Detect emergent harmful behaviour"] }
-    J13: { title: "Incident Reporting", source: {article: "Article 53"}, items: ["Report incidents"] }
-    J14: { title: "Authority Information", source: {article: "Article 53"}, items: ["Provide technical information to authorities"] }
-    J15: { title: "Corrective Measures", source: {article: "Article 53"}, items: ["Correct identified issues"] }
-    J16: { title: "Document Modifications", source: {article: "Article 53"}, items: ["Document all model modifications"] }
+    J1:
+      {
+        title: "Model Documentation",
+        source: { article: "Article 53" },
+        items: ["Document model architecture"],
+      }
+    J2:
+      {
+        title: "Capabilities Documentation",
+        source: { article: "Article 53" },
+        items: ["Document model capabilities"],
+      }
+    J3:
+      {
+        title: "Limitations Documentation",
+        source: { article: "Article 53" },
+        items: ["Document model limitations"],
+      }
+    J4:
+      {
+        title: "Performance Metrics",
+        source: { article: "Article 53" },
+        items: ["Document performance metrics"],
+      }
+    J5:
+      {
+        title: "Foreseeable Misuse Analysis",
+        source: { article: "Article 53" },
+        items: ["Assess foreseeable misuse"],
+      }
+    J6:
+      {
+        title: "Evaluation Methods",
+        source: { article: "Article 53" },
+        items: ["Document evaluation methods"],
+      }
+    J7:
+      {
+        title: "Integration Guidance",
+        source: { article: "Article 53" },
+        items: ["Provide integration guidance"],
+      }
+    J8:
+      {
+        title: "Cybersecurity Guidance",
+        source: { article: "Article 53" },
+        items: ["Provide cybersecurity guidance"],
+      }
+    J9:
+      {
+        title: "Data Summary",
+        source: { article: "Article 53" },
+        items: ["Provide training data summary"],
+      }
+    J10:
+      {
+        title: "Security Protections",
+        source: { article: "Article 53" },
+        items: ["Implement security protections"],
+      }
+    J11:
+      {
+        title: "Post-Market Monitoring",
+        source: { article: "Article 53" },
+        items: ["Monitor post-market"],
+      }
+    J12:
+      {
+        title: "Detect Emergent Behaviour",
+        source: { article: "Article 53" },
+        items: ["Detect emergent harmful behaviour"],
+      }
+    J13:
+      {
+        title: "Incident Reporting",
+        source: { article: "Article 53" },
+        items: ["Report incidents"],
+      }
+    J14:
+      {
+        title: "Authority Information",
+        source: { article: "Article 53" },
+        items: ["Provide technical information to authorities"],
+      }
+    J15:
+      {
+        title: "Corrective Measures",
+        source: { article: "Article 53" },
+        items: ["Correct identified issues"],
+      }
+    J16:
+      {
+        title: "Document Modifications",
+        source: { article: "Article 53" },
+        items: ["Document all model modifications"],
+      }
 
   ###########################################################
   # GPAI SYSTEMIC RISK OBLIGATIONS (K1–K13)
   ###########################################################
 
   GPAI_Systemic:
-
-    K1:  { title: "Adversarial Testing", source: {article: "Article 55"}, items: ["Conduct adversarial testing"] }
-    K2:  { title: "Red-Teaming", source: {article: "Article 55"}, items: ["Conduct red-teaming"] }
-    K3:  { title: "Systemic Risk Identification", source: {article: "Article 55"}, items: ["Identify systemic risks"] }
-    K4:  { title: "Systemic Risk Mitigation", source: {article: "Article 55"}, items: ["Implement systemic risk mitigation"] }
-    K5:  { title: "Stress Testing", source: {article: "Article 55"}, items: ["Perform stress testing"] }
-    K6:  { title: "Environmental Impact", source: {article: "Article 55"}, items: ["Document environmental impact"] }
-    K7:  { title: "Deep Technical Documentation", source: {article: "Article 55"}, items: ["Maintain deep technical documentation"] }
-    K8:  { title: "Provide Model Information", source: {article: "Article 55"}, items: ["Provide model information to authorities"] }
-    K9:  { title: "Systemic Incident Reporting", source: {article: "Article 55"}, items: ["Report systemic incidents"] }
-    K10: { title: "Vulnerability Reporting", source: {article: "Article 55"}, items: ["Maintain vulnerability reporting"] }
-    K11: { title: "Model Cards", source: {article: "Article 55"}, items: ["Publish model cards"] }
-    K12: { title: "Version Tracking", source: {article: "Article 55"}, items: ["Track all versions"] }
-    K13: { title: "Training Lineage", source: {article: "Article 55"}, items: ["Track training lineage"] }
+    K1:
+      {
+        title: "Adversarial Testing",
+        source: { article: "Article 55" },
+        items: ["Conduct adversarial testing"],
+      }
+    K2:
+      {
+        title: "Red-Teaming",
+        source: { article: "Article 55" },
+        items: ["Conduct red-teaming"],
+      }
+    K3:
+      {
+        title: "Systemic Risk Identification",
+        source: { article: "Article 55" },
+        items: ["Identify systemic risks"],
+      }
+    K4:
+      {
+        title: "Systemic Risk Mitigation",
+        source: { article: "Article 55" },
+        items: ["Implement systemic risk mitigation"],
+      }
+    K5:
+      {
+        title: "Stress Testing",
+        source: { article: "Article 55" },
+        items: ["Perform stress testing"],
+      }
+    K6:
+      {
+        title: "Environmental Impact",
+        source: { article: "Article 55" },
+        items: ["Document environmental impact"],
+      }
+    K7:
+      {
+        title: "Deep Technical Documentation",
+        source: { article: "Article 55" },
+        items: ["Maintain deep technical documentation"],
+      }
+    K8:
+      {
+        title: "Provide Model Information",
+        source: { article: "Article 55" },
+        items: ["Provide model information to authorities"],
+      }
+    K9:
+      {
+        title: "Systemic Incident Reporting",
+        source: { article: "Article 55" },
+        items: ["Report systemic incidents"],
+      }
+    K10:
+      {
+        title: "Vulnerability Reporting",
+        source: { article: "Article 55" },
+        items: ["Maintain vulnerability reporting"],
+      }
+    K11:
+      {
+        title: "Model Cards",
+        source: { article: "Article 55" },
+        items: ["Publish model cards"],
+      }
+    K12:
+      {
+        title: "Version Tracking",
+        source: { article: "Article 55" },
+        items: ["Track all versions"],
+      }
+    K13:
+      {
+        title: "Training Lineage",
+        source: { article: "Article 55" },
+        items: ["Track training lineage"],
+      }
 
   ###########################################################
   # PROHIBITED SYSTEM OBLIGATIONS (L1–L9)
   ###########################################################
 
   Prohibited:
-
-    L1: { title: "Stop Development", source: {article: "Article 5"}, items: ["Stop development"] }
-    L2: { title: "Stop Distribution", source: {article: "Article 5"}, items: ["Stop distribution"] }
-    L3: { title: "Disable System", source: {article: "Article 5"}, items: ["Disable prohibited functionality"] }
-    L4: { title: "Withdraw from Market", source: {article: "Article 5"}, items: ["Withdraw system from market"] }
-    L5: { title: "Notify Authorities", source: {article: "Article 5"}, items: ["Notify authorities"] }
-    L6: { title: "Provide Documentation", source: {article: "Article 5"}, items: ["Provide documentation"] }
-    L7: { title: "Document Cessation", source: {article: "Article 5"}, items: ["Document cessation process"] }
-    L8: { title: "Prevent Recurrence", source: {article: "Article 5"}, items: ["Prevent recurrence"] }
-    L9: { title: "Block Prohibited Features", source: {article: "Article 5"}, items: ["Block prohibited features"] }
+    L1:
+      {
+        title: "Stop Development",
+        source: { article: "Article 5" },
+        items: ["Stop development"],
+      }
+    L2:
+      {
+        title: "Stop Distribution",
+        source: { article: "Article 5" },
+        items: ["Stop distribution"],
+      }
+    L3:
+      {
+        title: "Disable System",
+        source: { article: "Article 5" },
+        items: ["Disable prohibited functionality"],
+      }
+    L4:
+      {
+        title: "Withdraw from Market",
+        source: { article: "Article 5" },
+        items: ["Withdraw system from market"],
+      }
+    L5:
+      {
+        title: "Notify Authorities",
+        source: { article: "Article 5" },
+        items: ["Notify authorities"],
+      }
+    L6:
+      {
+        title: "Provide Documentation",
+        source: { article: "Article 5" },
+        items: ["Provide documentation"],
+      }
+    L7:
+      {
+        title: "Document Cessation",
+        source: { article: "Article 5" },
+        items: ["Document cessation process"],
+      }
+    L8:
+      {
+        title: "Prevent Recurrence",
+        source: { article: "Article 5" },
+        items: ["Prevent recurrence"],
+      }
+    L9:
+      {
+        title: "Block Prohibited Features",
+        source: { article: "Article 5" },
+        items: ["Block prohibited features"],
+      }
 
   ###########################################################
   # EXCLUSION RULES (M1–M4)
   ###########################################################
 
   Exclusion:
-
-    M1: { title: "Research Not Placed on Market", source: {article: "Article 2"}, items: ["Research not placed on market"] }
-    M2: { title: "Open-Source Without Remuneration", source: {article: "Article 2"}, items: ["Open-source with no remuneration"] }
-    M3: { title: "Personal Non-Professional Use", source: {article: "Article 2"}, items: ["Personal non-professional use"] }
-    M4: { title: "Military or Foreign LE Use", source: {article: "Article 2"}, items: ["Military or foreign law enforcement use"] }
+    M1:
+      {
+        title: "Research Not Placed on Market",
+        source: { article: "Article 2" },
+        items: ["Research not placed on market"],
+      }
+    M2:
+      {
+        title: "Open-Source Without Remuneration",
+        source: { article: "Article 2" },
+        items: ["Open-source with no remuneration"],
+      }
+    M3:
+      {
+        title: "Personal Non-Professional Use",
+        source: { article: "Article 2" },
+        items: ["Personal non-professional use"],
+      }
+    M4:
+      {
+        title: "Military or Foreign LE Use",
+        source: { article: "Article 2" },
+        items: ["Military or foreign law enforcement use"],
+      }
 
   ###########################################################
   # PRODUCT MANUFACTURER OBLIGATIONS (N1–N4)
   ###########################################################
 
   ProductManufacturer:
-
-    N1: { title: "Manufacturer Becomes Provider", source: {article: "Article 24"}, items: ["Become provider if AI is a safety component"] }
-    N2: { title: "Apply Provider Obligations", source: {article: "Article 24"}, items: ["Apply all provider obligations"] }
-    N3: { title: "Apply Sectoral Product Law", source: {article: "Article 24"}, items: ["Apply applicable product legislation"] }
-    N4: { title: "Register High-Risk AI", source: {article: "Article 49"}, items: ["Register high-risk AI"] }
+    N1:
+      {
+        title: "Manufacturer Becomes Provider",
+        source: { article: "Article 24" },
+        items: ["Become provider if AI is a safety component"],
+      }
+    N2:
+      {
+        title: "Apply Provider Obligations",
+        source: { article: "Article 24" },
+        items: ["Apply all provider obligations"],
+      }
+    N3:
+      {
+        title: "Apply Sectoral Product Law",
+        source: { article: "Article 24" },
+        items: ["Apply applicable product legislation"],
+      }
+    N4:
+      {
+        title: "Register High-Risk AI",
+        source: { article: "Article 49" },
+        items: ["Register high-risk AI"],
+      }
 
   ###########################################################
   # PROHIBITED PRODUCT MANUFACTURER OBLIGATIONS (P1–P4)
   ###########################################################
 
   ProhibitedProductManufacturer:
-
     P1:
       title: "Cease Prohibited AI Integration"
       source:
@@ -1251,66 +1862,315 @@ obligations checklist:
         - "Re-assess product safety without prohibited AI component"
         - "Document corrective measures and alternative compliance path"
 
-  ###########################################################
-  # CONFORMITY ASSESSMENT OBLIGATIONS (O1–O50)
-  ###########################################################
+###########################################################
+# CONFORMITY ASSESSMENT OBLIGATIONS (O1–O50)
+###########################################################
 
-  ConformityAssessment:
+ConformityAssessment:
+  InternalControl:
+    O1:
+      {
+        title: "Identify Harmonised Standards",
+        source: { article: "Article 40, 41" },
+        items: ["Identify harmonised standards or common specifications"],
+      }
+    O2:
+      {
+        title: "Document Standards",
+        source: { article: "Article 40, 41, 11" },
+        items: ["Document chosen standards in technical documentation"],
+      }
+    O3:
+      {
+        title: "Verify Compliance",
+        source: { article: "Article 43(1)" },
+        items: ["Verify compliance with Articles 8–15"],
+      }
+    O4:
+      {
+        title: "Complete Technical Documentation",
+        source: { article: "Article 11, Annex IV" },
+        items: ["Complete technical documentation"],
+      }
+    O5:
+      {
+        title: "Include System Details",
+        source: { article: "Annex IV" },
+        items: ["Include architecture, data, oversight details"],
+      }
+    O6:
+      {
+        title: "Prepare Declaration",
+        source: { article: "Article 47" },
+        items: ["Prepare EU Declaration of Conformity"],
+      }
+    O7:
+      {
+        title: "Affix CE Marking",
+        source: { article: "Article 49" },
+        items: ["Affix CE marking"],
+      }
+    O8:
+      {
+        title: "Register System",
+        source: { article: "Article 71" },
+        items: ["Register AI system in EU database"],
+      }
+    O9:
+      {
+        title: "Post-Market Plan",
+        source: { article: "Article 72" },
+        items: ["Establish post-market monitoring system"],
+      }
+    O10:
+      {
+        title: "Document Logging",
+        source: { article: "Article 12" },
+        items: ["Document automatic logging"],
+      }
+    O11:
+      {
+        title: "Retain Docs",
+        source: { article: "Article 11(1), 18" },
+        items: ["Retain documentation 10 years"],
+      }
+    O12:
+      {
+        title: "Assign Responsible Officer",
+        source: { article: "Article 17" },
+        items: ["Implement quality management system"],
+      }
 
-    InternalControl:
-      O1:  { title: "Identify Harmonised Standards", source: {article: "Article 43"}, items: ["Identify harmonised standards"] }
-      O2:  { title: "Document Standards", source: {article: "Article 43"}, items: ["Document chosen standards"] }
-      O3:  { title: "Verify Compliance", source: {article: "Article 43"}, items: ["Verify compliance with Articles 9–15"] }
-      O4:  { title: "Complete Technical Documentation", source: {article: "Article 11"}, items: ["Complete technical documentation"] }
-      O5:  { title: "Include System Details", source: {article: "Annex IV"}, items: ["Include architecture, data, oversight details"] }
-      O6:  { title: "Prepare Declaration", source: {article: "Article 47"}, items: ["Prepare Declaration of Conformity"] }
-      O7:  { title: "Affix CE Marking", source: {article: "Article 48"}, items: ["Affix CE marking"] }
-      O8:  { title: "Register System", source: {article: "Article 49"}, items: ["Register AI system"] }
-      O9:  { title: "Post-Market Plan", source: {article: "Article 72"}, items: ["Document post-market plan"] }
-      O10: { title: "Document Logging", source: {article: "Article 12"}, items: ["Document logging"] }
-      O11: { title: "Retain Docs", source: {article: "Article 11"}, items: ["Retain documentation 10 years"] }
-      O12: { title: "Assign Responsible Officer", source: {article: "Article 17"}, items: ["Assign responsible officer"] }
+  NotifiedBody:
+    O13:
+      {
+        title: "Select Notified Body",
+        source: { article: "Article 43(1)" },
+        items: ["Select appropriate Notified Body"],
+      }
+    O14:
+      {
+        title: "Submit Technical Docs",
+        source: { article: "Article 43(2), Annex IV" },
+        items: ["Submit technical documentation"],
+      }
+    O15:
+      {
+        title: "Submit System Design",
+        source: { article: "Article 43(2)" },
+        items: ["Submit system for design examination"],
+      }
+    O16:
+      {
+        title: "Submit Data Governance Docs",
+        source: { article: "Article 10, Annex IV" },
+        items: ["Submit data governance documentation"],
+      }
+    O17:
+      {
+        title: "Submit Training/Testing Docs",
+        source: { article: "Annex IV, Section 2(f)" },
+        items: ["Submit training/testing/validation documentation"],
+      }
+    O18:
+      {
+        title: "Submit Metrics",
+        source: { article: "Article 15, Annex IV" },
+        items: ["Submit accuracy, robustness, cybersecurity metrics"],
+      }
+    O19:
+      {
+        title: "Submit Risk File",
+        source: { article: "Article 9, Annex IV" },
+        items: ["Submit risk management documentation"],
+      }
+    O20:
+      {
+        title: "Submit Oversight Design",
+        source: { article: "Article 14, Annex IV" },
+        items: ["Submit human oversight measures"],
+      }
+    O21:
+      {
+        title: "Submit Cybersecurity Docs",
+        source: { article: "Article 15, Annex IV" },
+        items: ["Submit cybersecurity documentation"],
+      }
+    O22:
+      {
+        title: "Submit Logging Architecture",
+        source: { article: "Article 12, Annex IV" },
+        items: ["Submit logging architecture"],
+      }
+    O23:
+      {
+        title: "Design Examination",
+        source: { article: "Article 43(2-3)" },
+        items: ["Undergo design examination"],
+      }
+    O24:
+      {
+        title: "Implement NB Actions",
+        source: { article: "Article 43(5)" },
+        items: ["Implement NB corrective actions"],
+      }
+    O25:
+      {
+        title: "Maintain Certificates",
+        source: { article: "Article 43(6-7)" },
+        items: ["Maintain and renew NB certificates"],
+      }
 
-    NotifiedBody:
-      O13: { title: "Select Notified Body", source: {article: "Article 43"}, items: ["Select Notified Body"] }
-      O14: { title: "Submit Technical Docs", source: {article: "Article 43"}, items: ["Submit technical documentation"] }
-      O15: { title: "Submit System Design", source: {article: "Article 43"}, items: ["Submit system design"] }
-      O16: { title: "Submit Data Governance Docs", source: {article: "Article 10"}, items: ["Submit data governance documentation"] }
-      O17: { title: "Submit Training/Testing Docs", source: {article: "Annex IV"}, items: ["Submit training/testing documentation"] }
-      O18: { title: "Submit Metrics", source: {article: "Article 15"}, items: ["Submit performance metrics"] }
-      O19: { title: "Submit Risk File", source: {article: "Article 9"}, items: ["Submit risk file"] }
-      O20: { title: "Submit Oversight Design", source: {article: "Article 14"}, items: ["Submit oversight design"] }
-      O21: { title: "Submit Cybersecurity Docs", source: {article: "Article 15"}, items: ["Submit cybersecurity file"] }
-      O22: { title: "Submit Logging Architecture", source: {article: "Article 12"}, items: ["Submit logging architecture"] }
-      O23: { title: "Design Examination", source: {article: "Article 43"}, items: ["Undergo design examination"] }
-      O24: { title: "Implement NB Actions", source: {article: "Article 43"}, items: ["Implement NB corrective actions"] }
-      O25: { title: "Maintain Certificates", source: {article: "Article 43"}, items: ["Maintain NB certificates"] }
+  CommonSpecifications:
+    O26:
+      {
+        title: "Identify CS",
+        source: { article: "Article 41" },
+        items: ["Identify applicable Common Specifications"],
+      }
+    O27:
+      {
+        title: "Document CS Implementation",
+        source: { article: "Article 41, 11" },
+        items: ["Document CS implementation in technical docs"],
+      }
+    O28:
+      {
+        title: "Map CS Requirements",
+        source: { article: "Article 41(2)" },
+        items: ["Map CS to system requirements"],
+      }
+    O29:
+      {
+        title: "Implement CS Controls",
+        source: { article: "Article 41(1)" },
+        items: ["Implement CS mandatory requirements"],
+      }
+    O30:
+      {
+        title: "Validate CS Compliance",
+        source: { article: "Article 41, 43" },
+        items: ["Validate compliance with CS"],
+      }
+    O31:
+      {
+        title: "Document CS Compliance",
+        source: { article: "Article 41, Annex IV" },
+        items: ["Document CS compliance in technical documentation"],
+      }
+    O32:
+      {
+        title: "Declaration",
+        source: { article: "Article 47" },
+        items: ["Prepare EU Declaration of Conformity referencing CS"],
+      }
+    O33:
+      {
+        title: "CE Marking",
+        source: { article: "Article 49" },
+        items: ["Affix CE marking"],
+      }
+    O34:
+      {
+        title: "Registration",
+        source: { article: "Article 71" },
+        items: ["Register system in EU database"],
+      }
+    O35:
+      {
+        title: "Maintain CS Documentation",
+        source: { article: "Article 11(1), 41" },
+        items: ["Maintain CS documentation 10 years"],
+      }
+    O36:
+      {
+        title: "Reassess After Changes",
+        source: { article: "Article 43(4)" },
+        items: ["Reassess after substantial modifications"],
+      }
 
-    CommonSpecifications:
-      O26: { title: "Identify CS", source: {article: "Article 40"}, items: ["Identify applicable Common Specifications"] }
-      O27: { title: "Document CS Implementation", source: {article: "Article 40"}, items: ["Document CS implementation"] }
-      O28: { title: "Map CS Requirements", source: {article: "Article 40"}, items: ["Map CS to system requirements"] }
-      O29: { title: "Implement CS Controls", source: {article: "Article 40"}, items: ["Implement CS controls"] }
-      O30: { title: "Validate CS Compliance", source: {article: "Article 40"}, items: ["Validate CS compliance"] }
-      O31: { title: "Document CS Compliance", source: {article: "Article 40"}, items: ["Document CS compliance"] }
-      O32: { title: "Declaration", source: {article: "Article 47"}, items: ["Prepare Declaration of Conformity"] }
-      O33: { title: "CE Marking", source: {article: "Article 48"}, items: ["Affix CE marking"] }
-      O34: { title: "Registration", source: {article: "Article 49"}, items: ["Register system"] }
-      O35: { title: "Maintain CS Documentation", source: {article: "Article 40"}, items: ["Maintain CS documentation"] }
-      O36: { title: "Reassess After Changes", source: {article: "Article 40"}, items: ["Reassess after system changes"] }
-
-    SectoralLaw:
-      O37: { title: "Identify Sectoral Law", source: {article: "Article 43"}, items: ["Identify applicable sectoral law"] }
-      O38: { title: "Sectoral Conformity Assessment", source: {article: "Sectoral Product Law"}, items: ["Perform sectoral conformity assessment"] }
-      O39: { title: "Include Articles 9–15", source: {article: "Article 43"}, items: ["Ensure compliance with Articles 9–15"] }
-      O40: { title: "Safety Documentation", source: {article: "Sectoral Product Law"}, items: ["Provide safety documentation"] }
-      O41: { title: "Cybersecurity Docs", source: {article: "Article 15"}, items: ["Provide cybersecurity documentation"] }
-      O42: { title: "Logging Docs", source: {article: "Article 12"}, items: ["Provide logging documentation"] }
-      O43: { title: "Design Examination", source: {article: "Sectoral Product Law"}, items: ["Undergo design examination"] }
-      O44: { title: "Audits", source: {article: "Sectoral Product Law"}, items: ["Undergo audits"] }
-      O45: { title: "Implement Findings", source: {article: "Sectoral Product Law"}, items: ["Implement audit findings"] }
-      O46: { title: "Prepare Sectoral Declarations", source: {article: "Sectoral Product Law"}, items: ["Prepare sectoral declarations"] }
-      O47: { title: "Register in Sectoral Database", source: {article: "Sectoral Product Law"}, items: ["Register in sectoral database"] }
-      O48: { title: "Register in AI Database", source: {article: "Article 49"}, items: ["Register in AI database"] }
-      O49: { title: "Retain Docs", source: {article: "Sectoral Product Law"}, items: ["Retain documentation"] }
-      O50: { title: "Authority Access", source: {article: "Sectoral Product Law"}, items: ["Provide authority access"] }
+  SectoralLaw:
+    O37:
+      {
+        title: "Identify Sectoral Law",
+        source: { article: "Article 43(3), Annex I Section B" },
+        items: ["Identify applicable sectoral harmonization law"],
+      }
+    O38:
+      {
+        title: "Sectoral Conformity Assessment",
+        source: { article: "Article 43(3)" },
+        items: ["Perform integrated sectoral conformity assessment"],
+      }
+    O39:
+      {
+        title: "Include Articles 9–15",
+        source: { article: "Article 43(3)" },
+        items: ["Ensure compliance with AI Act Articles 8–15"],
+      }
+    O40:
+      {
+        title: "Safety Documentation",
+        source: { article: "Article 43(4), Annex IV" },
+        items: ["Provide combined sectoral + AI technical documentation"],
+      }
+    O41:
+      {
+        title: "Cybersecurity Docs",
+        source: { article: "Article 15, 43(3)" },
+        items: ["Provide AI cybersecurity documentation"],
+      }
+    O42:
+      {
+        title: "Logging Docs",
+        source: { article: "Article 12, 43(3)" },
+        items: ["Provide AI logging documentation"],
+      }
+    O43:
+      {
+        title: "Design Examination",
+        source: { article: "Article 43(3-4)" },
+        items: ["Undergo integrated design examination by sectoral NB"],
+      }
+    O44:
+      {
+        title: "Audits",
+        source: { article: "Article 43(4)" },
+        items: ["Undergo audits covering both regimes"],
+      }
+    O45:
+      {
+        title: "Implement Findings",
+        source: { article: "Article 43(5)" },
+        items: ["Implement findings from sectoral + AI assessment"],
+      }
+    O46:
+      {
+        title: "Prepare Sectoral Declarations",
+        source: { article: "Article 47, 43(3)" },
+        items: ["Prepare unified Declaration of Conformity"],
+      }
+    O47:
+      {
+        title: "Register in Sectoral Database",
+        source: { article: "Sectoral Product Law" },
+        items: ["Register in sectoral database if required"],
+      }
+    O48:
+      {
+        title: "Register in AI Database",
+        source: { article: "Article 71" },
+        items: ["Register in EU AI database"],
+      }
+    O49:
+      {
+        title: "Retain Docs",
+        source: { article: "Article 11(1), 18" },
+        items: ["Retain documentation per both regimes (typically 10 years)"],
+      }
+    O50:
+      {
+        title: "Authority Access",
+        source: { article: "Article 64, 70, 43(4)" },
+        items: ["Provide access to both sectoral and AI authorities"],
+      }
