@@ -28,6 +28,63 @@ export default function Screen11b_FRIA() {
     return null;
   };
 
+  // Detect inconsistency between auto-populated and current deployment sectors
+  const detectDeploymentInconsistency = () => {
+    const hasAnnexIII = selectedUseCases.length > 0 && !selectedUseCases.includes('none');
+    if (!hasAnnexIII) return null;
+    
+    // Calculate expected deployment sectors based on use cases
+    const expectedSectors = [];
+    if (selectedUseCases.some(id => ['biometric_rbi', 'biometric_categorisation', 'emotion_recognition'].includes(id))) {
+      expectedSectors.push('biometrics');
+    }
+    if (selectedUseCases.some(id => id.startsWith('education_'))) {
+      expectedSectors.push('education');
+    }
+    if (selectedUseCases.some(id => id.startsWith('employment_'))) {
+      expectedSectors.push('employment');
+    }
+    if (selectedUseCases.some(id => id.startsWith('services_'))) {
+      expectedSectors.push('essential_services');
+    }
+    if (selectedUseCases.some(id => id.startsWith('law_'))) {
+      expectedSectors.push('law_enforcement');
+    }
+    if (selectedUseCases.some(id => id.startsWith('migration_'))) {
+      expectedSectors.push('migration_asylum_border');
+    }
+    if (selectedUseCases.some(id => id.startsWith('justice_'))) {
+      expectedSectors.push('justice');
+    }
+    
+    if (!expectedSectors.length) return null;
+    
+    const currentSectors = deploymentSectors || [];
+    
+    // Check if current selection significantly differs from expected
+    const hasMajorDeviation = expectedSectors.some(expected => !currentSectors.includes(expected)) ||
+                             currentSectors.some(current => current !== 'none' && !expectedSectors.includes(current));
+    
+    if (!hasMajorDeviation) return null;
+    
+    const sectorLabels = {
+      'biometrics': 'Biometrics',
+      'education': 'Education', 
+      'employment': 'Employment',
+      'essential_services': 'Essential Services',
+      'law_enforcement': 'Law Enforcement',
+      'migration_asylum_border': 'Migration/Asylum/Border',
+      'justice': 'Justice'
+    };
+    
+    return {
+      expected: expectedSectors.map(s => sectorLabels[s] || s).join(', '),
+      current: currentSectors.includes('none') ? 'None' : currentSectors.map(s => sectorLabels[s] || s).join(', ')
+    };
+  };
+
+  const deploymentInconsistency = detectDeploymentInconsistency();
+
   // Auto-set Annex III point if not already set
   useEffect(() => {
     const hasAnnexIII = selectedUseCases.length > 0 && !selectedUseCases.includes('none');
@@ -171,8 +228,8 @@ export default function Screen11b_FRIA() {
 
         {/* ===== PUBLIC BODY / AUTHORITY QUESTION ===== */}
         <div style={{ marginTop: "0", paddingTop: "0", borderTop: "none" }}>
-          <h3 style={{ marginBottom: "16px" }}>Are you a public body or authority?</h3>
-          <p style={{ marginBottom: "16px", fontSize: "0.95em", color: "#666" }}>
+          <h3>Are you a public body or authority?</h3>
+          <p style={{ marginBottom: "16px", fontSize: "0.9rem", color: "#666" }}>
             This affects whether Fundamental Rights Impact Assessment (FRIA) is required.
             Select "Yes" if you work for a government agency, public administration, or you are a private actor performing tasks “in the public interest” on behalf of a public authority (outsourced services).
           </p>
@@ -203,7 +260,7 @@ export default function Screen11b_FRIA() {
 
         {/* ===== PUBLIC SERVICE PROVIDER QUESTION ===== */}
         <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border-color)" }}>
-          <h3 style={{ marginBottom: "16px" }}>Are you a public service provider?</h3>
+          <h3>Are you a public service provider?</h3>
           <p style={{ marginBottom: "16px", fontSize: "0.95em", color: "#666" }}>
             This applies to private entities that provide services in the public interest (e.g., healthcare, utilities, education) 
             on behalf of or under contract with public authorities. This is distinct from being a public body directly.
@@ -246,10 +303,24 @@ export default function Screen11b_FRIA() {
                 {isAnnexIII_5b && isAnnexIII_5c && " and "}
                 {isAnnexIII_5c && "Annex III Point 5(c)"}).
                 <br/><br/>
-                <strong>Article 27 requires ALL deployers</strong> (both public and private entities) of these specific systems to conduct a Fundamental Rights Impact Assessment, regardless of your answers below.
-                <span className="source-tag" title="Article 27(1) - deployers of high-risk AI systems referred to in points 5(b) and (c) of Annex III">Source</span>
+                <strong>ALL deployers</strong> (both public and private entities) of these specific systems must conduct a Fundamental Rights Impact Assessment, regardless of your answers below.
+                {" "}<span className="source-tag" title="Article 27(1) - deployers of high-risk AI systems referred to in points 5(b) and (c) of Annex III">Source</span>
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Auto-selection banner for deployment sectors */}
+        {selectedUseCases.length > 0 && !selectedUseCases.includes('none') && deploymentSectors.length > 0 && !deploymentSectors.includes('none') && (
+          <div className="info-box alert-info" style={{ marginBottom: "24px" }}>
+            <strong>ℹ️ Auto-Selection:</strong> Based on your Part 5 Annex III use cases, we've pre-selected the corresponding deployment sectors below. You can change these selections if they don't match your situation.
+          </div>
+        )}
+
+        {/* Inconsistency warning */}
+        {deploymentInconsistency && (
+          <div className="info-box alert-warning" style={{ marginBottom: "24px" }}>
+            <strong>⚠️ Potential Inconsistency:</strong> Your current deployment sectors (<strong>{deploymentInconsistency.current}</strong>) differ from your Part 5 Annex III use cases, which suggest <strong>{deploymentInconsistency.expected}</strong>. Please verify this is correct for your situation.
           </div>
         )}
 
@@ -333,8 +404,9 @@ export default function Screen11b_FRIA() {
           {friaRequired ? (
             <div className="info-box alert-warning">
               <strong>🔍 FRIA Required:</strong>
+              <p>
               {isAnnexIII_5b_or_5c && (
-                <> Your AI system uses creditworthiness evaluation or life/health insurance risk assessment (Annex III Point 5b/5c). Article 27 requires ALL deployers of these systems to conduct FRIA, regardless of public/private status.</>
+                <>Your AI system uses creditworthiness evaluation or life/health insurance risk assessment (Annex III Point 5b/5c). ALL deployers of these systems must conduct FRIA, regardless of public/private status.</>
               )}
               {!isAnnexIII_5b_or_5c && (
                 <>
@@ -346,16 +418,20 @@ export default function Screen11b_FRIA() {
                   {" "}with a high-risk AI system.
                 </>
               )}
-              {" "}You must conduct and document a comprehensive Fundamental Rights Impact Assessment before deploying your system. <span className="source-tag" title="Article 27 - Fundamental Rights Impact Assessment for High-Risk AI Systems">Source</span>
+              {" "}You must conduct and document a comprehensive Fundamental Rights Impact Assessment before deploying your system.
+              {" "}<span className="source-tag" title="Article 27 - Fundamental Rights Impact Assessment for High-Risk AI Systems">Source</span>
+              </p>
             </div>
           ) : (
             <div className="info-box alert-info">
               <strong>ℹ️ No FRIA Required:</strong>
+              <p>
               Based on your selections, FRIA is not required. 
               {!isHighRisk && "Your system is not high-risk."}
-              {isHighRisk && annexIIIPoint === 2 && "Critical infrastructure systems (Annex III Point 2) are exempt from FRIA per Article 27(1)."}
+              {isHighRisk && annexIIIPoint === 2 && "Critical infrastructure systems (Annex III Point 2) are exempt from FRIA."}
               {isHighRisk && annexIIIPoint !== 2 && !isPublicAuthority && !isPublicServiceProvider && !hasSensitiveDeploymentSector && !isAnnexIII_5b_or_5c && "You are not a public authority, public service provider, deploying in sensitive sectors, or using Point 5(b)/(c) systems."}
               {" "}<span className="source-tag" title="Article 27 - Fundamental Rights Impact Assessment for High-Risk AI Systems">Source</span>
+              </p>
             </div>
           )}
         </div>

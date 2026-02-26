@@ -651,6 +651,11 @@ body {
   font-size: 0.88rem;
 }
 
+.checklist-item.sub-item .item-description {
+  padding-left: 0;
+  font-size: 0.85rem;
+}
+
 .checklist-item {
   padding: 7px 10px;
   margin-bottom: 3px;
@@ -698,7 +703,7 @@ body {
 
 /* Sub-items container */
 .sub-items-container {
-  width: 100%;
+  width: 95.7%;
   margin-top: 0;
   border-left: 2px solid var(--border-color);
   margin-left: 36px;
@@ -1129,6 +1134,25 @@ body {
   flex-direction: column;
   gap: 15px;
   margin: 25px 0;
+}
+
+.form-group h3,
+.form-group h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--text-color);
+  letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.form-group h4 {
+  font-size: 0.9rem;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 /* Responsive Design */

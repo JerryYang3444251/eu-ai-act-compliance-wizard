@@ -58,8 +58,9 @@ rules_engine:
     condition: "exclusion_flags intersects ['military','R&D_only','opensource_free','personal_use','foreign_LE_only']"
     action:
       classification: "Excluded"
+      add_obligations: "Exclusion_Documentation"  # Add M1-M5 documentation requirements
     next: SCREEN_FINAL
-    notes: "Immediate scope removal per Article 2"
+    notes: "Immediate scope removal per Article 2 material scope exclusions - but still requires documentation per M1-M5"
 
   EXCL_002:
     rule_id: EXCL_002
@@ -78,7 +79,7 @@ rules_engine:
     rule_id: ROLE_001
     namespace: roles.raw
     inputs: [org_actions]
-    condition: "org_actions intersects ['develop','modify','change_purpose','fine_tune','retrain']"
+    condition: "org_actions intersects ['develop_system','develop_model','modify','change_purpose','fine_tune']"
     action: "add_role_raw('Development_Modification')"
     notes: "Any form of development or substantial modification"
 
@@ -451,6 +452,16 @@ rules_engine:
         next = SCREEN_14  # Skip to checklist (terminal classification)
       else:
         # All practices have valid exceptions or none selected
+        # Check if any exceptions were actually applied (need X series documentation)
+        applied_exceptions = []
+        for practice in prohibited_actions:
+          if practice in ['criminal_risk', 'emotion_workplace_education', 'biometric_categorisation', 'real_time_rbi']:
+            if prohibited_exceptions.get(practice) == true:
+              applied_exceptions.append(practice)
+        
+        if applied_exceptions:
+          add_obligations('Exemption_Documentation')  # X1-X5 exemption proof requirements
+        
         next = SCREEN_10
     notes: |
       Article 5 Exception Logic (IMPLEMENTATION):
@@ -460,7 +471,16 @@ rules_engine:
       - real_time_rbi (Art 5(1)(h)): Exception if victim search, threat prevention, or serious crime
 
       Practices WITHOUT exceptions are ALWAYS prohibited:
-      - subliminal, vulnerability, social_scoring, face_scraping
+      - subliminal (updated: "cause or reasonably likely to cause")
+      - vulnerability (updated: "cause or reasonably likely to cause")
+      - social_scoring (updated: evaluation/classification based on social behavior)
+      - face_scraping (covers both Article 5(1)(e) and 5(2))
+
+      Exception requirements strengthened:
+      - criminal_risk: must SUPPLEMENT human assessment with objective facts
+      - emotion_workplace_education: must be STRICTLY for medical/safety (not within workplace/education)
+      - biometric_categorisation: lawful law enforcement use only
+      - real_time_rbi: requires judicial authorization, registration, FRIA, and limitations
 
       Logic: hasProhibited AND (has_non_exceptionable_practices OR has_exceptionable_practice_with_false_exception)
 
@@ -551,54 +571,60 @@ rules_engine:
     action: "CA_route = 'Notified_Body'"
     notes: "Ensures no dead-end in CA routing"
 
-  # STEP 1 — Sectoral Law
-  CA_001:
-    rule_id: CA_001
-    namespace: CA
-    inputs: [A_sectoral, B_thirdparty]
-    condition: "A_sectoral == true AND B_thirdparty == true"
-    action: "CA_route = 'Sectoral_Law'"
-    next: SCREEN_12B
-    notes: "Highest priority"
+  ###########################################################
+  # MODULE 10 — CONFORMITY ASSESSMENT ROUTING (Article 43)
+  ###########################################################
+  # Article 43 defines conformity assessment procedures based on:
+  # - Article 43(3): Annex I (HIGH_RISK_IA) → Follow sectoral legislation
+  # - Article 43(2): Annex III points 2-8 (non-biometric) → MUST use internal control (Annex VI)
+  # - Article 43(1): Annex III point 1 (biometric) → Choice or mandatory notified body based on standards
+  # 
+  # Note: HIGH_RISK_IB systems skip Article 43 per Article 2(2) - only Articles 6(1), 102-109, 112 apply
 
-  # STEP 2 — Common Specifications
-  CA_002:
-    rule_id: CA_002
+  CA_ARTICLE_43_3:
+    rule_id: CA_ARTICLE_43_3
     namespace: CA
-    inputs: [D_CS_available, D_CS_commit]
-    condition: "D_CS_available == true AND D_CS_commit == true"
-    action: "CA_route = 'Common_Specifications'"
-    next: SCREEN_12B
+    inputs: [classification]
+    condition: "classification == 'HIGH_RISK_IA'"
+    action: "CA_route = 'Sectoral_Legislation'"
+    next: SCREEN_14
+    notes: "Article 43(3) - Follow the conformity assessment procedure required under the relevant sectoral legislation listed in Annex I Section A"
 
-  # STEP 3 — Internal Control
-  CA_003:
-    rule_id: CA_003
+  CA_ARTICLE_43_2:
+    rule_id: CA_ARTICLE_43_2
     namespace: CA
-    inputs:
-      [
-        C_HS_full_coverage,
-        A_sectoral,
-        B_thirdparty,
-        D_CS_available,
-        E_safety_complexity,
-      ]
-    condition: >
-      C_HS_full_coverage == true AND
-      A_sectoral != true AND
-      B_thirdparty != true AND
-      D_CS_available != true AND
-      E_safety_complexity == false
+    inputs: [classification, isBiometric]
+    condition: "classification == 'HIGH_RISK_III' AND isBiometric == false"
     action: "CA_route = 'Internal_Control'"
-    next: SCREEN_12B
+    next: SCREEN_14
+    notes: "Article 43(2) - Annex III points 2-8 MUST use internal control (Annex VI), no notified body involvement"
 
-  # STEP 4 — Notified Body
-  CA_004:
-    rule_id: CA_004
+  CA_ARTICLE_43_1_MANDATORY:
+    rule_id: CA_ARTICLE_43_1_MANDATORY
     namespace: CA
-    inputs: [C_HS_full_coverage, E_safety_complexity]
-    condition: "C_HS_full_coverage == false OR E_safety_complexity == true"
+    inputs: [classification, isBiometric, harmonizedStandardsApplied]
+    condition: "classification == 'HIGH_RISK_III' AND isBiometric == true AND (harmonizedStandardsApplied == 'none' OR harmonizedStandardsApplied == 'partial')"
     action: "CA_route = 'Notified_Body'"
-    next: SCREEN_12B
+    next: SCREEN_14
+    notes: "Article 43(1) - Annex III point 1 (biometric) MUST use notified body (Annex VII) when HS/CS not fully applied"
+
+  CA_ARTICLE_43_1_CHOICE:
+    rule_id: CA_ARTICLE_43_1_CHOICE
+    namespace: CA
+    inputs: [classification, isBiometric, harmonizedStandardsApplied, userChoice]
+    condition: "classification == 'HIGH_RISK_III' AND isBiometric == true AND harmonizedStandardsApplied == 'full'"
+    action: "CA_route = userChoice"
+    next: SCREEN_14
+    notes: "Article 43(1) - Annex III point 1 (biometric) may CHOOSE between Internal Control (Annex VI) or Notified Body (Annex VII) when HS/CS fully applied"
+
+  CA_ARTICLE_2_2_SKIP:
+    rule_id: CA_ARTICLE_2_2_SKIP
+    namespace: CA
+    inputs: [classification]
+    condition: "classification == 'HIGH_RISK_IB'"
+    action: "skip_screen_13 = true"
+    next: SCREEN_14
+    notes: "Article 2(2) - HIGH_RISK_IB systems skip Article 43; only Articles 6(1), 102-109, 112 of AI Act apply; conformity governed by sectoral legislation"
 
   ###########################################################
   # MODULE 11 — ROLE + CLASSIFICATION → OBLIGATION SETS
@@ -610,7 +636,7 @@ rules_engine:
     inputs: [roles]
     condition: "roles contains 'Provider'"
     action: "add_obligations('Provider')"
-    notes: "Provider obligations (A1–A16) per Articles 9–17, 47–49, 72–75"
+    notes: "Provider obligations (A1–A17) per Articles 9–17, 25(4), 47–49, 72–75"
 
   OBL_002:
     rule_id: OBL_002
@@ -639,18 +665,18 @@ rules_engine:
   OBL_005:
     rule_id: OBL_005
     namespace: obligations
-    inputs: [classification]
-    condition: "classification contains 'GPAI'"
+    inputs: [classification, roles]
+    condition: "classification contains 'GPAI' AND roles contains 'Provider'"
     action: "add_obligations('GPAI')"
-    notes: "GPAI obligations (J1–J16) per Article 53"
+    notes: "GPAI obligations (J1–J16) per Article 53 — apply only to GPAI model PROVIDERS"
 
   OBL_006:
     rule_id: OBL_006
     namespace: obligations
-    inputs: [classification]
-    condition: "classification contains 'GPAI_systemic_risk'"
+    inputs: [classification, roles]
+    condition: "classification contains 'GPAI_systemic_risk' AND roles contains 'Provider'"
     action: "add_obligations('GPAI_systemic')"
-    notes: "GPAI systemic risk obligations (K1–K13) per Article 55"
+    notes: "GPAI systemic risk obligations (K1–K13) per Article 55 — apply only to GPAI model PROVIDERS"
 
   OBL_007:
     rule_id: OBL_007
@@ -748,6 +774,32 @@ rules_engine:
     action: "add_obligations('Handover')"
     notes: "Handover obligations (C1–C15) per Articles 13, 16, 23 — Provider must provide documentation to downstream actors for high-risk systems"
 
+  OBL_018:
+    rule_id: OBL_018
+    namespace: obligations
+    inputs: [classification]
+    condition: "classification == 'Excluded'"
+    action: "add_obligations('Exclusion_Documentation')"
+    notes: "Exclusion documentation obligations (M1–M5) per Article 2 — Required even for excluded systems to document exclusion basis"
+
+  OBL_019:
+    rule_id: OBL_019
+    namespace: obligations
+    inputs: [prohibited_exceptions, prohibited_actions]
+    condition: >
+      prohibited_exceptions contains_any ['criminal_risk', 'emotion_workplace_education', 'biometric_categorisation', 'real_time_rbi'] AND
+      any(prohibited_exceptions[practice] == true for practice in prohibited_actions)
+    action: "add_obligations('Exemption_Documentation')"
+    notes: "Exemption documentation obligations (X1–X5) per Article 5 & Recital 16 — Required when claiming exemptions from prohibited practices"
+
+  OBL_020:
+    rule_id: OBL_020
+    namespace: obligations
+    inputs: [system_features]
+    condition: "system_features contains 'ancillary_feature'"
+    action: "add_obligations('Exemption_Documentation')"
+    notes: "Ancillary feature documentation (X5) per Recital 16 — Required when claiming ancillary feature exemption"
+
   ###########################################################
   # MODULE 12 — OUTPUT CHECKLIST
   ###########################################################
@@ -761,7 +813,7 @@ rules_engine:
 
 obligations checklist:
   ###########################################################
-  # PROVIDER OBLIGATIONS (A1–A16)
+  # PROVIDER OBLIGATIONS (A1–A17)
   ###########################################################
 
   Provider:
@@ -986,6 +1038,19 @@ obligations checklist:
         - "Provide logs"
         - "Provide samples"
         - "Cooperate with investigations"
+
+    A17:
+      title: "Model Provider Cooperation Agreements"
+      source:
+        article: "Article 25(4)"
+      items:
+        - "Establish written agreements with AI model providers"
+        - "Define responsibilities and obligations in agreements"
+        - "Ensure model providers provide necessary information"
+        - "Obtain technical access and assistance from model providers"
+        - "Document technical specifications of integrated models"
+        - "Document capabilities and limitations of integrated models"
+        - "Confirm cooperation enables full compliance"
 
   ###########################################################
   # HANDOVER OBLIGATIONS (C1–C15)
@@ -1762,33 +1827,100 @@ obligations checklist:
       }
 
   ###########################################################
-  # EXCLUSION RULES (M1–M4)
+  # EXCLUSION DOCUMENTATION OBLIGATIONS (M1–M5) — Article 2 only
   ###########################################################
 
-  Exclusion:
+  Exclusion_Documentation:
     M1:
       {
-        title: "Research Not Placed on Market",
+        title: "Document Exclusion Basis",
         source: { article: "Article 2" },
-        items: ["Research not placed on market"],
+        items: ["Document the specific exclusion ground(s) under Article 2 that applies to your AI system"],
       }
     M2:
       {
-        title: "Open-Source Without Remuneration",
+        title: "Maintain Exclusion Justification",
         source: { article: "Article 2" },
-        items: ["Open-source with no remuneration"],
+        items: ["Maintain documentation justifying why the system falls under the exclusion"],
       }
     M3:
       {
-        title: "Personal Non-Professional Use",
+        title: "Monitor Exclusion Applicability",
         source: { article: "Article 2" },
-        items: ["Personal non-professional use"],
+        items: ["Regularly review whether the exclusion grounds continue to apply as the system evolves"],
       }
     M4:
       {
-        title: "Military or Foreign LE Use",
+        title: "Update Classification if Needed",
         source: { article: "Article 2" },
-        items: ["Military or foreign law enforcement use"],
+        items: ["If exclusion grounds no longer apply, re-classify system and apply appropriate AI Act requirements"],
+      }
+    M5:
+      {
+        title: "Exclusion Documentation Record",
+        source: { article: "Article 2" },
+        items: ["Keep records of exclusion determination and any reviews performed"],
+      }
+
+  ###########################################################
+  # EXEMPTION DOCUMENTATION OBLIGATIONS (X1–X5) — Article 5 & Recital 16
+  ###########################################################
+
+  Exemption_Documentation:
+    X1:
+      {
+        title: "Criminal Risk Assessment Exemption Documentation",
+        source: { article: "Article 5(1)(d)" },
+        items: [
+          "Document that system only supports human assessment and does not replace human decision-making",
+          "Maintain evidence that assessments are based on objective and verifiable facts",
+          "Document that facts are directly linked to specific criminal activity",
+          "Keep records of human oversight and final decision accountability"
+        ],
+      }
+    X2:
+      {
+        title: "Medical/Safety Emotion Recognition Exemption Documentation",
+        source: { article: "Article 5(1)(f)" },
+        items: [
+          "Document specific medical or safety purpose justification for emotion inference",
+          "Maintain evidence of medical/safety context and necessity",
+          "Keep records of medical professional involvement or safety protocol compliance",
+          "Document that use is limited to medical/safety purposes only"
+        ],
+      }
+    X3:
+      {
+        title: "Biometric Law Enforcement Exemption Documentation",
+        source: { article: "Article 5(1)(g), Article 5(2-4)" },
+        items: [
+          "Document judicial or administrative authorization for each use",
+          "Maintain records of strict temporal and geographical limitations",
+          "Document compliance with all safeguards and conditions",
+          "Keep records of human verification and oversight procedures"
+        ],
+      }
+    X4:
+      {
+        title: "Real-time Remote Biometric Identification Exemption Documentation",
+        source: { article: "Article 5(1)(h), Article 5(2-4)" },
+        items: [
+          "Document specific law enforcement purpose and legal authorization",
+          "Maintain records of urgency justification and authorization timing",
+          "Document implementation of required safeguards and human oversight",
+          "Keep detailed logs of each use including judicial review"
+        ],
+      }
+    X5:
+      {
+        title: "Ancillary Feature Exemption Documentation",
+        source: { article: "Recital 16" },
+        items: [
+          "Document objective technical reasons why the AI feature cannot be used without the principal service",
+          "Maintain evidence that integration is not a means to circumvent the AI Act",
+          "Document that the AI functionality is genuinely ancillary and secondary to the main service",
+          "Keep records of technical architecture showing inseparable integration"
+        ],
       }
 
   ###########################################################

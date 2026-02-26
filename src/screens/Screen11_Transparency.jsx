@@ -123,8 +123,8 @@ export default function Screen11_Transparency() {
         {/* SYSTEM FUNCTIONALITY SECTION - Only show if generates content */}
         {generatesContent && (
           <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border-color)" }}>
-            <h3 style={{ marginBottom: "16px" }}>What does your system generate?</h3>
-            <p style={{ marginBottom: "16px", fontSize: "0.95em", color: "#666" }}>
+            <h3>What does your system generate?</h3>
+            <p style={{ marginBottom: "16px", fontSize: "0.9rem", color: "#666" }}>
               Select all types of content your AI system produces. This helps determine specific transparency requirements.
             </p>
             
@@ -184,9 +184,9 @@ export default function Screen11_Transparency() {
         {/* CONTENT CHARACTERISTICS SECTION - Only show if generates content AND answered Q1 */}
         {generatesContent && shouldShowDeepfakeQuestion && (
           <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border-color)" }}>
-            <h3 style={{ marginBottom: "16px" }}>Does generated content resemble real persons, objects, places or events?</h3>
-          <p style={{ marginBottom: "16px", fontSize: "0.95em", color: "#666" }}>
-            This identifies deepfake-like capabilities requiring enhanced transparency obligations (Article 50).
+            <h3>Does generated content resemble real persons, objects, places or events?</h3>
+          <p style={{ marginBottom: "16px", fontSize: "0.9rem", color: "#666" }}>
+            This identifies deepfake-like capabilities requiring enhanced transparency obligations. <span className="source-tag" title="Article 50">Source</span>
           </p>
           
           <div className="options-group radio-group">
@@ -221,18 +221,19 @@ export default function Screen11_Transparency() {
               <div className="info-box alert-warning">
                 <strong>Transparency Obligations Identified:</strong>
                 <p>
-                  Your AI system triggers transparency obligations (Article 50). Transparency checklist items will apply.
+                  Your AI system triggers transparency obligations. Transparency checklist items will apply.
                   {contentCharacteristics?.includes("realistic") && 
                     (systemFunctionality?.includes("images") || systemFunctionality?.includes("video") || systemFunctionality?.includes("audio")) ? 
                     " Enhanced disclosure requirements apply for realistic synthetic content (deepfake labeling required)." : ""}
                   {systemFunctionality && systemFunctionality.length > 0 && !systemFunctionality.includes("none") ? 
                     " Content generation labeling requirements apply." : ""}
+                  {" "}<span className="source-tag" title="Article 50">Source</span>
                 </p>
               </div>
             ) : (
               <div className="info-box alert-success">
                 <strong>✓ No Transparency Obligations:</strong>
-                <p>Your system does not trigger specific transparency obligations under Article 50.</p>
+                <p>Your system does not trigger specific transparency obligations. <span className="source-tag" title="Article 50">Source</span></p>
               </div>
             )}
           </div>

@@ -17,6 +17,7 @@ export default function Screen14() {
     setShouldReevaluateRules,
     clearAnswers,
     pushHistory,
+    answers,
     // NEW: Additional context variables for FRIA rule
     isPublicServiceProvider,
     deploymentSector,
@@ -33,13 +34,13 @@ export default function Screen14() {
   }, []);
 
   // Obligations: persisted array of categories (e.g., ["A","C","O","H"])
-  const applicableCategories = obligations || [];
+  // Deduplicate to avoid repeated categories (e.g., double 'O')
+  const applicableCategories = Array.from(new Set(obligations || []));
 
   // Normalize conformityRoute into human-readable route label
   const routeLabelMap = {
     [CONFORMITY_ASSESSMENT_ROUTES.INTERNAL_CONTROL]: "Internal Control",
     [CONFORMITY_ASSESSMENT_ROUTES.NOTIFIED_BODY]: "Notified Body",
-    [CONFORMITY_ASSESSMENT_ROUTES.COMMON_SPECIFICATIONS]: "Common Specifications",
     [CONFORMITY_ASSESSMENT_ROUTES.SECTORAL_LEGISLATION]: "Sectoral Legislation",
   };
   const selectedRouteLabel = conformityRoute ? routeLabelMap[conformityRoute] : null;
@@ -48,7 +49,6 @@ export default function Screen14() {
   const routeDisplayMap = {
     [CONFORMITY_ASSESSMENT_ROUTES.INTERNAL_CONTROL]: "Internal Control (Harmonised Standards)",
     [CONFORMITY_ASSESSMENT_ROUTES.NOTIFIED_BODY]: "Notified Body (Third-Party Assessment)",
-    [CONFORMITY_ASSESSMENT_ROUTES.COMMON_SPECIFICATIONS]: "Common Specifications",
     [CONFORMITY_ASSESSMENT_ROUTES.SECTORAL_LEGISLATION]: "Sectoral Legislation",
   };
 
@@ -95,7 +95,7 @@ export default function Screen14() {
           </p>
         </div>
         <div className="screen-content">
-          <div className="info-box alert-danger">
+          <div className="info-box alert-danger" style={{ marginTop: "24px" }}>
             <strong>Configuration Error:</strong>
             <p>
               No conformity assessment route was determined for this high-risk AI system. 
@@ -108,11 +108,10 @@ export default function Screen14() {
             <ul>
               <li>Internal Control (Harmonised Standards)</li>
               <li>Notified Body Assessment</li>
-              <li>Common Specifications</li>
               <li>Sectoral Legislation</li>
             </ul>
             <p>
-              Please go back and complete the conformity assessment routing questions (Screen 12).
+              Please go back and complete the conformity assessment routing questions (Screen 13).
             </p>
           </div>
           <div className="screen-navigation">
@@ -226,6 +225,40 @@ export default function Screen14() {
       return false;
     }
     
+    // Exemption Documentation obligations (category "X") - Based on specific exemptions claimed
+    if (item.category === "X") {
+      if (!applicableCategories.includes("X")) return false;
+      
+      const exceptions = answers.prohibitedExceptions || {};
+      
+      // X1: Criminal Risk Assessment Exemption
+      if (item.number === "X1") {
+        return exceptions.criminal_risk === true;
+      }
+      
+      // X2: Medical/Safety Emotion Recognition Exemption
+      if (item.number === "X2") {
+        return exceptions.emotion_workplace_education === true;
+      }
+      
+      // X3: Biometric Law Enforcement Exemption
+      if (item.number === "X3") {
+        return exceptions.biometric_categorisation === true;
+      }
+      
+      // X4: Real-time Remote Biometric Identification Exemption
+      if (item.number === "X4") {
+        return exceptions.real_time_rbi === true;
+      }
+      
+      // X5: Ancillary Feature Exemption
+      if (item.number === "X5") {
+        return answers.ancillaryFeature === true;
+      }
+      
+      return false; // Don't show if exemption not claimed
+    }
+    
     // All other obligation categories
     return applicableCategories.includes(item.category);
   });
@@ -240,7 +273,7 @@ export default function Screen14() {
   });
 
   // Sort categories in logical order (Provider → High-Risk → Role-specific → GPAI → Other)
-  const categoryOrder = ["A", "C", "O", "H", "G", "F", "D", "E", "N", "J", "K", "I", "L", "M"];
+  const categoryOrder = ["A", "C", "O", "H", "G", "F", "D", "E", "N", "J", "K", "I", "L", "M", "X", "P"];
   const sortedCategories = Object.keys(itemsByCategory).sort((a, b) => {
     const aIndex = categoryOrder.indexOf(a);
     const bIndex = categoryOrder.indexOf(b);
@@ -266,6 +299,7 @@ export default function Screen14() {
     N: "Product Manufacturer Obligations",
     O: "Conformity Assessment Obligations",
     P: "Prohibited Product Manufacturer Obligations",
+    X: "Exemption Documentation",
   };
 
   // Category source citations
@@ -285,6 +319,7 @@ export default function Screen14() {
     N: "Article 24",
     O: "Article 43",
     P: "Articles 5, 24",
+    X: "Article 5, Recital 16",
   };
 
   // Category descriptions
@@ -297,20 +332,22 @@ export default function Screen14() {
     G: "Assessment of impacts on fundamental rights (public authorities & sensitive sectors)",
     H: "Article 50 transparency: content labeling, deepfake disclosure, and AI interaction disclosure",
     I: "Notification procedure for Annex III systems with non-significant risk",
-    J: "Obligations for general-purpose AI model providers",
-    K: "Additional obligations for GPAI models with systemic risk",
+    J: "Obligations for general-purpose AI model providers (Chapter V). These only apply where you are the provider placing the GPAI model on the market or putting it into service.",
+    K: "Additional obligations for GPAI models with systemic risk (Chapter V). These only apply where you are the provider of the systemic GPAI model.",
     L: "Actions required when AI system is prohibited",
-    M: "Documentation for systems excluded from the AI Act",
+    M: "Documentation for systems excluded from AI Act scope under Article 2",
     N: "Obligations when AI is integrated as a safety component in products",
     O: `Conformity assessment obligations via: ${routeDisplayMap[conformityRoute] || "Not Required"}`,
     P: "Special obligations for product manufacturers integrating prohibited AI systems",
+    X: "Documentation to prove compliance with exemption conditions for prohibited practices and ancillary features",
   };
 
   const completedCount = Object.values(completedItems).filter(Boolean).length;
   
-  // Calculate progress: 100% if no items, otherwise percentage of completed items
-  const progressPercent = applicableItems.length > 0 
-    ? (completedCount / applicableItems.length) * 100 
+  // Calculate progress: cap at 100% and use correct denominator
+  const totalItems = Math.max(completedCount, applicableItems.length);
+  const progressPercent = totalItems > 0
+    ? Math.min((completedCount / totalItems) * 100, 100)
     : 100;
 
   return (
@@ -363,7 +400,7 @@ export default function Screen14() {
             }}
           ></div>
           <p className="progress-text">
-            {Math.round(progressPercent)}% Completed — {completedCount} of {applicableItems.length} items
+            {Math.round(progressPercent)}% Completed — {completedCount} of {totalItems} items
           </p>
         </div>
       </div>
@@ -409,6 +446,12 @@ export default function Screen14() {
                 
                 // Main item is complete if: (no multi-items and checked) OR (has multi-items and all are checked)
                 const isMainItemCompleted = hasMultipleSubItems ? allSubItemsCompleted : (completedItems[item.number] || false);
+
+                // Extract description: use item.description if exists, or use single sub-item text as description
+                let displayDescription = item.description;
+                if (!displayDescription && item.items && item.items.length === 1) {
+                  displayDescription = typeof item.items[0] === 'string' ? item.items[0] : item.items[0].text;
+                }
 
                 return (
                   <div key={item.number} className="checklist-item-wrapper">
@@ -458,7 +501,7 @@ export default function Screen14() {
                             </span>
                           )}
                         </div>
-                        {item.description && <span className="item-description">{item.description}</span>}
+                        {displayDescription && <span className="item-description">{displayDescription}</span>}
                         {hasMultipleSubItems && (
                           <span className="sub-items-count">
                             {subItemsCompleted}/{item.items.length} completed
@@ -507,26 +550,6 @@ export default function Screen14() {
                         })}
                       </div>
                     )}
-
-                    {/* Single item - show inline without sub-hierarchy */}
-                    {!hasMultipleSubItems && item.items && item.items.length === 1 && (
-                      <div className="single-sub-item">
-                        <p className="single-sub-text">
-                          • {typeof item.items[0] === 'string' ? item.items[0] : item.items[0].text}
-                          {typeof item.items[0] !== 'string' && item.items[0].source && (
-                            <span 
-                              className="source-tag" 
-                              title={typeof item.items[0].source === 'object' 
-                                ? [item.items[0].source.article, item.items[0].source.annex].filter(Boolean).join(', ')
-                                : item.items[0].source
-                              }
-                            >
-                              Source
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 );
               })}
@@ -536,7 +559,7 @@ export default function Screen14() {
 
         {/* Completion Status */}
         {progressPercent === 100 && (
-          <div className="info-box success" style={{ marginTop: "1.5rem" }}>
+          <div className="info-box alert-success" style={{ marginTop: "24px" }}>
             <strong>Checklist Complete</strong>
             <p>
               You have reviewed all {applicableItems.length} applicable obligations. 

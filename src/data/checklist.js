@@ -108,24 +108,24 @@ export const ANNEX_III_USECASES = [
 
 // Exclusions - Article 2
 export const EXCLUSIONS = [
-  { id: "military", label: "Military, defence or national security use", source: "Article 2(3)(a)" },
-  { id: "research", label: "Research and development only", source: "Article 2(6)" },
-  { id: "open_source", label: "Free/open-source components not placed on market", source: "Article 2(7)" },
-  { id: "personal", label: "Purely personal, non‑professional use", source: "Article 2(4)" },
-  { id: "third_country_le", label: "Use by third‑country authority for law enforcement or judicial cooperation", source: "Article 2(3)(c)" },
-  { id: "none", label: "None", source: null },
+  { id: "military", label: "Military, defence or national security use", source: "Article 2(3)" },
+  { id: "R&D_only", label: "Research and development only (not placed on market or put into service)", source: "Article 2(6), 2(8)" },
+  { id: "opensource_free", label: "Free and open-source AI components not placed on the market", source: "Article 2(12)" },
+  { id: "personal_use", label: "Purely personal, non-professional activity", source: "Article 2(10)" },
+  { id: "foreign_LE_only", label: "Use by third-country authorities for law enforcement or judicial cooperation", source: "Article 2(4)" },
+  { id: "none", label: "None of the above", source: null },
 ];
 
 // Prohibited practices - Article 5
 export const PROHIBITED_PRACTICES = [
-  { id: "subliminal", label: "Subliminal techniques beyond consciousness or manipulative/deceptive techniques that materially distort behavior and cause significant harm", source: "Article 5(1)(a)" },
-  { id: "vulnerability", label: "Exploiting vulnerabilities due to age, disability, or social/economic situation to materially distort behavior and cause significant harm", source: "Article 5(1)(b)" },
-  { id: "social_scoring", label: "Social scoring leading to detrimental treatment unrelated to context or unjustified/disproportionate to behavior", source: "Article 5(1)(c)" },
-  { id: "criminal_risk", label: "Risk assessment to predict criminal offence risk based solely on profiling or personality traits", source: "Article 5(1)(d)" },
-  { id: "face_scraping", label: "Untargeted scraping of facial images from internet or CCTV for facial recognition databases", source: "Article 5(1)(e)" },
-  { id: "emotion_workplace_education", label: "Inferring emotions in workplace or education", source: "Article 5(1)(f)" },
-  { id: "biometric_categorisation", label: "Biometric categorisation to infer race, political opinions, trade union membership, religious/philosophical beliefs, sex life or sexual orientation", source: "Article 5(1)(g)" },
-  { id: "real_time_rbi", label: "Real-time remote biometric identification in publicly accessible spaces for law enforcement", source: "Article 5(1)(h)" },
+  { id: "subliminal", label: "Subliminal or other manipulative/deceptive techniques that materially distort behavior and cause significant harm", source: "Article 5(1)(a), Recital 29" },
+  { id: "vulnerability", label: "Exploiting vulnerabilities of persons (age, disability, social/economic situation) to materially distort behavior and cause significant harm", source: "Article 5(1)(b), Recital 29" },
+  { id: "social_scoring", label: "Social scoring of natural persons leading to unjustified or disproportionate detrimental treatment", source: "Article 5(1)(c), Recital 31" },
+  { id: "criminal_risk", label: "Risk assessment of criminal offending based solely on profiling or personality traits", source: "Article 5(1)(d), Recital 42" },
+  { id: "face_scraping", label: "Untargeted scraping of facial images from internet or CCTV footage", source: "Article 5(1)(e) & 5(2), Recital 43" },
+  { id: "emotion_workplace_education", label: "Emotion recognition in workplace or educational institutions", source: "Article 5(1)(f), Recital 18" },
+  { id: "biometric_categorisation", label: "Biometric categorisation to infer sensitive attributes (e.g. race, political opinions, sexual orientation)", source: "Article 5(1)(g), Recital 16, Recital 30" },
+  { id: "real_time_rbi", label: "Real-time remote biometric identification in publicly accessible spaces for law enforcement", source: "Article 5(1)(h), Recitals 32-38" },
   { id: "none", label: "None of the above", source: null },
 ];
 
@@ -163,18 +163,18 @@ export const CLASSIFICATIONS = {
 
 // Conformity assessment routes - Article 43
 export const CONFORMITY_ASSESSMENT_ROUTES = {
-  INTERNAL_CONTROL: "internal_control",
-  NOTIFIED_BODY: "notified_body",
-  COMMON_SPECIFICATIONS: "common_specifications",
-  SECTORAL_LEGISLATION: "sectoral_legislation",
+  INTERNAL_CONTROL: "internal_control",         // Annex VI
+  NOTIFIED_BODY: "notified_body",               // Annex VII
+  SECTORAL_LEGISLATION: "sectoral_legislation", // Annex I - follow sectoral law
 };
 
-// Conformity Assessment Obligations - Article 43 and Annexes V-VII
+// Conformity Assessment Obligations - Article 43 and Annexes VI-VII
 export const CONFORMITY_ASSESSMENT_OBLIGATIONS = {
-  O1: { category: "O", number: "O1", route: "Internal Control", title: "Identify harmonized standards", description: "Identify applicable harmonized standards", source: { article: "Article 40, 41" } },
-  O2: { category: "O", number: "O2", route: "Internal Control", title: "Document chosen standards", description: "Document selected standards", source: { article: "Article 40, 41, 11" } },
+  // INTERNAL CONTROL (Annex VI) - All Annex III points 2-8 + optional for point 1
+  O1: { category: "O", number: "O1", route: "Internal Control", title: "Identify harmonized standards or common specifications", description: "Identify applicable harmonized standards (Article 40) or common specifications (Article 41)", source: { article: "Article 40, 41" } },
+  O2: { category: "O", number: "O2", route: "Internal Control", title: "Document chosen standards/specifications", description: "Document selected harmonized standards or common specifications", source: { article: "Article 40, 41, 11" } },
   O3: { category: "O", number: "O3", route: "Internal Control", title: "Verify compliance with Articles 8–15", description: "Verify compliance with legal requirements", source: { article: "Article 43(1)" } },
-  O4: { category: "O", number: "O4", route: "Internal Control", title: "Complete technical documentation", description: "Complete all technical documentation", source: { article: "Article 11", annex: "Annex IV" } },
+  O4: { category: "O", number: "O4", route: "Internal Control", title: "Complete technical documentation", description: "Complete all technical documentation per Annex IV", source: { article: "Article 11", annex: "Annex IV" } },
   O5: { category: "O", number: "O5", route: "Internal Control", title: "Include system architecture, data governance, etc.", description: "Include all required technical sections", source: { annex: "Annex IV" } },
   O6: { category: "O", number: "O6", route: "Internal Control", title: "Prepare Declaration of Conformity", description: "Prepare EU Declaration of Conformity", source: { article: "Article 47" } },
   O7: { category: "O", number: "O7", route: "Internal Control", title: "Affix CE marking", description: "Affix CE marking", source: { article: "Article 48" } },
@@ -183,8 +183,10 @@ export const CONFORMITY_ASSESSMENT_OBLIGATIONS = {
   O10: { category: "O", number: "O10", route: "Internal Control", title: "Document logging", description: "Document logging implementation", source: { article: "Article 12" } },
   O11: { category: "O", number: "O11", route: "Internal Control", title: "Retain documentation 10 years", description: "Maintain documentation for 10 years", source: { article: "Article 11(1), 18" } },
   O12: { category: "O", number: "O12", route: "Internal Control", title: "Assign responsible officer", description: "Designate responsible person for regulatory compliance", source: { article: "Article 17" } },
+  
+  // NOTIFIED BODY (Annex VII) - Mandatory for some point 1 scenarios, optional for others
   O13: { category: "O", number: "O13", route: "Notified Body", title: "Select Notified Body", description: "Select appropriate Notified Body", source: { article: "Article 43(1)" } },
-  O14: { category: "O", number: "O14", route: "Notified Body", title: "Submit all technical docs", description: "Submit technical documentation", source: { article: "Article 43(2)", annex: "Annex IV" } },
+  O14: { category: "O", number: "O14", route: "Notified Body", title: "Submit all technical docs", description: "Submit technical documentation per Annex IV", source: { article: "Article 43(2)", annex: "Annex IV" } },
   O15: { category: "O", number: "O15", route: "Notified Body", title: "Submit system design", description: "Submit system design documentation", source: { article: "Article 43(2)" } },
   O16: { category: "O", number: "O16", route: "Notified Body", title: "Submit data governance docs", description: "Submit data governance documentation", source: { article: "Article 10", annex: "Annex IV" } },
   O17: { category: "O", number: "O17", route: "Notified Body", title: "Submit training/testing docs", description: "Submit training and testing documentation", source: { annex: "Annex IV, Section 2(f)" } },
@@ -441,6 +443,16 @@ export const PROVIDER_OBLIGATIONS = {
       { text: "Provide information in official Union language determined by Member State", source: "Article 64(3)" },
       { text: "Cooperate with competent authorities on any action taken", source: "Article 64(4)" },
       { text: "Register organization in relevant section of EU database if based outside Union", source: "Article 78(3)" }
+    ]
+  },
+  A17: {
+    category: "A", number: "A17", title: "Model Provider Cooperation Agreements", source: { article: "Article 25(4)" },
+    items: [
+      { text: "Establish written agreements with AI model providers defining responsibilities and obligations", source: "Article 25(4)" },
+      { text: "Ensure model providers provide necessary information and capabilities for compliance", source: "Article 25(4)" },
+      { text: "Obtain technical access and assistance based on generally acknowledged state of the art", source: "Article 25(4)" },
+      { text: "Document technical specifications, capabilities, and limitations of integrated models", source: "Article 25(4)" },
+      { text: "Confirm model provider cooperation enables full compliance with provider obligations", source: "Article 25(4)" }
     ]
   }
 };
@@ -989,11 +1001,6 @@ export const GPAI_SYSTEMIC_OBLIGATIONS = {
     source: { article: "Article 55" }, 
     items: [{ text: "Ensure adequate level of cybersecurity protection for model, physical infrastructure and supply chain", source: "Article 55(1)(d)" }] 
   },
-  K5: { 
-    category: "K", number: "K5", title: "All GPAI Obligations", 
-    source: { article: "Article 55" }, 
-    items: [{ text: "Comply with all obligations for general-purpose AI providers (Article 53)", source: "Article 55(2)" }] 
-  },
   K6: { 
     category: "K", number: "K6", title: "Follow Code of Practice", 
     source: { article: "Article 56" }, 
@@ -1110,8 +1117,8 @@ export const PRODUCT_MANUFACTURER_OBLIGATIONS = {
   }
 };
 
-// EXCLUSION OBLIGATIONS (M1-M5) - Article 2
-// Documentation requirements for systems excluded from AI Act scope
+// EXCLUSION OBLIGATIONS (M1-M5) - Article 2 only
+// Documentation requirements for systems treated as excluded from AI Act scope under Article 2
 export const EXCLUSION_OBLIGATIONS = {
   M1: {
     category: "M", number: "M1", title: "Document Exclusion Basis",
@@ -1137,6 +1144,61 @@ export const EXCLUSION_OBLIGATIONS = {
     category: "M", number: "M5", title: "Exclusion Documentation Record",
     source: { article: "Article 2" },
     items: [{ text: "Keep records of exclusion determination and any reviews performed", source: "Article 2" }]
+  }
+};
+
+// EXEMPTION DOCUMENTATION OBLIGATIONS (X1-X5) - Article 5 & Recital 16
+// Documentation requirements to prove compliance with exemption conditions for prohibited practices and ancillary features
+export const EXEMPTION_DOCUMENTATION_OBLIGATIONS = {
+  X1: {
+    category: "X", number: "X1", title: "Criminal Risk Assessment Exemption Documentation",
+    source: { article: "Article 5(1)(d)" },
+    items: [
+      { text: "Document that system only supports human assessment and does not replace human decision-making", source: "Article 5(1)(d)" },
+      { text: "Maintain evidence that assessments are based on objective and verifiable facts", source: "Article 5(1)(d)" },
+      { text: "Document that facts are directly linked to specific criminal activity", source: "Article 5(1)(d)" },
+      { text: "Keep records of human oversight and final decision accountability", source: "Article 5(1)(d)" }
+    ]
+  },
+  X2: {
+    category: "X", number: "X2", title: "Medical/Safety Emotion Recognition Exemption Documentation",
+    source: { article: "Article 5(1)(f)" },
+    items: [
+      { text: "Document specific medical or safety purpose justification for emotion inference", source: "Article 5(1)(f)" },
+      { text: "Maintain evidence of medical/safety context and necessity", source: "Article 5(1)(f)" },
+      { text: "Keep records of medical professional involvement or safety protocol compliance", source: "Article 5(1)(f)" },
+      { text: "Document that use is limited to medical/safety purposes only", source: "Article 5(1)(f)" }
+    ]
+  },
+  X3: {
+    category: "X", number: "X3", title: "Biometric Law Enforcement Exemption Documentation",
+    source: { article: "Article 5(1)(g), Article 5(2-4)" },
+    items: [
+      { text: "Document judicial or administrative authorization for each use", source: "Article 5(2)" },
+      { text: "Maintain records of strict temporal and geographical limitations", source: "Article 5(2)" },
+      { text: "Document compliance with all safeguards and conditions", source: "Article 5(3)" },
+      { text: "Keep records of human verification and oversight procedures", source: "Article 14(5)" }
+    ]
+  },
+  X4: {
+    category: "X", number: "X4", title: "Real-time Remote Biometric Identification Exemption Documentation",
+    source: { article: "Article 5(1)(h), Article 5(2-4)" },
+    items: [
+      { text: "Document specific law enforcement purpose and legal authorization", source: "Article 5(1)(h)" },
+      { text: "Maintain records of urgency justification and authorization timing", source: "Article 5(2)" },
+      { text: "Document implementation of required safeguards and human oversight", source: "Article 5(3)" },
+      { text: "Keep detailed logs of each use including judicial review", source: "Article 5(4)" }
+    ]
+  },
+  X5: {
+    category: "X", number: "X5", title: "Ancillary Feature Exemption Documentation",
+    source: { article: "Recital 16" },
+    items: [
+      { text: "Document objective technical reasons why the AI feature cannot be used without the principal service", source: "Recital 16" },
+      { text: "Maintain evidence that integration is not a means to circumvent the AI Act", source: "Recital 16" },
+      { text: "Document that the AI functionality is genuinely ancillary and secondary to the main service", source: "Recital 16" },
+      { text: "Keep records of technical architecture showing inseparable integration", source: "Recital 16" }
+    ]
   }
 };
 
@@ -1179,6 +1241,7 @@ export const ALL_OBLIGATIONS = {
   ...GPAI_SYSTEMIC_OBLIGATIONS,
   ...PROHIBITED_OBLIGATIONS,
   ...EXCLUSION_OBLIGATIONS,
+  ...EXEMPTION_DOCUMENTATION_OBLIGATIONS,
   ...PROHIBITED_PRODUCT_MANUFACTURER_OBLIGATIONS,
   ...PRODUCT_MANUFACTURER_OBLIGATIONS,
   ...CONFORMITY_ASSESSMENT_OBLIGATIONS,

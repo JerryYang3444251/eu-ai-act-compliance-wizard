@@ -136,7 +136,7 @@ export default function Screen7b_SignificantRisk() {
         </div>
 
         {hasConflict && (
-          <div className="info-box alert-danger" style={{ marginTop: "20px" }}>
+          <div className="info-box alert-danger" style={{ marginTop: "24px" }}>
             <strong>⚠️ Conflict detected:</strong>
             <p>
               You selected “None of the above” AND other indicators.
@@ -146,14 +146,14 @@ export default function Screen7b_SignificantRisk() {
         )}
 
         {hasSignificant && !hasConflict && (
-          <div className="info-box alert-warning" style={{ marginTop: "20px" }}>
+          <div className="info-box alert-warning" style={{ marginTop: "24px" }}>
             <strong>⚠️ High-Risk Classification:</strong>
             You selected at least one significant risk indicator. Your system is classified as High-Risk. Full high-risk obligations will apply. <span className="source-tag" title="Article 6(2) and Annex III">Source</span>
           </div>
         )}
 
         {hasNone && !hasConflict && (
-          <div className="info-box alert-success" style={{ marginTop: "20px" }}>
+          <div className="info-box alert-success" style={{ marginTop: "24px" }}>
             <strong>✓ Non-Significant Risk:</strong>
             You selected "None of the above." Your system is classified as Non-Significant Risk. Reduced obligations will apply. <span className="source-tag" title="Article 6(2) and Annex III">Source</span>
           </div>

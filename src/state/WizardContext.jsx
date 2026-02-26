@@ -66,7 +66,7 @@ export function WizardProvider({ children }) {
     const raw_role_tags = new Set();
 
     // ROLE_001: Development/Modification tag
-    if (org_actions.some(a => ['develop','modify','change_purpose','fine_tune','retrain'].includes(a))) {
+    if (org_actions.some(a => ['develop_system','develop_model','modify','change_purpose','fine_tune'].includes(a))) {
       raw_role_tags.add('Development_Modification');
     }
 
@@ -183,6 +183,15 @@ export function WizardProvider({ children }) {
       }
     }
 
+    // RECLASS_014: Model relationship provider selection → PROVIDER
+    // If user explicitly selected "provider" relationship in Part 7 (GPAI section)
+    // Assign Provider role for GPAI systemic providers
+    if ((answers.modelRelationship === "provider" && !provider_assigned) ||
+        (classification === CLASSIFICATIONS.GPAI_SYSTEMIC && answers.modelRelationship === "provider")) {
+      legal_roles.add("Provider");
+      provider_assigned = true;
+    }
+
     // RECLASS_012: Deduplicate roles
     const deduplicated = Array.from(legal_roles);
 
@@ -206,123 +215,97 @@ export function WizardProvider({ children }) {
     // Article 5 (Prohibited) supersedes all other obligations
     // When prohibited, ONLY L-series (and P for Product_Manufacturer) apply
     if (classification === CLASSIFICATIONS.PROHIBITED) {
-      // OBL_011: Provider prohibited obligations
-      if (roles.includes("Provider")) {
-        obs.push("L");
-      }
-      
-      // OBL_012: Importer prohibited obligations
-      if (roles.includes("Importer")) {
-        obs.push("L");
-      }
-      
-      // OBL_013: Distributor prohibited obligations
-      if (roles.includes("Distributor")) {
-        obs.push("L");
-      }
-      
-      // OBL_014: Deployer prohibited obligations
-      if (roles.includes("Deployer")) {
-        obs.push("L");
-      }
-      
-      // OBL_016: Product manufacturer must not integrate prohibited AI
+      if (roles.includes("Provider")) obs.push("L");
+      if (roles.includes("Importer")) obs.push("L");
+      if (roles.includes("Distributor")) obs.push("L");
+      if (roles.includes("Deployer")) obs.push("L");
       if (roles.includes("Product_Manufacturer")) {
-        obs.push("L"); // Gets L category for common prohibited obligations
-        obs.push("P"); // Plus specific P obligations
+        obs.push("L");
+        obs.push("P");
       }
-      
-      // Return ONLY prohibited obligations - no A, C, D, E, F, G, H, I, J, K, N, O
       return obs;
     }
 
     // Normal obligations (non-prohibited systems only)
 
-    // OBL_001: Provider obligations (A1-A16)
-    if (roles.includes("Provider")) {
-      obs.push("A");
-    }
-
+    // OBL_001: Provider obligations (A1-A16) - Chapter III, Section 2
+    if (roles.includes("Provider") && isHighRisk) obs.push("A");
     // OBL_017: Handover (C1-C15) only if Provider AND high-risk classification
-    if (roles.includes("Provider") && isHighRisk) {
-      obs.push("C");
-    }
-
+    if (roles.includes("Provider") && isHighRisk) obs.push("C");
     // OBL_002: Importer obligations (D1-D14)
-    if (roles.includes("Importer")) {
-      obs.push("D");
-    }
-
+    if (roles.includes("Importer")) obs.push("D");
     // OBL_003: Distributor obligations (E1-E9)
-    if (roles.includes("Distributor")) {
-      obs.push("E");
-    }
-
+    if (roles.includes("Distributor")) obs.push("E");
     // OBL_004: Deployer obligations (F1-F12)
-    if (roles.includes("Deployer")) {
-      obs.push("F");
-    }
+    if (roles.includes("Deployer")) obs.push("F");
 
     // OBL_009: FRIA obligations (G1-G15) - Article 27
     const isPublicAuthority = roles.includes("Public_Authority");
-    const hasSensitiveDeploymentSector = deploymentSector?.some(sector => 
-      ['biometrics', 'education', 'employment', 'essential_services', 'law_enforcement', 'migration', 'asylum', 'border_control', 'migration_asylum_border', 'justice'].includes(sector)
+    const hasSensitiveDeploymentSector = deploymentSector?.some(sector =>
+      [
+        'biometrics', 'education', 'employment', 'essential_services', 'law_enforcement',
+        'migration', 'asylum', 'border_control', 'migration_asylum_border', 'justice'
+      ].includes(sector)
     );
-    
-    // Check for specific Annex III Point 5(b) and 5(c) use cases (creditworthiness and insurance)
-    const hasAnnexIII_5b_5c = answers.annexIIIUsecases?.some(usecase => 
+    const hasAnnexIII_5b_5c = answers.annexIIIUsecases?.some(usecase =>
       ['services_creditworthiness', 'services_insurance'].includes(usecase)
     );
-    
-    // FRIA required if: (Public Authority OR Public Service Provider OR Sensitive Sector OR Point 5b/5c)
-    // AND High-Risk AND NOT Annex III point 2 (critical infrastructure)
-    const requiresFRIA = 
+    const requiresFRIA =
       isHighRisk &&
       annexIIIPoint !== 2 &&
       (isPublicAuthority || isPublicServiceProvider || hasSensitiveDeploymentSector || hasAnnexIII_5b_5c);
-    
-    if (requiresFRIA) {
-      obs.push("G");
-    }
+    if (requiresFRIA) obs.push("G");
 
     // OBL_008: Transparency obligations (H1-H9) - Article 50 only
-    // Triggered by: specific system functionalities that require disclosure/labeling
-    // NOTE: Article 13 high-risk transparency is separate and included in A/F categories
-    const hasArticle50Triggers = 
-      (systemFunctionality && systemFunctionality.length > 0 && !systemFunctionality.includes("none")) || 
+    const hasArticle50Triggers =
+      (systemFunctionality && systemFunctionality.length > 0 && !systemFunctionality.includes("none")) ||
       (answers.transparencyTriggers && answers.transparencyTriggers.length > 0 && !answers.transparencyTriggers.includes("none"));
-    
     const isProviderOrDeployer = roles.includes("Provider") || roles.includes("Deployer");
-    
-    if (hasArticle50Triggers && isProviderOrDeployer) {
-      obs.push("H");
-    }
+    if (hasArticle50Triggers && isProviderOrDeployer) obs.push("H");
 
     // OBL_010: Non-Significant Risk obligations (I1-I7)
-    // Only for Providers per Article 6(2)
-    if (classification === CLASSIFICATIONS.ANNEX_III_NON_SIGNIFICANT && roles.includes("Provider")) {
-      obs.push("I");
-    }
+    if (classification === CLASSIFICATIONS.ANNEX_III_NON_SIGNIFICANT && roles.includes("Provider")) obs.push("I");
 
-    // OBL_005: GPAI obligations (J1-J18)
-    if (classification === CLASSIFICATIONS.GPAI) {
+    // DUAL-ROLE LOGIC: Assign both high-risk and GPAI obligations if both apply, regardless of classification precedence
+    const isModelProvider = answers.modelRelationship === "provider";
+    const isSystemProvider = roles.includes("Provider") && (
+      // High-risk triggers: any high-risk classification or answers
+      [CLASSIFICATIONS.HIGH_RISK_IA, CLASSIFICATIONS.HIGH_RISK_IB, CLASSIFICATIONS.HIGH_RISK_III].includes(classification)
+      || (answers.annexIACategories && answers.annexIACategories.some(x => x !== "none"))
+      || (answers.highRiskSectorsB && answers.highRiskSectorsB.some(x => x !== "none"))
+      || (answers.annexIIIUsecases && answers.annexIIIUsecases.some(x => x !== "none"))
+    );
+    const isGPAI = isModelProvider && (
+      classification === CLASSIFICATIONS.GPAI || classification === CLASSIFICATIONS.GPAI_SYSTEMIC || answers.isGPAI === "yes"
+    );
+    const isGPAISystemic = isModelProvider && (
+      classification === CLASSIFICATIONS.GPAI_SYSTEMIC || answers.hasSystemicRisk === "yes" || answers.hasSystemicRisk === "commission_determined"
+    );
+
+    // Always add high-risk obligations if system provider
+    if (isSystemProvider) {
+      obs.push("A");
+      obs.push("C");
+      if (classification !== CLASSIFICATIONS.HIGH_RISK_IB) {
+        obs.push("O");
+      }
+    }
+    // Always add GPAI obligations if model provider and GPAI
+    if (isGPAI) {
       obs.push("J");
     }
-
-    // OBL_006: GPAI Systemic obligations (K1-K13)
-    if (classification === CLASSIFICATIONS.GPAI_SYSTEMIC) {
+    // Always add GPAI Systemic obligations if model provider and GPAI systemic
+    if (isGPAISystemic) {
       obs.push("K");
     }
 
     // OBL_015: Product Manufacturer obligations (N1-N4)
-    // Only when AI is safety component (NOT prohibited - already returned above)
-    if (roles.includes("Product_Manufacturer")) {
-      obs.push("N");
-    }
+    if (roles.includes("Product_Manufacturer")) obs.push("N");
 
     // OBL_007: Conformity Assessment obligations (O1-O50 by route)
     // Only for Providers with high-risk classification per Article 43
-    if (roles.includes("Provider") && isHighRisk) {
+    // EXCLUDE HIGH_RISK_IB: Per Article 2(2), Annex I Section B systems follow sectoral legislation only
+    if (roles.includes("Provider") && isHighRisk && classification !== CLASSIFICATIONS.HIGH_RISK_IB) {
       obs.push("O");
       // Note: O obligations filtered by conformityRoute in screen rendering
     }
@@ -333,11 +316,25 @@ export function WizardProvider({ children }) {
       obs.push("M");
     }
 
+    // X: Exemption Documentation (Article 5 & Recital 16)
+    // Added when prohibited practices are selected but valid exemptions apply
+    const hasValidExemptions = answers.prohibitedPractices && 
+      answers.prohibitedPractices.some(practice => practice !== "none") &&
+      answers.prohibitedExceptions &&
+      Object.values(answers.prohibitedExceptions).some(exemption => exemption === true);
+    
+    // Also check for ancillary feature exemption claims
+    const hasAncillaryFeatureExemption = answers.ancillaryFeature === true;
+    
+    if (hasValidExemptions || hasAncillaryFeatureExemption) {
+      obs.push("X");
+    }
+
     return obs;
   };
 
-  // Re-run role reclassification when safety_function changes (ROLE_RECLASS_004)
-  // This handles the case where Product_Manufacturer role changes based on ai_is_safety_component
+  // Re-run role reclassification when safety_function or modelRelationship changes
+  // This handles provider reclassification from Part 7 GPAI section and Part 2 safety components
   useEffect(() => {
     if (roles_raw.length > 0) {
       try {
@@ -350,7 +347,7 @@ export function WizardProvider({ children }) {
         console.warn("Error re-classifying roles:", e);
       }
     }
-  }, [answers.safety_function, roles_raw]);
+  }, [answers.safety_function, answers.modelRelationship, roles_raw]);
 
   // Automatically persist computed obligations whenever inputs change
   useEffect(() => {
@@ -373,7 +370,9 @@ export function WizardProvider({ children }) {
     answers.flopsValue,
     commissionDesignation,
     answers.annexIIIUsecases, 
-    answers.prohibitedPractices
+    answers.prohibitedPractices,
+    answers.prohibitedExceptions,
+    answers.ancillaryFeature
   ]);
 
   // Save answer to wizard state
@@ -671,6 +670,14 @@ export function WizardProvider({ children }) {
     }, 100);
   };
 
+  // Helper: Detect if Annex III system is biometric (point 1) vs non-biometric (points 2-8)
+  // Article 43(1) applies to point 1, Article 43(2) applies to points 2-8
+  const isBiometricAnnexIII = () => {
+    const usecases = answers.annexIIIUsecases || [];
+    const biometricCases = ['biometric_rbi', 'biometric_categorisation', 'emotion_recognition'];
+    return usecases.some(id => biometricCases.includes(id));
+  };
+
   const value = {
     // ========== STATE ==========
     roles_raw,
@@ -732,6 +739,7 @@ export function WizardProvider({ children }) {
     reclassifyRoles,
     computeObligations,
     resolvePrecedenceOrder,
+    isBiometricAnnexIII,
     
     // ========== UTILS ==========
     resetWizard

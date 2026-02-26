@@ -141,7 +141,7 @@ export default function Screen11_Transparency() {
         {generatesContent && (
           <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border-color)" }}>
             <h3 style={{ marginBottom: "16px" }}>What does your system generate?</h3>
-            <p style={{ marginBottom: "16px", fontSize: "0.95em", color: "#666" }}>
+            <p style={{ marginBottom: "16px", fontSize: "0.9rem", color: "#666" }}>
               Select all types of content your AI system produces. This helps determine specific transparency requirements.
             </p>
             
@@ -202,7 +202,7 @@ export default function Screen11_Transparency() {
         {generatesContent && shouldShowDeepfakeQuestion && (
           <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border-color)" }}>
             <h3 style={{ marginBottom: "16px" }}>Does generated content resemble real persons, objects, places or events?</h3>
-          <p style={{ marginBottom: "16px", fontSize: "0.95em", color: "#666" }}>
+          <p style={{ marginBottom: "16px", fontSize: "0.9rem", color: "#666" }}>
             This identifies deepfake-like capabilities requiring enhanced transparency obligations. <span className="source-tag" title="Article 50">Source</span>
           </p>
           

@@ -21,9 +21,9 @@ export default function Screen0_Information() {
       <div className="screen-content">
         <div className="info-box">
           <p>
-            This wizard is designed to guide you through a comprehensive assessment of your AI system's 
+            This wizard is designed to guide you through a comprehensive assessment of your AI system or AI model's 
             compliance with the <strong>Artificial Intelligence Act (Regulation (EU) 2024/1689), Official Journal version of 13 June 2024 (EU AI Act).</strong> 
-            The tool will help you determine the classification of your AI system and identify applicable 
+            The tool will help you determine the classification of your AI system or AI model and identify applicable 
             compliance obligations.
           </p>
         </div>
@@ -40,6 +40,25 @@ export default function Screen0_Information() {
             <li><strong>Parts 9-11:</strong> Check for prohibited practices, transparency requirements, and FRIA obligations</li>
             <li><strong>Part 12:</strong> Receive your system's final classification</li>
             <li><strong>Parts 13-14:</strong> Review conformity assessment routes and compliance checklist</li>
+          </ul>
+        </div>
+
+        <div className="info-box">
+          <h3>Key Definitions</h3>
+          <p>Before starting, it's important to understand these core concepts from the EU AI Act:</p>
+          <ul>
+            <li>
+              <strong>AI System:</strong> A machine-based system that is designed to operate with varying levels of autonomy 
+              and that may exhibit adaptiveness after deployment, and that, for explicit or implicit objectives, infers, from the 
+              input it receives, how to generate outputs such as predictions, content, recommendations, or decisions that can 
+              influence physical or virtual environments. <span className="source-tag" title="Article 3(1)">Source</span>
+            </li>
+            <li>
+              <strong>AI Model:</strong> An essential component of AI systems that does not constitute an AI system on its own. 
+              AI models require the addition of further components, such as a user interface, to become AI systems. 
+              AI models are typically integrated into and form part of AI systems. A general-purpose AI model displays significant 
+              generality and is capable of competently performing a wide range of distinct tasks. <span className="source-tag" title="Recital (442), Article 3(63)">Source</span>
+            </li>
           </ul>
         </div>
 

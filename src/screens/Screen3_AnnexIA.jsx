@@ -152,7 +152,7 @@ export default function Screen5() {
             <strong>High-Risk Classification:</strong> Your AI system is classified as <strong>High-Risk</strong> because it performs a safety function in a regulated product category. <span className="source-tag" title="Article 6(1) and Annex I, Section A">Source</span>
             {wasReclassifiedToProvider && (
               <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid rgba(0,0,0,0.1)" }}>
-                <strong>Role Reclassification:</strong> Because the AI performs a safety function, your role has been reclassified from Product Manufacturer to <strong>Provider</strong>. You now have full Provider obligations. <span className="source-tag" title="Article 3(3) and 24">Source</span>
+                <strong>Role Reclassification:</strong> Because the AI performs a safety function, your role has been reclassified from Product Manufacturer to <strong>Provider</strong>. You now have full Provider obligations. <span className="source-tag" title="Article 25(3)">Source</span>
               </div>
             )}
           </div>
