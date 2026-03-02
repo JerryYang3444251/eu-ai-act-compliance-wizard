@@ -252,13 +252,13 @@ export default function Screen10_Prohibited() {
             {isTrulyProhibited ? (
               <>
                 <strong>⛔ System is Prohibited:</strong>
-                Your AI system engages in prohibited practices under Article 5. The system cannot be placed on the market, put into service, or used in the Union. Prohibited practices must be eliminated immediately, and you must cease development and distribution. <span className="source-tag" title="Article 5 — Prohibited Artificial Intelligence Practices">Source</span>
+                Your AI system engages in prohibited practices. The system cannot be placed on the market, put into service, or used in the Union. Prohibited practices must be eliminated immediately, and you must cease development and distribution. <span className="source-tag" title="Article 5 — Prohibited Artificial Intelligence Practices">Source</span>
               </>
             ) : (
               <>
                 <strong>✓ No Prohibited Practices:</strong>
                 {selectedWithExceptions.length > 0 
-                  ? "All selected practices qualify for valid exceptions under Article 5. Your system is not prohibited, but you must maintain documentation demonstrating compliance with exception requirements."
+                  ? "All selected practices qualify for valid exceptions. Your system is not prohibited, but you must maintain documentation demonstrating compliance with the applicable exception requirements."
                   : "Your system does not engage in prohibited practices."} <span className="source-tag" title="Article 5">Source</span>
               </>
             )}

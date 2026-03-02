@@ -161,31 +161,74 @@ export const CLASSIFICATIONS = {
   IN_SCOPE_NON_HIGH_RISK: "in_scope_non_high_risk",
 };
 
+// Human-readable display labels aligned with EU AI Act terminology (Regulation (EU) 2024/1689)
+export const CLASSIFICATION_LABELS = {
+  [CLASSIFICATIONS.OUT_OF_SCOPE]: "Out of Scope",
+  [CLASSIFICATIONS.EXCLUDED]: "Excluded",
+  [CLASSIFICATIONS.PROHIBITED]: "Prohibited",
+  [CLASSIFICATIONS.GPAI_SYSTEMIC]: "General-Purpose AI Model with Systemic Risk",
+  [CLASSIFICATIONS.GPAI]: "General-Purpose AI Model",
+  [CLASSIFICATIONS.HIGH_RISK_IB]: "High-Risk (Section B of Annex I)",
+  [CLASSIFICATIONS.HIGH_RISK_IA]: "High-Risk (Section A of Annex I)",
+  [CLASSIFICATIONS.HIGH_RISK_III]: "High-Risk (Annex III)",
+  [CLASSIFICATIONS.ANNEX_III_NON_SIGNIFICANT]: "Not High-Risk (Annex III)",
+  [CLASSIFICATIONS.IN_SCOPE_NON_HIGH_RISK]: "In-Scope (Non-High-Risk)",
+};
+
 // Conformity assessment routes - Article 43
+// Note: Common Specifications (Article 41) are a compliance tool used *within* the Internal Control
+// route when harmonised standards do not exist or are inadequate — not a separate route.
 export const CONFORMITY_ASSESSMENT_ROUTES = {
-  INTERNAL_CONTROL: "internal_control",         // Annex VI
-  NOTIFIED_BODY: "notified_body",               // Annex VII
-  SECTORAL_LEGISLATION: "sectoral_legislation", // Annex I - follow sectoral law
+  INTERNAL_CONTROL: "internal_control",         // Annex VI — Art 43(1)/(2); includes CS (Art 41) when harmonised standards absent
+  NOTIFIED_BODY: "notified_body",               // Annex VII — Art 43(1), for Annex III pt 1 remote biometric ID (mandatory) or provider choice
+  SECTORAL_LEGISLATION: "sectoral_legislation", // Art 43(3), Annex I Section A — follow sectoral Union harmonisation legislation
 };
 
 // Conformity Assessment Obligations - Article 43 and Annexes VI-VII
 export const CONFORMITY_ASSESSMENT_OBLIGATIONS = {
   // INTERNAL CONTROL (Annex VI) - All Annex III points 2-8 + optional for point 1
-  O1: { category: "O", number: "O1", route: "Internal Control", title: "Identify harmonized standards or common specifications", description: "Identify applicable harmonized standards (Article 40) or common specifications (Article 41)", source: { article: "Article 40, 41" } },
+  O1: { category: "O", number: "O1", route: "Internal Control", title: "Identify harmonized standards or common specifications", description: "Identify applicable harmonized standards (Article 40) or common specifications (Article 41)", source: { article: "Article 40, 41, 43" }, items: [
+      { text: "Identify applicable harmonized standards (Article 40) or common specifications (Article 41) for the high-risk AI system", source: "Article 40, 41" }
+    ] },
   O2: { category: "O", number: "O2", route: "Internal Control", title: "Document chosen standards/specifications", description: "Document selected harmonized standards or common specifications", source: { article: "Article 40, 41, 11" } },
   O3: { category: "O", number: "O3", route: "Internal Control", title: "Verify compliance with Articles 8–15", description: "Verify compliance with legal requirements", source: { article: "Article 43(1)" } },
   O4: { category: "O", number: "O4", route: "Internal Control", title: "Complete technical documentation", description: "Complete all technical documentation per Annex IV", source: { article: "Article 11", annex: "Annex IV" } },
   O5: { category: "O", number: "O5", route: "Internal Control", title: "Include system architecture, data governance, etc.", description: "Include all required technical sections", source: { annex: "Annex IV" } },
-  O6: { category: "O", number: "O6", route: "Internal Control", title: "Prepare Declaration of Conformity", description: "Prepare EU Declaration of Conformity", source: { article: "Article 47" } },
-  O7: { category: "O", number: "O7", route: "Internal Control", title: "Affix CE marking", description: "Affix CE marking", source: { article: "Article 48" } },
-  O8: { category: "O", number: "O8", route: "Internal Control", title: "Register system", description: "Register system in EU database", source: { article: "Article 49" } },
+  O6: { category: "O", number: "O6", route: "Internal Control", title: "Prepare Declaration of Conformity", description: "Prepare EU Declaration of Conformity", source: { article: "Article 47" }, items: [
+      { text: "Draw up the EU declaration of conformity for each high-risk AI system placed on the market or put into service and keep it for 10 years after placing on market", source: "Article 47(1)" },
+      { text: "Make the EU declaration of conformity available to national competent authorities upon request", source: "Article 47(1)" },
+      { text: "State in the declaration that the AI system is in conformity with the requirements of Chapter III, Section 2, and include all information listed in Annex V", source: "Article 47(2)" },
+      { text: "Translate the EU declaration of conformity into the official language(s) required by the Member State(s) where the system is placed on market or put into service", source: "Article 47(2)" },
+      { text: "Where the AI system is subject to multiple Union laws, draw up a single EU declaration of conformity covering all applicable Union legislation", source: "Article 47(3)" },
+      { text: "Assume responsibility for the AI system's compliance with this Regulation and keep the EU declaration of conformity up to date throughout the system's lifecycle", source: "Article 47(4)" }
+    ] },
+  O7: { category: "O", number: "O7", route: "Internal Control", title: "Affix CE marking", description: "Affix CE marking", source: { article: "Article 48" }, items: [
+      { text: "Follow the general principles for the CE marking set out in Article 30 of Regulation (EC) No 765/2008 before placing on market or putting into service", source: "Article 48(1)" },
+      { text: "Where the high-risk AI system is provided purely in digital form, affix the CE marking digitally", source: "Article 48(2)" },
+      { text: "Affix the CE marking visibly, legibly and indelibly to the AI system or, where not possible, to its packaging or accompanying documentation", source: "Article 48(3)" },
+      { text: "Where a notified body is involved in the conformity assessment procedure, affix the notified body's identification number after the CE marking", source: "Article 48(4)" }
+    ] },
+  O8: { category: "O", number: "O8", route: "Internal Control", title: "Register system", description: "Register system in EU database", source: { article: "Article 49" }, items: [
+      { text: "Register the high-risk AI system listed in Annex III (except point 2) in the EU database before placing on market or putting into service", source: "Article 49(1)" },
+      { text: "Provide all information required under Annex VIII, Section A in the EU database registration and keep it accurate and up to date", source: "Article 49(1), Annex VIII Section A" },
+      { text: "For AI systems referred to in Annex III, point 2, register at national level in the Member State where the system is first placed on market or put into service", source: "Article 49(5)" }
+    ] },
   O9: { category: "O", number: "O9", route: "Internal Control", title: "Document post-market plan", description: "Document post-market monitoring plan", source: { article: "Article 72" } },
   O10: { category: "O", number: "O10", route: "Internal Control", title: "Document logging", description: "Document logging implementation", source: { article: "Article 12" } },
-  O11: { category: "O", number: "O11", route: "Internal Control", title: "Retain documentation 10 years", description: "Maintain documentation for 10 years", source: { article: "Article 11(1), 18" } },
+  O11: { category: "O", number: "O11", route: "Internal Control", title: "Retain documentation and logs", description: "Maintain technical documentation and automatically generated logs for required retention periods", source: { article: "Article 18, 19" }, items: [
+      { text: "Keep the technical documentation and, where applicable, NB-issued certificates at the disposal of national competent authorities for at least 10 years after the high-risk AI system has been placed on market or put into service", source: "Article 18(1)" },
+      { text: "Retain automatically generated logs under Article 12 for a minimum of 6 months, unless applicable Union or national law requires a longer retention period", source: "Article 19(1)" }
+    ] },
   O12: { category: "O", number: "O12", route: "Internal Control", title: "Assign responsible officer", description: "Designate responsible person for regulatory compliance", source: { article: "Article 17" } },
   
   // NOTIFIED BODY (Annex VII) - Mandatory for some point 1 scenarios, optional for others
-  O13: { category: "O", number: "O13", route: "Notified Body", title: "Select Notified Body", description: "Select appropriate Notified Body", source: { article: "Article 43(1)" } },
+  O13: { category: "O", number: "O13", route: "Notified Body", title: "Select Notified Body", description: "Select appropriate Notified Body", source: { article: "Article 43(1), 43(2)" }, items: [
+      { text: "Undergo the applicable notified body conformity assessment procedure before placing on market or putting into service", source: "Article 43(1)" },
+      { text: "Follow the procedure involving notified body EU type-examination or quality management system assessment (Annex VII) where required for remote biometric identification systems or as chosen by the provider", source: "Article 43(2), Annex VII" },
+      { text: "Undergo a new conformity assessment when making a substantial modification to the high-risk AI system", source: "Article 43(4)" },
+      { text: "Demonstrate conformity of the AI system with the requirements of Chapter III, Section 2", source: "Article 43(1)" },
+      { text: "Select an appropriate Notified Body designated by a Member State for the relevant high-risk AI product category", source: "Article 43(1)" }
+    ] },
   O14: { category: "O", number: "O14", route: "Notified Body", title: "Submit all technical docs", description: "Submit technical documentation per Annex IV", source: { article: "Article 43(2)", annex: "Annex IV" } },
   O15: { category: "O", number: "O15", route: "Notified Body", title: "Submit system design", description: "Submit system design documentation", source: { article: "Article 43(2)" } },
   O16: { category: "O", number: "O16", route: "Notified Body", title: "Submit data governance docs", description: "Submit data governance documentation", source: { article: "Article 10", annex: "Annex IV" } },
@@ -196,33 +239,88 @@ export const CONFORMITY_ASSESSMENT_OBLIGATIONS = {
   O21: { category: "O", number: "O21", route: "Notified Body", title: "Submit cybersecurity file", description: "Submit cybersecurity documentation", source: { article: "Article 15", annex: "Annex IV" } },
   O22: { category: "O", number: "O22", route: "Notified Body", title: "Submit logging architecture", description: "Submit logging system architecture", source: { article: "Article 12", annex: "Annex IV" } },
   O23: { category: "O", number: "O23", route: "Notified Body", title: "Undergo design exam", description: "Undergo Notified Body design examination", source: { article: "Article 43(2-3)" } },
-  O24: { category: "O", number: "O24", route: "Notified Body", title: "Implement NB corrective actions", description: "Implement Notified Body recommendations", source: { article: "Article 43(5)" } },
+  O24: { category: "O", number: "O24", route: "Notified Body", title: "Implement NB corrective actions", description: "Implement Notified Body recommendations and corrective measures", source: { article: "Article 43(2), 17(1)(h)" } },
   O25: { category: "O", number: "O25", route: "Notified Body", title: "Maintain NB certificates", description: "Maintain certificates from Notified Body", source: { article: "Article 43(6-7)" } },
-  O26: { category: "O", number: "O26", route: "Common Specifications", title: "Identify CS", description: "Identify applicable Common Specifications", source: { article: "Article 41" } },
-  O27: { category: "O", number: "O27", route: "Common Specifications", title: "Document use of CS", description: "Document use of Common Specifications", source: { article: "Article 41, 11" } },
-  O28: { category: "O", number: "O28", route: "Common Specifications", title: "Map CS to system", description: "Map specifications to system components", source: { article: "Article 41(2)" } },
-  O29: { category: "O", number: "O29", route: "Common Specifications", title: "Implement CS controls", description: "Implement all required controls", source: { article: "Article 41(1)" } },
-  O30: { category: "O", number: "O30", route: "Common Specifications", title: "Validate compliance", description: "Validate full compliance", source: { article: "Article 41, 43" } },
-  O31: { category: "O", number: "O31", route: "Common Specifications", title: "Document compliance", description: "Document compliance evidence", source: { article: "Article 41", annex: "Annex IV" } },
-  O32: { category: "O", number: "O32", route: "Common Specifications", title: "Prepare Declaration", description: "Prepare Declaration of Conformity", source: { article: "Article 47" } },
-  O33: { category: "O", number: "O33", route: "Common Specifications", title: "CE marking", description: "Affix CE marking", source: { article: "Article 48" } },
-  O34: { category: "O", number: "O34", route: "Common Specifications", title: "Register", description: "Register in EU database", source: { article: "Article 49" } },
-  O35: { category: "O", number: "O35", route: "Common Specifications", title: "Maintain documentation", description: "Maintain documentation", source: { article: "Article 11(1), 41" } },
-  O36: { category: "O", number: "O36", route: "Common Specifications", title: "Reassess after changes", description: "Reassess compliance after changes", source: { article: "Article 43(4)" } },
-  O37: { category: "O", number: "O37", route: "Sectoral Legislation", title: "Identify sectoral law", description: "Identify applicable sectoral legislation", source: { article: "Article 43(3)", annex: "Annex I Section B" } },
+  O25a: { category: "O", number: "O25a", route: "Notified Body", title: "Prepare Declaration of Conformity", description: "Prepare EU Declaration of Conformity after NB assessment", source: { article: "Article 47" }, items: [
+      { text: "Draw up the EU declaration of conformity for each high-risk AI system placed on the market or put into service and keep it for 10 years after placing on market", source: "Article 47(1)" },
+      { text: "Make the EU declaration of conformity available to national competent authorities upon request", source: "Article 47(1)" },
+      { text: "State in the declaration that the AI system is in conformity with the requirements of Chapter III, Section 2, and include all information listed in Annex V", source: "Article 47(2)" },
+      { text: "Translate the EU declaration of conformity into the official language(s) required by the Member State(s) where the system is placed on market or put into service", source: "Article 47(2)" },
+      { text: "Where the AI system is subject to multiple Union laws, draw up a single EU declaration of conformity covering all applicable Union legislation", source: "Article 47(3)" },
+      { text: "Assume responsibility for the AI system's compliance with this Regulation and keep the EU declaration of conformity up to date throughout the system's lifecycle", source: "Article 47(4)" }
+    ] },
+  O25b: { category: "O", number: "O25b", route: "Notified Body", title: "Affix CE marking", description: "Affix CE marking after NB assessment", source: { article: "Article 48" }, items: [
+      { text: "Follow the general principles for the CE marking set out in Article 30 of Regulation (EC) No 765/2008 before placing on market or putting into service", source: "Article 48(1)" },
+      { text: "Where the high-risk AI system is provided purely in digital form, affix the CE marking digitally", source: "Article 48(2)" },
+      { text: "Affix the CE marking visibly, legibly and indelibly to the AI system or, where not possible, to its packaging or accompanying documentation", source: "Article 48(3)" },
+      { text: "Affix the notified body's identification number after the CE marking", source: "Article 48(4)" }
+    ] },
+  O25c: { category: "O", number: "O25c", route: "Notified Body", title: "Register system", description: "Register system in EU database", source: { article: "Article 49" }, items: [
+      { text: "Register the high-risk AI system listed in Annex III (except point 2) in the EU database before placing on market or putting into service", source: "Article 49(1)" },
+      { text: "Provide all information required under Annex VIII, Section A in the EU database registration and keep it accurate and up to date", source: "Article 49(1), Annex VIII Section A" },
+      { text: "For AI systems referred to in Annex III, point 2, register at national level in the Member State where the system is first placed on market or put into service", source: "Article 49(5)" }
+    ] },
+  // COMMON SPECIFICATIONS (Article 41) - used within the Internal Control route when harmonised
+  // standards do not exist or are inadequate. csOnly: true means these only appear when the user
+  // confirms they are using Common Specifications via the conformity_uses_cs answer.
+  O26: { category: "O", number: "O26", route: "Internal Control", csOnly: true, title: "Identify CS", description: "Identify applicable Common Specifications (Article 41) where harmonised standards do not exist or are inadequate", source: { article: "Article 41" } },
+  O27: { category: "O", number: "O27", route: "Internal Control", csOnly: true, title: "Document use of CS", description: "Document use of Common Specifications", source: { article: "Article 41, 11" } },
+  O28: { category: "O", number: "O28", route: "Internal Control", csOnly: true, title: "Map CS to system", description: "Map specifications to system components", source: { article: "Article 41(2)" } },
+  O29: { category: "O", number: "O29", route: "Internal Control", csOnly: true, title: "Implement CS controls", description: "Implement all required controls from the applicable Common Specifications", source: { article: "Article 41(1)" } },
+  O30: { category: "O", number: "O30", route: "Internal Control", csOnly: true, title: "Validate compliance", description: "Validate full compliance against Common Specifications", source: { article: "Article 41, 43" } },
+  O31: { category: "O", number: "O31", route: "Internal Control", csOnly: true, title: "Document compliance", description: "Document compliance evidence against Common Specifications", source: { article: "Article 41", annex: "Annex IV" } },
+  O32: { category: "O", number: "O32", route: "Internal Control", csOnly: true, title: "Prepare Declaration (CS)", description: "Prepare Declaration of Conformity (Common Specifications route)", source: { article: "Article 47" }, items: [
+      { text: "Draw up the EU declaration of conformity for each high-risk AI system placed on the market or put into service and keep it for 10 years after placing on market", source: "Article 47(1)" },
+      { text: "Make the EU declaration of conformity available to national competent authorities upon request", source: "Article 47(1)" },
+      { text: "State in the declaration that the AI system is in conformity with the requirements of Chapter III, Section 2, and include all information listed in Annex V", source: "Article 47(2)" },
+      { text: "Translate the EU declaration of conformity into the official language(s) required by the Member State(s) where the system is placed on market or put into service", source: "Article 47(2)" },
+      { text: "Where the AI system is subject to multiple Union laws, draw up a single EU declaration of conformity covering all applicable Union legislation", source: "Article 47(3)" },
+      { text: "Assume responsibility for the AI system's compliance with this Regulation and keep the EU declaration of conformity up to date throughout the system's lifecycle", source: "Article 47(4)" }
+    ] },
+  O33: { category: "O", number: "O33", route: "Internal Control", csOnly: true, title: "CE marking (CS)", description: "Affix CE marking (Common Specifications path)", source: { article: "Article 48" }, items: [
+      { text: "Follow the general principles for the CE marking set out in Article 30 of Regulation (EC) No 765/2008 before placing on market or putting into service", source: "Article 48(1)" },
+      { text: "Where the high-risk AI system is provided purely in digital form, affix the CE marking digitally", source: "Article 48(2)" },
+      { text: "Affix the CE marking visibly, legibly and indelibly to the AI system or, where not possible, to its packaging or accompanying documentation", source: "Article 48(3)" },
+      { text: "Where a notified body is involved in the conformity assessment procedure, affix the notified body's identification number after the CE marking", source: "Article 48(4)" }
+    ] },
+  O34: { category: "O", number: "O34", route: "Internal Control", csOnly: true, title: "Register (CS)", description: "Register in EU database (Common Specifications path)", source: { article: "Article 49" }, items: [
+      { text: "Register the high-risk AI system listed in Annex III (except point 2) in the EU database before placing on market or putting into service", source: "Article 49(1)" },
+      { text: "Provide all information required under Annex VIII, Section A in the EU database registration and keep it accurate and up to date", source: "Article 49(1), Annex VIII Section A" },
+      { text: "For AI systems referred to in Annex III, point 2, register at national level in the Member State where the system is first placed on market or put into service", source: "Article 49(5)" }
+    ] },
+  O35: { category: "O", number: "O35", route: "Internal Control", csOnly: true, title: "Maintain documentation", description: "Maintain documentation (Common Specifications)", source: { article: "Article 11(1), 41" } },
+  O36: { category: "O", number: "O36", route: "Internal Control", csOnly: true, title: "Reassess after changes", description: "Reassess compliance against Common Specifications after substantial modification", source: { article: "Article 43(4)" } },
+  O37: { category: "O", number: "O37", route: "Sectoral Legislation", title: "Identify sectoral law", description: "Identify applicable sectoral legislation (Section A of Annex I)", source: { article: "Article 43(3)", annex: "Section A of Annex I" }, items: [
+      { text: "Undergo the conformity assessment procedure prescribed by the applicable Union harmonisation legislation listed in Section A of Annex I before placing on market or putting into service", source: "Article 43(3)" },
+      { text: "Follow the sectoral conformity assessment provided for in the applicable Annex I Section A Union harmonisation legislation in place of the Annex VI / VII procedures", source: "Article 43(3)" },
+      { text: "Undergo a new conformity assessment when making a substantial modification to the high-risk AI system", source: "Article 43(4)" },
+      { text: "Demonstrate conformity of the AI system with the requirements of Chapter III, Section 2", source: "Article 43(1)" },
+      { text: "Identify the applicable sectoral legislation under Section A of Annex I governing the conformity assessment procedure (e.g. Machinery Directive, Toys Directive, Medical Devices Regulation)", source: "Article 43(3), Annex I Section A" }
+    ] },
   O38: { category: "O", number: "O38", route: "Sectoral Legislation", title: "Perform sector CA", description: "Perform sectoral conformity assessment", source: { article: "Article 43(3)" } },
   O39: { category: "O", number: "O39", route: "Sectoral Legislation", title: "Include AI‑specific requirements", description: "Include AI-specific requirements (Articles 8-15)", source: { article: "Article 43(3)" } },
-  O40: { category: "O", number: "O40", route: "Sectoral Legislation", title: "Provide safety docs", description: "Provide safety documentation", source: { article: "Article 43(4)", annex: "Annex IV" } },
+  O40: { category: "O", number: "O40", route: "Sectoral Legislation", title: "Provide safety docs", description: "Provide technical safety documentation per Annex IV", source: { article: "Article 11, 43(3)", annex: "Annex IV" } },
   O41: { category: "O", number: "O41", route: "Sectoral Legislation", title: "Provide cybersecurity docs", description: "Provide cybersecurity documentation", source: { article: "Article 15, 43(3)" } },
   O42: { category: "O", number: "O42", route: "Sectoral Legislation", title: "Provide logging docs", description: "Provide logging documentation", source: { article: "Article 12, 43(3)" } },
   O43: { category: "O", number: "O43", route: "Sectoral Legislation", title: "Undergo design exam", description: "Undergo design examination", source: { article: "Article 43(3-4)" } },
-  O44: { category: "O", number: "O44", route: "Sectoral Legislation", title: "Undergo audits", description: "Undergo compliance audits", source: { article: "Article 43(4)" } },
-  O45: { category: "O", number: "O45", route: "Sectoral Legislation", title: "Implement findings", description: "Implement audit findings", source: { article: "Article 43(5)" } },
-  O46: { category: "O", number: "O46", route: "Sectoral Legislation", title: "Prepare sector declarations", description: "Prepare sectoral declarations", source: { article: "Article 47, 43(3)" } },
-  O47: { category: "O", number: "O47", route: "Sectoral Legislation", title: "Register in sector DB", description: "Register in sectoral database", source: { article: "Sectoral Product Law" } },
-  O48: { category: "O", number: "O48", route: "Sectoral Legislation", title: "Register in AI DB", description: "Register in AI Act database", source: { article: "Article 49" } },
+  O44: { category: "O", number: "O44", route: "Sectoral Legislation", title: "Undergo audits", description: "Undergo compliance audits as required by sectoral conformity assessment procedure", source: { article: "Article 43(3)" } },
+  O45: { category: "O", number: "O45", route: "Sectoral Legislation", title: "Implement findings", description: "Implement audit findings and corrective measures", source: { article: "Article 17(1)(h), 43(3)" } },
+  O46: { category: "O", number: "O46", route: "Sectoral Legislation", title: "Prepare Declaration of Conformity", description: "Prepare EU Declaration of Conformity (alongside any sectoral declaration)", source: { article: "Article 47, 43(3)" }, items: [
+      { text: "Draw up the EU declaration of conformity for each high-risk AI system placed on the market or put into service and keep it for 10 years after placing on market", source: "Article 47(1)" },
+      { text: "Make the EU declaration of conformity available to national competent authorities upon request", source: "Article 47(1)" },
+      { text: "State in the declaration that the AI system is in conformity with the requirements of Chapter III, Section 2, and include all information listed in Annex V", source: "Article 47(2)" },
+      { text: "Translate the EU declaration of conformity into the official language(s) required by the Member State(s) where the system is placed on market or put into service", source: "Article 47(2)" },
+      { text: "Where the AI system is subject to multiple Union laws including sectoral legislation, draw up a single EU declaration of conformity covering all applicable Union legislation", source: "Article 47(3)" },
+      { text: "Assume responsibility for the AI system's compliance with this Regulation and keep the EU declaration of conformity up to date throughout the system's lifecycle", source: "Article 47(4)" }
+    ] },
+  O47: { category: "O", number: "O47", route: "Sectoral Legislation", title: "Register in sector DB", description: "Register in sectoral database as required by applicable Annex I Section A legislation", source: { article: "Article 43(3)", annex: "Annex I Section A" } },
+  O48: { category: "O", number: "O48", route: "Sectoral Legislation", title: "Register in AI DB", description: "Register in EU AI Act database", source: { article: "Article 49" }, items: [
+      { text: "Register the high-risk AI system listed in Annex III (except point 2) in the EU database before placing on market or putting into service", source: "Article 49(1)" },
+      { text: "Provide all information required under Annex VIII, Section A in the EU database registration and keep it accurate and up to date", source: "Article 49(1), Annex VIII Section A" },
+      { text: "For AI systems referred to in Annex III, point 2, register at national level in the Member State where the system is first placed on market or put into service", source: "Article 49(5)" }
+    ] },
   O49: { category: "O", number: "O49", route: "Sectoral Legislation", title: "Retain docs", description: "Retain all documentation", source: { article: "Article 11(1), 18" } },
-  O50: { category: "O", number: "O50", route: "Sectoral Legislation", title: "Provide authority access", description: "Provide access to authorities", source: { article: "Article 64, 70, 43(4)" } },
+  O50: { category: "O", number: "O50", route: "Sectoral Legislation", title: "Provide authority access", description: "Provide access to authorities", source: { article: "Article 21(1), 21(2)" } },
 };
 
 // PROVIDER OBLIGATIONS (A1–A16) - Articles 16-22
@@ -289,24 +387,6 @@ export const PROVIDER_OBLIGATIONS = {
       { text: "Log identification of natural persons involved in verification of results", source: "Article 12(2)" },
       { text: "Protect logs by design from tampering and manipulation", source: "Article 12(3)" },
       { text: "Ensure logs remain accurate, complete and up-to-date", source: "Article 12(4)" }
-    ]
-  },
-  A5: {
-    category: "A", number: "A5", title: "Transparency and Provision of Information to Deployers", source: { article: "Article 13", annex: "Annex IV" },
-    items: [
-      { text: "Ensure systems are designed to be sufficiently transparent", source: "Article 13(1)" },
-      { text: "Provide instructions for use in appropriate digital format or otherwise", source: "Article 13(2)" },
-      { text: "Include identity and contact details of provider", source: "Article 13(3)(a)" },
-      { text: "Include characteristics, capabilities and limitations of performance", source: "Article 13(3)(b)" },
-      { text: "Include changes and updates to system", source: "Article 13(3)(c)" },
-      { text: "Include human oversight measures", source: "Article 13(3)(d)" },
-      { text: "Include expected lifetime and necessary maintenance measures", source: "Article 13(3)(e)" },
-      { text: "Provide information to enable deployers to understand output and use it appropriately", source: "Article 13(3)(b)(i)" },
-      { text: "Describe technical capabilities and limitations", source: "Article 13(3)(b)(ii)" },
-      { text: "Inform of circumstances that may lead to risks", source: "Article 13(3)(b)(iii)" },
-      { text: "Provide performance metrics", source: "Article 13(3)(b)(iv)" },
-      { text: "Describe human oversight arrangements", source: "Article 13(3)(d)" },
-      { text: "Provide installation and use instructions", source: "Article 13(3)(f)" }
     ]
   },
   A6: {
@@ -385,47 +465,6 @@ export const PROVIDER_OBLIGATIONS = {
       { text: "Report serious incidents to market surveillance authority", source: "Article 73(1)" }
     ]
   },
-  A11: {
-    category: "A", number: "A11", title: "Conformity Assessment", source: { article: "Article 43", annex: "Annexes V, VI, VII" },
-    items: [
-      { text: "Undergo applicable conformity assessment procedure before placing on market", source: "Article 43(1)" },
-      { text: "Follow internal control procedure (Annex V) for most high-risk systems", source: "Article 43(1)" },
-      { text: "Follow procedure with notified body involvement (Annex VI or VII) where required", source: "Article 43(2)" },
-      { text: "Follow conformity assessment of Annex I Union harmonisation legislation where applicable", source: "Article 43(3)" },
-      { text: "Undergo new conformity assessment for substantial modifications", source: "Article 43(4)" },
-      { text: "Demonstrate conformity with requirements", source: "Article 43(5)" }
-    ]
-  },
-  A12: {
-    category: "A", number: "A12", title: "EU Declaration of Conformity", source: { article: "Article 47" },
-    items: [
-      { text: "Draw up EU declaration of conformity for each AI system", source: "Article 47(1)" },
-      { text: "State that AI system meets requirements of Chapter III, Section 2", source: "Article 47(1)" },
-      { text: "Include information listed in Annex V", source: "Article 47(2)" },
-      { text: "Keep declaration up to date", source: "Article 47(3)" },
-      { text: "Translate declaration into language required by Member State", source: "Article 47(4)" },
-      { text: "Make declaration available to national competent authorities upon request", source: "Article 47(5)" }
-    ]
-  },
-  A13: {
-    category: "A", number: "A13", title: "CE Marking", source: { article: "Article 48" },
-    items: [
-      { text: "Affix CE marking to high-risk AI system", source: "Article 48(1)" },
-      { text: "Affix CE marking visibly, legibly and indelibly", source: "Article 48(2)" },
-      { text: "Affix CE marking before placing on market or putting into service", source: "Article 48(1)" },
-      { text: "Follow general principles set out in Article 30 of Regulation (EC) 765/2008", source: "Article 48(3)" },
-      { text: "Affix identification number of notified body if involved", source: "Article 48(4)" }
-    ]
-  },
-  A14: {
-    category: "A", number: "A14", title: "Registration in EU Database", source: { article: "Article 49" },
-    items: [
-      { text: "Register high-risk AI system in EU database before placing on market or putting into service", source: "Article 49(1)" },
-      { text: "Provide information listed in Annex VIII, Section A", source: "Article 49(2)" },
-      { text: "Update information when necessary", source: "Article 49(3)" },
-      { text: "Ensure accuracy of information provided", source: "Article 49(4)" }
-    ]
-  },
   A15: {
     category: "A", number: "A15", title: "Serious Incident Reporting", source: { article: "Article 73" },
     items: [
@@ -454,6 +493,14 @@ export const PROVIDER_OBLIGATIONS = {
       { text: "Document technical specifications, capabilities, and limitations of integrated models", source: "Article 25(4)" },
       { text: "Confirm model provider cooperation enables full compliance with provider obligations", source: "Article 25(4)" }
     ]
+  },
+  A18: {
+    category: "A", number: "A18", title: "AI Literacy",
+    source: { article: "Article 4" },
+    items: [
+      { text: "Ensure that staff involved in developing, operating or using the AI system have a sufficient level of AI literacy", source: "Article 4" },
+      { text: "Take into account the technical knowledge, experience, education and training of persons, and the context in which the AI system is to be used", source: "Article 4" }
+    ]
   }
 };
 
@@ -462,7 +509,10 @@ export const HANDOVER_OBLIGATIONS = {
   C1: { 
     category: "C", number: "C1", title: "General System Description", 
     source: { article: "Article 13", annex: "Annex IV" }, 
-    items: [{ text: "Provide general description of AI system including intended purpose", source: "Article 13(3)(b), Annex IV" }] 
+    items: [
+      { text: "Ensure the AI system is designed and developed to be sufficiently transparent to enable deployers to understand its outputs and use it appropriately", source: "Article 13(1)" },
+      { text: "Provide general description of AI system including intended purpose", source: "Article 13(3)(b), Annex IV" }
+    ] 
   },
   C2: { 
     category: "C", number: "C2", title: "Technical Capabilities and Limitations", 
@@ -701,11 +751,6 @@ export const DEPLOYER_OBLIGATIONS = {
     source: { article: "Article 26" }, 
     items: [{ text: "Carry out data protection impact assessment under Article 35 GDPR where applicable", source: "Article 26(8)" }] 
   },
-  F9: { 
-    category: "F", number: "F9", title: "Conduct Fundamental Rights Impact Assessment", 
-    source: { article: "Article 26" }, 
-    items: [{ text: "Perform fundamental rights impact assessment prior to use if deployer is public authority or private operator providing public services", source: "Article 26(9)" }] 
-  },
   F10: { 
     category: "F", number: "F10", title: "Inform Representatives", 
     source: { article: "Article 26" }, 
@@ -725,6 +770,14 @@ export const DEPLOYER_OBLIGATIONS = {
     category: "F", number: "F13", title: "Provider Obligations When Modifying", 
     source: { article: "Article 28" }, 
     items: [{ text: "Assume provider obligations if making substantial modification to high-risk system", source: "Article 28(1)" }] 
+  },
+  F14: {
+    category: "F", number: "F14", title: "AI Literacy",
+    source: { article: "Article 4" },
+    items: [
+      { text: "Ensure that staff and other persons dealing with the operation and use of the AI system have a sufficient level of AI literacy", source: "Article 4" },
+      { text: "Take measures to achieve AI literacy appropriate to the deployer's context, staff roles, and the type of AI system being used", source: "Article 4" }
+    ]
   }
 };
 
@@ -732,8 +785,11 @@ export const DEPLOYER_OBLIGATIONS = {
 export const FRIA_OBLIGATIONS = {
   G1: { 
     category: "G", number: "G1", title: "Determine Necessity", 
-    source: { article: "Article 27" }, 
-    items: [{ text: "Assess whether fundamental rights impact assessment is required", source: "Article 27(1)" }] 
+    source: { article: "Article 26, Article 27" }, 
+    items: [
+      { text: "Perform a fundamental rights impact assessment prior to putting the high-risk AI system into service if the deployer is a body governed by public law or a private operator providing public services", source: "Article 26(9)" },
+      { text: "Assess whether a fundamental rights impact assessment is required and follow the procedure set out in Article 27", source: "Article 27(1)" }
+    ] 
   },
   G2: { 
     category: "G", number: "G2", title: "Identify Deployment Process", 
@@ -856,42 +912,40 @@ export const TRANSPARENCY_OBLIGATIONS = {
   }
 };
 
-// NON-SIGNIFICANT RISK OBLIGATIONS (I1–I7) - Article 6(5)
+// NON-SIGNIFICANT RISK OBLIGATIONS (I1–I6) - Articles 6(3), 6(4), 49(2)
 export const NON_SIGNIFICANT_RISK_OBLIGATIONS = {
   I1: { 
-    category: "I", number: "I1", title: "Conduct Risk Assessment", 
+    category: "I", number: "I1", title: "Conduct and Document Not-High-Risk Assessment", 
     source: { article: "Article 6" }, 
-    items: [{ text: "Perform and document risk assessment showing why system does not present significant risk", source: "Article 6(5)" }] 
+    items: [
+      { text: "Perform and document assessment demonstrating why the Annex III use case does not present a significant risk of harm to health, safety or fundamental rights", source: "Article 6(3)" },
+      { text: "Document the assessment procedure, criteria applied, and results", source: "Article 6(3)" }
+    ] 
   },
   I2: { 
-    category: "I", number: "I2", title: "Document Assessment", 
-    source: { article: "Article 6" }, 
-    items: [{ text: "Document risk assessment procedure and results", source: "Article 6(5)" }] 
+    category: "I", number: "I2", title: "Register System in EU Database", 
+    source: { article: "Article 6, Article 49" }, 
+    items: [{ text: "Register the system in the EU database before placing on the market or putting into service", source: "Article 6(4), Article 49(2)" }] 
   },
   I3: { 
-    category: "I", number: "I3", title: "Notify Authorities", 
-    source: { article: "Article 6" }, 
-    items: [{ text: "Submit assessment to relevant market surveillance authority", source: "Article 6(5)" }] 
+    category: "I", number: "I3", title: "Provide Registration Information", 
+    source: { article: "Article 49" }, 
+    items: [{ text: "Provide all information required under Annex VIII, Section B in the EU database registration", source: "Article 6(4), Article 49(2)" }] 
   },
   I4: { 
-    category: "I", number: "I4", title: "Register System", 
-    source: { article: "Article 49" }, 
-    items: [{ text: "Register system in EU database", source: "Article 6(5), Article 49" }] 
+    category: "I", number: "I4", title: "Maintain Evidence", 
+    source: { article: "Article 6" }, 
+    items: [{ text: "Keep documented assessment and supporting evidence available for authorities", source: "Article 6(3)" }] 
   },
   I5: { 
-    category: "I", number: "I5", title: "Maintain Evidence", 
+    category: "I", number: "I5", title: "Reassess After Changes", 
     source: { article: "Article 6" }, 
-    items: [{ text: "Keep documented assessment and supporting evidence", source: "Article 6(5)" }] 
+    items: [{ text: "Reassess whether the not-high-risk determination still holds after any substantial modification", source: "Article 6(3)" }] 
   },
   I6: { 
-    category: "I", number: "I6", title: "Reassess After Changes", 
+    category: "I", number: "I6", title: "Cooperate with Authorities", 
     source: { article: "Article 6" }, 
-    items: [{ text: "Reassess if system undergoes substantial modification", source: "Article 6(5)" }] 
-  },
-  I7: { 
-    category: "I", number: "I7", title: "Cooperate with Authorities", 
-    source: { article: "Article 6" }, 
-    items: [{ text: "Provide additional information if requested by authorities", source: "Article 6(5)" }] 
+    items: [{ text: "Provide assessment and supporting documentation to competent authorities upon request", source: "Article 6(3)" }] 
   }
 };
 
@@ -1001,6 +1055,11 @@ export const GPAI_SYSTEMIC_OBLIGATIONS = {
     source: { article: "Article 55" }, 
     items: [{ text: "Ensure adequate level of cybersecurity protection for model, physical infrastructure and supply chain", source: "Article 55(1)(d)" }] 
   },
+  K5: {
+    category: "K", number: "K5", title: "Notify Downstream Providers",
+    source: { article: "Article 55" },
+    items: [{ text: "Notify providers of AI systems built on the general-purpose AI model with systemic risk of identified systemic risks and corrective measures taken to address them", source: "Article 55(2)" }]
+  },
   K6: { 
     category: "K", number: "K6", title: "Follow Code of Practice", 
     source: { article: "Article 56" }, 
@@ -1092,23 +1151,24 @@ export const PROHIBITED_OBLIGATIONS = {
   }
 };
 
-// PRODUCT MANUFACTURER OBLIGATIONS (N1–N4) - Article 24 (different article 24 - for products)
-// Note: This appears to reference when product manufacturers integrate AI
+// PRODUCT MANUFACTURER OBLIGATIONS (N1–N4) - Article 25
+// Article 25(1): product manufacturer of a product covered by Annex I(A) Union harmonisation
+// legislation that integrates a high-risk AI safety component assumes the obligations of a Provider.
 export const PRODUCT_MANUFACTURER_OBLIGATIONS = {
   N1: { 
     category: "N", number: "N1", title: "Assume Provider Obligations", 
-    source: { article: "Article 24" }, 
-    items: [{ text: "Assume provider obligations when placing AI system on market with product under own name or trademark", source: "Article 24(1)" }] 
+    source: { article: "Article 25" }, 
+    items: [{ text: "Assume provider obligations when placing AI system on market with product under own name or trademark", source: "Article 25(1)" }] 
   },
   N2: { 
     category: "N", number: "N2", title: "Apply All Provider Requirements", 
-    source: { article: "Article 24" }, 
-    items: [{ text: "Comply with all obligations in Chapter III, Section 2", source: "Article 24(1)" }] 
+    source: { article: "Article 25" }, 
+    items: [{ text: "Comply with all obligations in Chapter III, Section 2", source: "Article 25(1)" }] 
   },
   N3: { 
     category: "N", number: "N3", title: "Apply Product Safety Legislation", 
-    source: { article: "Article 6" }, 
-    items: [{ text: "Comply with requirements of applicable Union harmonisation legislation", source: "Article 6(1)" }] 
+    source: { article: "Article 25" }, 
+    items: [{ text: "Comply with requirements of applicable Union harmonisation legislation listed in Section A of Annex I", source: "Article 25(1)" }] 
   },
   N4: { 
     category: "N", number: "N4", title: "Register System", 
@@ -1202,6 +1262,65 @@ export const EXEMPTION_DOCUMENTATION_OBLIGATIONS = {
   }
 };
 
+// AI LITERACY OBLIGATIONS (Q1–Q2) - Article 4
+// Applies to ALL providers and deployers regardless of risk level.
+// For high-risk systems these obligations are also represented in A18 (Provider) and F14 (Deployer);
+// this series ensures they appear for non-high-risk in-scope systems too.
+export const AI_LITERACY_OBLIGATIONS = {
+  Q1: {
+    category: "Q", number: "Q1", title: "AI Literacy — Provider",
+    source: { article: "Article 4" },
+    items: [
+      { text: "Take measures to ensure, to your best extent, a sufficient level of AI literacy of staff and other persons dealing with the development and operation of AI systems on your behalf", source: "Article 4" },
+      { text: "Take into account the technical knowledge, experience, education and training of those persons, and the context the AI system is to be used in", source: "Article 4" },
+      { text: "Consider the persons or groups of persons on whom the AI systems are to be used", source: "Article 4" }
+    ]
+  },
+  Q2: {
+    category: "Q", number: "Q2", title: "AI Literacy — Deployer",
+    source: { article: "Article 4" },
+    items: [
+      { text: "Take measures to ensure, to your best extent, a sufficient level of AI literacy of staff and other persons dealing with the operation and use of AI systems on your behalf", source: "Article 4" },
+      { text: "Take into account the technical knowledge, experience, education and training of those persons, and the context the AI system is to be used in", source: "Article 4" },
+      { text: "Consider the persons or groups of persons on whom the AI systems are to be used", source: "Article 4" }
+    ]
+  }
+};
+
+// AUTHORISED REPRESENTATIVE OBLIGATIONS (R1–R6) - Article 22
+export const AUTHORISED_REPRESENTATIVE_OBLIGATIONS = {
+  R1: {
+    category: "R", number: "R1", title: "Act Under Written Mandate",
+    source: { article: "Article 22" },
+    items: [{ text: "Act on behalf of the provider under a written mandate; perform registration, cooperation and notification obligations on the provider's behalf", source: "Article 22(1), 22(3)" }]
+  },
+  R2: {
+    category: "R", number: "R2", title: "Verify Compliance Documentation",
+    source: { article: "Article 22" },
+    items: [{ text: "Verify that the EU declaration of conformity and technical documentation have been drawn up and are up to date", source: "Article 22(1)(a)" }]
+  },
+  R3: {
+    category: "R", number: "R3", title: "Cooperate with National Authorities",
+    source: { article: "Article 22" },
+    items: [{ text: "Cooperate with and provide information to competent authorities upon motivated request, including making technical documentation available", source: "Article 22(1)(b)" }]
+  },
+  R4: {
+    category: "R", number: "R4", title: "Provide Documentation to Authorities",
+    source: { article: "Article 22" },
+    items: [{ text: "Provide national competent authorities with all information and documentation necessary to demonstrate conformity of the high-risk AI system", source: "Article 22(1)(c)" }]
+  },
+  R5: {
+    category: "R", number: "R5", title: "Terminate Mandate if Non-Compliant",
+    source: { article: "Article 22" },
+    items: [{ text: "Terminate the mandate if the provider acts contrary to obligations under this Regulation and immediately inform the relevant market surveillance authority", source: "Article 22(2)" }]
+  },
+  R6: {
+    category: "R", number: "R6", title: "Register as Authorised Representative",
+    source: { article: "Article 22, Article 49" },
+    items: [{ text: "Register own name, address and contact details in the EU database alongside the provider's registration", source: "Article 22(1), Article 49(1)" }]
+  }
+};
+
 // PROHIBITED PRODUCT MANUFACTURER OBLIGATIONS (P1-P4) - Article 5 & 24
 // Special obligations when Product Manufacturer integrates prohibited AI as safety component
 export const PROHIBITED_PRODUCT_MANUFACTURER_OBLIGATIONS = {
@@ -1244,5 +1363,7 @@ export const ALL_OBLIGATIONS = {
   ...EXEMPTION_DOCUMENTATION_OBLIGATIONS,
   ...PROHIBITED_PRODUCT_MANUFACTURER_OBLIGATIONS,
   ...PRODUCT_MANUFACTURER_OBLIGATIONS,
+  ...AUTHORISED_REPRESENTATIVE_OBLIGATIONS,
+  ...AI_LITERACY_OBLIGATIONS,
   ...CONFORMITY_ASSESSMENT_OBLIGATIONS,
 };

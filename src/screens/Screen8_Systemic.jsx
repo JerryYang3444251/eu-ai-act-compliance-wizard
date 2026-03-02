@@ -95,13 +95,13 @@ export default function Screen8b_Systemic() {
 
         {hasSystemicRisk === "yes" || hasSystemicRisk === "commission_determined" ? (
           <div className="info-box alert-warning" style={{ marginTop: "24px" }}>
-            <strong>Systemic Risk Classification:</strong>
-            You indicated systemic risk criteria are met (10²⁵ FLOPs threshold or Commission designation). Your model is classified as General-Purpose AI Model with Systemic Risk. Enhanced obligations apply <strong>to you in your capacity as the provider of this GPAI model</strong>. <span className="source-tag" title="Articles 51 and 55">Source</span>
+            <strong>⚠️ Systemic Risk Classification:</strong>
+            You indicated systemic risk criteria are met. Your model is classified as a General-Purpose AI Model with Systemic Risk. Enhanced obligations apply <strong>to you in your capacity as the provider of this GPAI model</strong>. <span className="source-tag" title="Articles 51 and 55">Source</span>
           </div>
         ) : (
           hasSystemicRisk === "no" && (
               <div className="info-box alert-success" style={{ marginTop: "24px" }}>
-                <strong>Standard GPAI Classification:</strong>
+                <strong>✓ Standard GPAI Classification:</strong>
                 You indicated systemic risk criteria are not met. Your model is classified as standard GPAI without systemic risk. Standard GPAI obligations apply <strong>only if you are the provider placing this GPAI model on the market</strong>. <span className="source-tag" title="Articles 52-53">Source</span>
               </div>
           )

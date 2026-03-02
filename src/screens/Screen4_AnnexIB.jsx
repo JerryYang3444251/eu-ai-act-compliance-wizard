@@ -71,7 +71,7 @@ export default function Screen4() {
 
         {sectors.length > 0 && !sectors.includes("none") && (
           <div className="info-box alert-warning">
-            <strong>🚨 High-Risk Classification:</strong> You selected one or more regulated sectors. Your AI system is classified as High-Risk. <span className="source-tag" title="Article 6(1) and Annex I, Section B">Source</span>
+            <strong>⚠️ High-Risk Classification:</strong> You selected one or more regulated sectors. Your AI system is classified as High-Risk under Annex I Section B. <span className="source-tag" title="Article 6(1) and Annex I, Section B">Source</span>
           </div>
         )}
 

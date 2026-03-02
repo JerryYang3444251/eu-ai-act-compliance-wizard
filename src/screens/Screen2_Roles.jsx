@@ -16,24 +16,25 @@ export default function Screen1() {
   // ----------------------------------------------------------------------
   const orgActions = [
     ...([
-      { id: "place_on_market", label: "Place the AI system on the EU market" },
-      { id: "import", label: "Import a third‑country AI system into the EU" },
-      { id: "distribute", label: "Distribute/resell the AI system" },
-      { id: "deploy", label: "Deploy/use the AI system" },
-      { id: "product_manufacturer", label: "Manufacture a product that integrates the AI system" }
+      { id: "place_on_market", label: "Place the AI system on the EU market", article: "Article 3(3), Article 16" },
+      { id: "import", label: "Import a third‑country AI system into the EU", article: "Article 3(6), Article 23" },
+      { id: "distribute", label: "Distribute/resell the AI system", article: "Article 3(7), Article 24" },
+      { id: "deploy", label: "Deploy/use the AI system", article: "Article 3(4), Article 26" },
+      { id: "product_manufacturer", label: "Manufacture a product that integrates the AI system", article: "Article 25(3)" },
+      { id: "act_as_ar", label: "Act as the authorised representative for a provider established outside the EU", article: "Article 22" }
     ]),
     ...([
-      { id: "develop_system", label: "Develop an AI system (building or integrating components into a complete system)" },
-      { id: "develop_model", label: "Develop or train an AI model" },
-      { id: "modify", label: "Substantially modify the AI system (architecture, data, design, performance)" },
-      { id: "fine_tune", label: "Fine‑tune or retrain an AI model" },
-      { id: "change_purpose", label: "Change the AI system's intended purpose" },
-      { id: "brand", label: "Brand or rename the AI system (place under our own name)" }
+      { id: "develop_system", label: "Develop an AI system (building or integrating components into a complete system)", article: "Article 3(3), Article 16" },
+      { id: "develop_model", label: "Develop or train an AI model", article: "Article 3(63), Article 53" },
+      { id: "modify", label: "Substantially modify the AI system (architecture, data, design, performance)", article: "Article 3(23), Article 28" },
+      { id: "fine_tune", label: "Fine‑tune or retrain an AI model", article: "Article 3(23), Article 28(1)" },
+      { id: "change_purpose", label: "Change the AI system's intended purpose", article: "Article 3(23), Article 28(1)(b)" },
+      { id: "brand", label: "Brand or rename the AI system (place under our own name)", article: "Article 3(3), Article 25(1)(a)" }
     ])
   ];
   
-  const baseActivities = orgActions.slice(0, 5);
-  const modificationActivities = orgActions.slice(5);
+  const baseActivities = orgActions.slice(0, 6);
+  const modificationActivities = orgActions.slice(6);
 
   const handleToggleAction = (actionId) => {
     const updated = roles_raw.includes(actionId)
@@ -95,6 +96,15 @@ export default function Screen1() {
         reclassified as a Provider automatically.
       `,
       articles: "Article 24"
+    },
+    Authorised_Representative: {
+      title: "Authorised Representative",
+      description: `
+        You are an Authorised Representative if you are established in the EU and have been
+        mandated in writing by a provider established outside the EU to act on their behalf
+        for the purposes of the EU AI Act.
+      `,
+      articles: "Article 22"
     }
   };
 
@@ -149,7 +159,12 @@ export default function Screen1() {
                   checked={roles_raw.includes(action.id)}
                   onChange={() => handleToggleAction(action.id)}
                 />
-                <span>{action.label}</span>
+                <span>
+                  {action.label}
+                  {action.article && (
+                    <span className="source-tag" title={action.article} style={{ marginLeft: "6px" }}>Source</span>
+                  )}
+                </span>
               </label>
             ))}
           </div>
@@ -196,7 +211,12 @@ export default function Screen1() {
                     checked={roles_raw.includes(action.id)}
                     onChange={() => handleToggleAction(action.id)}
                   />
-                  <span>{enhancedLabel}</span>
+                  <span>
+                    {enhancedLabel}
+                    {action.article && (
+                      <span className="source-tag" title={action.article} style={{ marginLeft: "6px" }}>Source</span>
+                    )}
+                  </span>
                 </label>
               );
             })}

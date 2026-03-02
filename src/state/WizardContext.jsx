@@ -100,6 +100,11 @@ export function WizardProvider({ children }) {
       raw_role_tags.add('Product_Manufacturer');
     }
 
+    // ROLE_009: Authorised Representative tag
+    if (org_actions.includes('act_as_ar')) {
+      raw_role_tags.add('Authorised_Representative');
+    }
+
     // ROLE_008: Validation
     if (raw_role_tags.size === 0) {
       console.warn("ROLE_008: No raw roles identified from org_actions", { org_actions });
@@ -183,6 +188,11 @@ export function WizardProvider({ children }) {
       }
     }
 
+    // RECLASS_015: Authorised_Representative → AUTHORISED_REPRESENTATIVE (Article 22)
+    if (roles_raw_tags.includes('Authorised_Representative')) {
+      legal_roles.add("Authorised_Representative");
+    }
+
     // RECLASS_014: Model relationship provider selection → PROVIDER
     // If user explicitly selected "provider" relationship in Part 7 (GPAI section)
     // Assign Provider role for GPAI systemic providers
@@ -232,12 +242,12 @@ export function WizardProvider({ children }) {
     if (roles.includes("Provider") && isHighRisk) obs.push("A");
     // OBL_017: Handover (C1-C15) only if Provider AND high-risk classification
     if (roles.includes("Provider") && isHighRisk) obs.push("C");
-    // OBL_002: Importer obligations (D1-D14)
-    if (roles.includes("Importer")) obs.push("D");
-    // OBL_003: Distributor obligations (E1-E9)
-    if (roles.includes("Distributor")) obs.push("E");
-    // OBL_004: Deployer obligations (F1-F12)
-    if (roles.includes("Deployer")) obs.push("F");
+    // OBL_002: Importer obligations (D1-D14) - Article 23 — high-risk AI systems only
+    if (roles.includes("Importer") && isHighRisk) obs.push("D");
+    // OBL_003: Distributor obligations (E1-E9) - Article 24 — high-risk AI systems only
+    if (roles.includes("Distributor") && isHighRisk) obs.push("E");
+    // OBL_004: Deployer obligations (F1-F13) - Article 26 — high-risk AI systems only
+    if (roles.includes("Deployer") && isHighRisk) obs.push("F");
 
     // OBL_009: FRIA obligations (G1-G15) - Article 27
     const isPublicAuthority = roles.includes("Public_Authority");
@@ -268,12 +278,21 @@ export function WizardProvider({ children }) {
 
     // DUAL-ROLE LOGIC: Assign both high-risk and GPAI obligations if both apply, regardless of classification precedence
     const isModelProvider = answers.modelRelationship === "provider";
+    // isSystemProvider: true for (a) directly classified high-risk, or (b) GPAI/GPAI_SYSTEMIC provider
+    // who also touches high-risk use cases (dual-role). Explicitly excludes ANNEX_III_NON_SIGNIFICANT
+    // and IN_SCOPE_NON_HIGH_RISK to avoid incorrectly pushing A/C/O for non-high-risk providers
+    // who still have annexIII answers filled in from the wizard journey.
     const isSystemProvider = roles.includes("Provider") && (
-      // High-risk triggers: any high-risk classification or answers
+      // Direct high-risk classification
       [CLASSIFICATIONS.HIGH_RISK_IA, CLASSIFICATIONS.HIGH_RISK_IB, CLASSIFICATIONS.HIGH_RISK_III].includes(classification)
-      || (answers.annexIACategories && answers.annexIACategories.some(x => x !== "none"))
-      || (answers.highRiskSectorsB && answers.highRiskSectorsB.some(x => x !== "none"))
-      || (answers.annexIIIUsecases && answers.annexIIIUsecases.some(x => x !== "none"))
+      || (
+        // Dual-role: GPAI model that also has high-risk system exposure
+        [CLASSIFICATIONS.GPAI, CLASSIFICATIONS.GPAI_SYSTEMIC].includes(classification) && (
+          (answers.annexIACategories && answers.annexIACategories.some(x => x !== "none"))
+          || (answers.highRiskSectorsB && answers.highRiskSectorsB.some(x => x !== "none"))
+          || (answers.annexIIIUsecases && answers.annexIIIUsecases.some(x => x !== "none"))
+        )
+      )
     );
     const isGPAI = isModelProvider && (
       classification === CLASSIFICATIONS.GPAI || classification === CLASSIFICATIONS.GPAI_SYSTEMIC || answers.isGPAI === "yes"
@@ -299,8 +318,14 @@ export function WizardProvider({ children }) {
       obs.push("K");
     }
 
-    // OBL_015: Product Manufacturer obligations (N1-N4)
-    if (roles.includes("Product_Manufacturer")) obs.push("N");
+    // OBL_015: Product Manufacturer obligations (N1-N4) - Article 25(3) — high-risk AI systems only
+    // Article 25(3): product manufacturer becomes Provider only when the AI is a high-risk safety component
+    if (roles.includes("Product_Manufacturer") && isHighRisk) obs.push("N");
+
+    // OBL_019: AI Literacy (Q) - Article 4
+    // Universal obligation for all providers and deployers, regardless of risk level
+    // For high-risk systems, AI literacy is also embedded in A18/F14; push Q here for non-high-risk only
+    if (!isHighRisk && (roles.includes("Provider") || roles.includes("Deployer"))) obs.push("Q");
 
     // OBL_007: Conformity Assessment obligations (O1-O50 by route)
     // Only for Providers with high-risk classification per Article 43
@@ -315,6 +340,9 @@ export function WizardProvider({ children }) {
     if (classification === CLASSIFICATIONS.EXCLUDED) {
       obs.push("M");
     }
+
+    // OBL_018: Authorised Representative obligations (R1-R6) - Article 22
+    if (roles.includes("Authorised_Representative")) obs.push("R");
 
     // X: Exemption Documentation (Article 5 & Recital 16)
     // Added when prohibited practices are selected but valid exemptions apply
@@ -529,7 +557,7 @@ export function WizardProvider({ children }) {
     "/screen3": ["annexIACategories"],
     "/screen4": ["highRiskSectorsB"],
     "/screen5": ["annexIIIUsecases"],
-    "/screen6": ["impact_checks"],
+    "/screen6": ["impact_checks", "profiling"],
     "/screen7": ["isGPAI"],
     "/screen8": ["hasSystemicRisk", "flopsValue", "commissionDesignation"],
     "/screen9": ["prohibitedPractices"],

@@ -3,176 +3,201 @@ import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
 import { CLASSIFICATIONS } from "../data/checklist";
 
-export default function Screen7b_SignificantRisk() {
+export default function Screen6_SignificantRisk() {
   const navigate = useNavigate();
-  const { answers, saveAnswer, toggleAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+  const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
 
   useEffect(() => {
     pushHistory("/screen6");
   }, [pushHistory]);
 
-  const impactChecks = answers.impact_checks || [];
+  const derogationChecks = answers.impact_checks || [];
+  const profiling = answers.profiling || null;
 
   // -------------------------------------------------------------------
-  // RULE ENGINE MATCHING OPTIONS
-  // These are EXACTLY the identifiers the rule engine expects.
+  // Article 6(3) EU AI Act: Four derogation conditions
+  // An Annex III system is NOT high-risk if ANY of these applies,
+  // UNLESS the system performs profiling of natural persons (absolute override).
   // -------------------------------------------------------------------
-  const SIGNIFICANT_RISK_OPTIONS = [
-    { id: "decision_basis", label: "The system's output is used as a basis for a decision about a person" },
-    { id: "decision_constraining", label: "The system shapes, constrains, or determines a final decision" },
-    { id: "unverifiable_output", label: "Users cannot reasonably verify the output" },
-    { id: "access_entitlements", label: "Affects eligibility or access to services, benefits, rights, or opportunities" },
-    { id: "profiling_effects", label: "Profiles, scores, classifies, or predicts individuals in ways that affect rights" },
-    { id: "harm_risk", label: "Errors could cause harm to health, safety, property, or rights" },
-    { id: "disadvantage_risk", label: "Incorrect outputs could materially disadvantage a person" },
-    { id: "opacity_limiting_oversight", label: "System is complex/opaque in a way that limits human oversight" },
-    { id: "automation_bias_risk", label: "Human oversight cannot counter automation bias" },
-    { id: "law_enforcement_effect", label: "Affects decisions in policing or law enforcement" },
-    { id: "migration_border_effect", label: "Affects decisions on migration, asylum, visas, or border control" },
+  const DEROGATION_OPTIONS = [
+    {
+      id: "narrow_procedural",
+      label: "Narrow procedural task",
+      description: "The system is intended to perform a narrow procedural task (e.g., scheduling, routing, formatting) with no influence on substantive decisions.",
+      article: "Article 6(3)(a)"
+    },
+    {
+      id: "improve_prior_human",
+      label: "Improves result of a previously completed human activity",
+      description: "The system is intended to improve the result of a previously completed human activity (e.g., spell-checking a completed human-written report, quality-checking a human-made decision).",
+      article: "Article 6(3)(b)"
+    },
+    {
+      id: "detect_patterns_no_replace",
+      label: "Detects decision-making patterns without replacing human assessment",
+      description: "The system is intended to detect decision-making patterns or deviations from prior decision-making patterns, and is not meant to replace or influence the previously completed human assessment, without proper human review.",
+      article: "Article 6(3)(c)"
+    },
+    {
+      id: "preparatory_task",
+      label: "Preparatory task to an Annex III assessment",
+      description: "The system is intended to perform a preparatory task to an assessment relevant for an Annex III use case (e.g., pre-sorting documents, collecting data that a human will then assess).",
+      article: "Article 6(3)(d)"
+    },
   ];
 
-  const NONE_OPTION = "none_of_the_above";
+  const hasDerogation = derogationChecks.length > 0;
+  const isProfilingYes = profiling === "yes";
+  const isProfilingNo = profiling === "no";
 
-  const handleToggle = (id) => {
-    // If selecting NONE → clear everything else
-    if (id === NONE_OPTION) {
-      if (impactChecks.includes(NONE_OPTION)) {
-        saveAnswer("impact_checks", []);
-      } else {
-        saveAnswer("impact_checks", [NONE_OPTION]);
-      }
-      return;
-    }
+  // Classification result:
+  // - Profiling = yes → always HIGH-RISK (Art. 6(3) absolute override)
+  // - Any derogation + no profiling → ANNEX_III_NON_SIGNIFICANT
+  // - No derogation → HIGH-RISK (default under Art. 6(2))
+  const canProceed = hasDerogation ? (profiling !== null) : true;
 
-    // If selecting ANY risk indicator → deselect NONE
-    const updated = impactChecks.includes(id)
-      ? impactChecks.filter((v) => v !== id && v !== NONE_OPTION)
-      : [...impactChecks.filter((v) => v !== NONE_OPTION), id];
-
-    saveAnswer("impact_checks", updated);
+  const getClassification = () => {
+    if (isProfilingYes) return CLASSIFICATIONS.HIGH_RISK_III;
+    if (hasDerogation && isProfilingNo) return CLASSIFICATIONS.ANNEX_III_NON_SIGNIFICANT;
+    return CLASSIFICATIONS.HIGH_RISK_III;
   };
 
-  const hasSignificant = impactChecks.some((v) => v !== NONE_OPTION);
-  const hasNone = impactChecks.length === 1 && impactChecks[0] === NONE_OPTION;
-
-  const hasConflict = hasSignificant && hasNone;
-  const hasSelection = impactChecks.length > 0;
+  const handleToggleDerogation = (id) => {
+    const updated = derogationChecks.includes(id)
+      ? derogationChecks.filter((v) => v !== id)
+      : [...derogationChecks, id];
+    saveAnswer("impact_checks", updated);
+    // Reset profiling if all derogations removed
+    if (updated.length === 0) saveAnswer("profiling", null);
+  };
 
   const handleNext = () => {
-    // Clear re-evaluation flag if set
-    if (shouldReevaluateRules) {
-      setShouldReevaluateRules(false);
-    }
-
-    if (!hasSelection) {
-      alert("Please select one or more options.");
-      return;
-    }
-
-    if (hasConflict) {
-      alert("You cannot select both 'none of the above' and other indicators.");
-      return;
-    }
-
-    // -------------------------------------------------------------------
-    // RULE ENGINE CLASSIFICATION
-    // EXACT MATCH with:
-    //  A3_IMPACT_001 → High-risk Annex III
-    //  A3_IMPACT_002 → Annex III Non-Significant
-    // -------------------------------------------------------------------
-    if (hasSignificant) {
-      setClassificationWithPrecedence(CLASSIFICATIONS.HIGH_RISK_III);
-    } else if (hasNone) {
-      setClassificationWithPrecedence(CLASSIFICATIONS.ANNEX_III_NON_SIGNIFICANT);
-    }
-
-    // Route to SCREEN 7 (GPAI CHECK)
+    if (shouldReevaluateRules) setShouldReevaluateRules(false);
+    setClassificationWithPrecedence(getClassification());
     navigate("/screen7");
   };
+
+  // Live classification preview
+  const previewClassification = !hasDerogation
+    ? "high_risk"
+    : isProfilingYes
+    ? "high_risk"
+    : isProfilingNo
+    ? "non_significant"
+    : null;
 
   return (
     <div className="screen-container">
       <div className="screen-header">
         <h1>Part 6: Significant Risk Assessment</h1>
         <p className="subtitle">
-          Select applicable criteria. Your selection determines whether your Annex III system
-          is HIGH-RISK or NON-SIGNIFICANT.
+          Determines whether your Annex III system qualifies for the Article&nbsp;6(3) derogation from high-risk status.
         </p>
       </div>
 
       <div className="screen-content">
-        <div className="info-box alert-info">
-          <p>
-            If you select any of the criteria below, your system is classified as HIGH-RISK Annex III.
-            If none apply, select “None of the above”.
+        <div className="helper-box alert-info" style={{ marginBottom: "24px" }}>
+          <strong>ℹ️ Default: High-Risk</strong>
+          <p style={{ marginTop: "8px" }}>
+            All Annex III systems are classified as <strong>high-risk by default</strong> under Article&nbsp;6(2).
+            Article&nbsp;6(3) provides a narrow derogation: a system escapes the high-risk designation
+            only if at least one of the four conditions below is met <em>and</em> the system does not
+            perform profiling of natural persons.
           </p>
+          <span className="source-tag" title="Article 6(2), Article 6(3)">Source</span>
         </div>
 
-        <h3>Indicators of Significant Risk</h3>
-        <p className="section-help">Select all that apply</p>
+        <h3>Step 1: Article&nbsp;6(3) Derogation Conditions</h3>
+        <p style={{ color: "var(--text-light)", marginBottom: "16px" }}>
+          Select <strong>all conditions that apply</strong> to your system. If none apply, leave all unchecked.
+        </p>
 
         <div className="options-group checkbox-group">
-          {SIGNIFICANT_RISK_OPTIONS.map((opt) => (
-            <label key={opt.id} className="checkbox-option">
+          {DEROGATION_OPTIONS.map((opt) => (
+            <label key={opt.id} className="checkbox-option" style={{ alignItems: "flex-start" }}>
               <input
                 type="checkbox"
-                checked={impactChecks.includes(opt.id)}
-                onChange={() => handleToggle(opt.id)}
+                checked={derogationChecks.includes(opt.id)}
+                onChange={() => handleToggleDerogation(opt.id)}
+                style={{ marginTop: "3px" }}
               />
-              <span>{opt.label}</span>
+              <div>
+                <strong>{opt.label}</strong>
+                <span className="source-tag" style={{ marginLeft: "6px" }} title={opt.article}>Source</span>
+                <div style={{ fontSize: "0.875rem", color: "var(--text-lighter)", marginTop: "4px" }}>
+                  {opt.description}
+                </div>
+              </div>
             </label>
           ))}
-          
-          <div style={{ margin: "24px 0 8px 0", borderTop: "1px solid var(--border-color)", paddingTop: "16px" }}>
-            <label className="checkbox-option">
-              <input
-                type="checkbox"
-                checked={hasNone}
-                onChange={() => handleToggle(NONE_OPTION)}
-              />
-              <span>No significant-risk indicators apply</span>
-            </label>
-          </div>
         </div>
 
-        {hasConflict && (
-          <div className="info-box alert-danger" style={{ marginTop: "24px" }}>
-            <strong>⚠️ Conflict detected:</strong>
-            <p>
-              You selected “None of the above” AND other indicators.
-              Please correct your selection.
+        {hasDerogation && (
+          <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "2px solid var(--border-color)" }}>
+            <h3>Step 2: Profiling of Natural Persons</h3>
+            <div className="helper-box" style={{ marginBottom: "16px", fontSize: "0.9rem" }}>
+              <p>
+                Even where a derogation condition applies, the system is <strong>always high-risk</strong> if
+                it performs <strong>profiling of natural persons</strong> within the meaning of Article 4(4)
+                of Regulation (EU) 2016/679 (automated processing to evaluate, analyse or predict aspects
+                of a person — work performance, economic situation, health, preferences, behaviour, location, etc.).
+              </p>
+              <span className="source-tag" title="Article 6(3), third subparagraph">Source</span>
+            </div>
+            <p style={{ color: "var(--text-light)", marginBottom: "12px" }}>
+              Does your Annex III system perform <strong>profiling of natural persons</strong>?
             </p>
+            <div className="options-group radio-group">
+              <label className="radio-option">
+                <input type="radio" name="profiling" value="yes"
+                  checked={profiling === "yes"} onChange={() => saveAnswer("profiling", "yes")} />
+                <div>
+                  <strong>Yes</strong> — the system profiles natural persons
+                  <div style={{ fontSize: "0.875rem", color: "var(--text-lighter)", marginTop: "2px" }}>
+                    System will be classified as High-Risk regardless of derogation conditions.
+                  </div>
+                </div>
+              </label>
+              <label className="radio-option">
+                <input type="radio" name="profiling" value="no"
+                  checked={profiling === "no"} onChange={() => saveAnswer("profiling", "no")} />
+                <div>
+                  <strong>No</strong> — the system does not profile natural persons
+                  <div style={{ fontSize: "0.875rem", color: "var(--text-lighter)", marginTop: "2px" }}>
+                    Derogation condition(s) will apply; system qualifies as Not High-Risk.
+                  </div>
+                </div>
+              </label>
+            </div>
           </div>
         )}
 
-        {hasSignificant && !hasConflict && (
+        {previewClassification === "high_risk" && (
           <div className="info-box alert-warning" style={{ marginTop: "24px" }}>
-            <strong>⚠️ High-Risk Classification:</strong>
-            You selected at least one significant risk indicator. Your system is classified as High-Risk. Full high-risk obligations will apply. <span className="source-tag" title="Article 6(2) and Annex III">Source</span>
+            <strong>⚠️ High-Risk (Annex III):</strong>{" "}
+            {isProfilingYes
+              ? "Your system performs profiling. Full high-risk obligations apply regardless of derogation conditions."
+              : "No derogation condition applies. Your system is High-Risk by default."}
+            {" "}<span className="source-tag" title={isProfilingYes ? "Article 6(3), third subparagraph" : "Article 6(2)"}>Source</span>
           </div>
         )}
 
-        {hasNone && !hasConflict && (
+        {previewClassification === "non_significant" && (
           <div className="info-box alert-success" style={{ marginTop: "24px" }}>
-            <strong>✓ Non-Significant Risk:</strong>
-            You selected "None of the above." Your system is classified as Non-Significant Risk. Reduced obligations will apply. <span className="source-tag" title="Article 6(2) and Annex III">Source</span>
+            <strong>✓ Not High-Risk (Annex III):</strong>{" "}
+            At least one derogation condition applies and the system does not perform profiling.
+            Reduced obligations apply.
+            {" "}<span className="source-tag" title="Article 6(3), Article 6(4), Article 49(2)">Source</span>
           </div>
         )}
 
         <div className="screen-navigation" style={{ marginTop: "32px" }}>
-          <button className="btn btn-secondary" onClick={() => navigateBack(navigate)}>
-            ← Back
-          </button>
-
-          <button
-            className="btn btn-primary"
-            onClick={handleNext}
-            disabled={!hasSelection || hasConflict}
-          >
-            Next →
-          </button>
+          <button className="btn btn-secondary" onClick={() => navigateBack(navigate)}>Back</button>
+          <button className="btn btn-primary" onClick={handleNext} disabled={!canProceed}>Next</button>
         </div>
       </div>
     </div>
   );
 }
+
+

@@ -298,13 +298,10 @@ export default function Screen11b_FRIA() {
               <p style={{ margin: "8px 0 0 0" }}>
                 Your AI system uses {isAnnexIII_5b && "creditworthiness evaluation or credit scoring"}
                 {isAnnexIII_5b && isAnnexIII_5c && " and "}
-                {isAnnexIII_5c && "life/health insurance risk assessment"} 
-                ({isAnnexIII_5b && "Annex III Point 5(b)"}
-                {isAnnexIII_5b && isAnnexIII_5c && " and "}
-                {isAnnexIII_5c && "Annex III Point 5(c)"}).
+              {isAnnexIII_5c && "life/health insurance risk assessment"}.
                 <br/><br/>
                 <strong>ALL deployers</strong> (both public and private entities) of these specific systems must conduct a Fundamental Rights Impact Assessment, regardless of your answers below.
-                {" "}<span className="source-tag" title="Article 27(1) - deployers of high-risk AI systems referred to in points 5(b) and (c) of Annex III">Source</span>
+                {" "}<span className="source-tag" title="Article 27(1), Annex III Points 5(b) and 5(c)">Source</span>
               </p>
             </div>
           </div>
@@ -328,7 +325,7 @@ export default function Screen11b_FRIA() {
         <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border-color)" }}>
           <h3 style={{ marginBottom: "16px" }}>Deployment Sectors</h3>
           <p style={{ marginBottom: "16px", fontSize: "0.95em", color: "#666" }}>
-            Select the high-risk areas (Annex III) where your AI system will be deployed. For public bodies and public service providers, deployment in these areas triggers FRIA requirements (except Point 2).
+            Select the sectors in which your AI system will be deployed. For public bodies and public service providers, deployment in high-risk sectors triggers FRIA requirements.
           </p>
           
           <div className="options-group checkbox-group">
@@ -406,7 +403,7 @@ export default function Screen11b_FRIA() {
               <strong>🔍 FRIA Required:</strong>
               <p>
               {isAnnexIII_5b_or_5c && (
-                <>Your AI system uses creditworthiness evaluation or life/health insurance risk assessment (Annex III Point 5b/5c). ALL deployers of these systems must conduct FRIA, regardless of public/private status.</>
+                <>Your AI system uses creditworthiness evaluation or life/health insurance risk assessment. ALL deployers of these systems must conduct FRIA, regardless of public/private status.</>
               )}
               {!isAnnexIII_5b_or_5c && (
                 <>
@@ -428,8 +425,8 @@ export default function Screen11b_FRIA() {
               <p>
               Based on your selections, FRIA is not required. 
               {!isHighRisk && "Your system is not high-risk."}
-              {isHighRisk && annexIIIPoint === 2 && "Critical infrastructure systems (Annex III Point 2) are exempt from FRIA."}
-              {isHighRisk && annexIIIPoint !== 2 && !isPublicAuthority && !isPublicServiceProvider && !hasSensitiveDeploymentSector && !isAnnexIII_5b_or_5c && "You are not a public authority, public service provider, deploying in sensitive sectors, or using Point 5(b)/(c) systems."}
+              {isHighRisk && annexIIIPoint === 2 && "Your system covers critical infrastructure, which is exempt from FRIA."}
+              {isHighRisk && annexIIIPoint !== 2 && !isPublicAuthority && !isPublicServiceProvider && !hasSensitiveDeploymentSector && !isAnnexIII_5b_or_5c && "You are not a public authority, public service provider, or deploying in high-risk sectors."}
               {" "}<span className="source-tag" title="Article 27 - Fundamental Rights Impact Assessment for High-Risk AI Systems">Source</span>
               </p>
             </div>

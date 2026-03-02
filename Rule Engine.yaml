@@ -1,4 +1,4 @@
-rules_engine:
+﻿rules_engine:
   ###########################################################
   # DATA STRUCTURE REFERENCE — ANNEX III USE CASES
   ###########################################################
@@ -47,6 +47,15 @@ rules_engine:
   #
   ###########################################################
 
+  # ---------------------------------------------------------------------------
+  # SCREEN ROUTE MAPPING
+  # YAML uses SCREEN_N labels. Code routes: SCREEN_2=/screen2, SCREEN_3=/screen3,
+  # SCREEN_5=/screen4, SCREEN_6=/screen5, SCREEN_6b=/screen6, SCREEN_8=/screen7,
+  # SCREEN_8b=/screen8, SCREEN_9=/screen9, SCREEN_10=/screen10,
+  # SCREEN_11=/screen11, SCREEN_12=/screen13, SCREEN_14=/screen14.
+  # (Screens 4 and above in the code are numbered two lower than in the YAML label.)
+  # ---------------------------------------------------------------------------
+
   ###########################################################
   # MODULE 1 — EXCLUSIONS
   ###########################################################
@@ -54,19 +63,19 @@ rules_engine:
   EXCL_001:
     rule_id: EXCL_001
     namespace: exclusions
-    inputs: [exclusion_flags]
-    condition: "exclusion_flags intersects ['military','R&D_only','opensource_free','personal_use','foreign_LE_only']"
+    inputs: [answers.exclusions]
+    condition: "answers.exclusions intersects ['military','R&D_only','opensource_free','personal_use','foreign_LE_only']"
     action:
       classification: "Excluded"
       add_obligations: "Exclusion_Documentation"  # Add M1-M5 documentation requirements
-    next: SCREEN_FINAL
+    next: SCREEN_12  # Screen12 detects Excluded and auto-redirects to /screenFinal
     notes: "Immediate scope removal per Article 2 material scope exclusions - but still requires documentation per M1-M5"
 
   EXCL_002:
     rule_id: EXCL_002
     namespace: exclusions
-    inputs: [exclusion_flags]
-    condition: "NOT (exclusion_flags intersects ['military','R&D_only','opensource_free','personal_use','foreign_LE_only'])"
+    inputs: [answers.exclusions]
+    condition: "NOT (answers.exclusions intersects ['military','R&D_only','opensource_free','personal_use','foreign_LE_only'])"
     action: proceed
     next: SCREEN_2
     notes: "Continue only if not excluded under Article 2"
@@ -132,8 +141,24 @@ rules_engine:
     action: "error('At least one role must be selected.')"
     next: SCREEN_2
 
+  ROLE_009:
+    rule_id: ROLE_009
+    namespace: roles.raw
+    inputs: [org_actions]
+    condition: "org_actions contains 'act_as_ar'"
+    action: "add_role_raw('Authorised_Representative')"
+    notes: "Acting as authorised representative for an EU-external provider (Article 22)"
+
   ###########################################################
   # MODULE 2B — LEGAL ROLE RECLASSIFICATION (EU AI ACT)
+  # NOTE: 'roles_raw' in conditions below refers to roles_raw_TAGS (e.g.
+  # 'Development_Modification'), not the raw org_actions array. The code
+  # first calls identifyRawRoles() to produce role tags, then calls
+  # reclassifyRoles() which uses those tags.
+  # Key input variable mappings:
+  #   ai_is_safety_component   → answers.safety_function == "yes"
+  #   placing_under_own_name   → presence of 'Branding' raw-role tag
+  #   modifications array      → presence of 'Development_Modification' tag
   ###########################################################
 
   ROLE_RECLASS_FLAG_INIT:
@@ -270,32 +295,44 @@ rules_engine:
     action: "display(roles)"
     next: SCREEN_3
 
+  # BLOCK 15 — AUTHORISED REPRESENTATIVE (pass-through)
+  ROLE_RECLASS_015:
+    rule_id: ROLE_RECLASS_015
+    namespace: roles.legal
+    inputs: [roles_raw_tags]
+    condition: "roles_raw_tags contains 'Authorised_Representative'"
+    action: "add_role('Authorised_Representative')"
+    notes: "Article 22 — authorised representatives are not reclassified; role passes through as-is"
+
   ###########################################################
   # MODULE 3 — ANNEX I A (Product Safety)
   ###########################################################
 
+  # NOTE: Screen3 presents product_laws (annexIACategories) and safety_function
+  # on a single screen simultaneously. YAML rule sequencing is logical only.
   A1A_001:
     rule_id: A1A_001
     namespace: annex_I_A
-    inputs: [product_laws]
-    condition: "product_laws not empty"
+    inputs: [answers.annexIACategories]
+    condition: "answers.annexIACategories not empty"
     action: proceed
     next: SCREEN_4
 
   A1A_002:
     rule_id: A1A_002
     namespace: annex_I_A
-    inputs: [safety_function]
-    condition: "safety_function == 'yes'"
+    inputs: [answers.safety_function]
+    condition: "answers.safety_function == 'yes'"
     action:
       classification: "High-risk_Annex_I_A"
-    next: SCREEN_8
+    next: SCREEN_8  # = /screen7 (GPAI check)
 
   A1A_003:
     rule_id: A1A_003
     namespace: annex_I_A
-    condition: "safety_function == 'no'"
-    next: SCREEN_5
+    inputs: [answers.safety_function]
+    condition: "answers.safety_function == 'no'"
+    next: SCREEN_5  # = /screen4 (Annex IB)
 
   ###########################################################
   # MODULE 4 — ANNEX I B (Regulated Sectors)
@@ -304,17 +341,18 @@ rules_engine:
   A1B_001:
     rule_id: A1B_001
     namespace: annex_I_B
-    inputs: [regulated_sectors]
-    condition: "regulated_sectors not empty"
+    inputs: [answers.highRiskSectorsB]
+    condition: "answers.highRiskSectorsB not empty"
     action:
       classification: "High-risk_Annex_I_B"
-    next: SCREEN_8
+    next: SCREEN_8  # = /screen7 (GPAI check)
 
   A1B_002:
     rule_id: A1B_002
     namespace: annex_I_B
-    condition: "regulated_sectors empty"
-    next: SCREEN_6
+    inputs: [answers.highRiskSectorsB]
+    condition: "answers.highRiskSectorsB empty"
+    next: SCREEN_6  # = /screen5 (Annex III)
 
   ###########################################################
   # MODULE 5 — ANNEX III + SIGNIFICANT IMPACT
@@ -327,67 +365,111 @@ rules_engine:
   A3_001:
     rule_id: A3_001
     namespace: annex_III
-    inputs: [annexIII_usecases]
-    condition: "annexIII_usecases empty OR annexIII_usecases == ['none']"
+    inputs: [answers.annexIIIUsecases]
+    condition: "answers.annexIIIUsecases empty OR answers.annexIIIUsecases == ['none']"
     action:
       classification: "In-scope_non-high-risk"
-    next: SCREEN_8
+    next: SCREEN_8  # = /screen7 (GPAI check)
     notes: "No Annex III use cases selected; 29 specific use cases available"
 
   A3_002:
     rule_id: A3_002
     namespace: annex_III
-    condition: "annexIII_usecases not empty AND annexIII_usecases != ['none']"
-    next: SCREEN_6b
+    inputs: [answers.annexIIIUsecases]
+    condition: "answers.annexIIIUsecases not empty AND answers.annexIIIUsecases != ['none']"
+    next: SCREEN_6b  # = /screen6 (Significant Risk check)
     notes: "At least one of 29 Annex III specific use cases selected"
 
-  # SIGNIFICANT IMPACT CHECK
-  A3_IMPACT_001:
-    rule_id: A3_IMPACT_001
-    namespace: annex_III.impact
-    inputs: [impact_checks]
-    condition: "impact_checks intersects ['decision_basis','decision_constraining','unverifiable_output','access_entitlements','profiling_effects','harm_risk','disadvantage_risk','opacity_limiting_oversight','automation_bias_risk','law_enforcement_effect','migration_border_effect']"
+  # ARTICLE 6(3) DEROGATION CHECK  —  Screen6_SignificantRisk.jsx
+  # The code implements Article 6(3) derogation conditions, NOT a positive
+  # harm-factor checklist. High-risk is the DEFAULT for Annex III systems;
+  # a system is non-high-risk only if ALL of the following are true:
+  #   (a) a derogation condition applies, AND
+  #   (b) the system does not perform profiling.
+  #
+  # Derogation conditions (answers.significantRiskFactors):
+  #   narrow_procedural     — purely preparatory/narrow procedural task
+  #   improve_prior_human   — improves result of previously completed human activity
+  #   detect_patterns_no_replace — detects patterns, does not replace human assessment
+  #   preparatory_task      — intended for preparatory task only
+  #   Absence of any condition (or selecting none) → HIGH_RISK
+  #
+  # Profiling override (answers.profiling):
+  #   If answers.profiling == 'yes' → always HIGH_RISK, derogation cannot apply.
+  #   Article 6(3) third subparagraph: profiling of natural persons is always significant.
+
+  A3_DEROG_001:
+    rule_id: A3_DEROG_001
+    namespace: annex_III.significant_risk
+    inputs: [answers.profiling]
+    condition: "answers.profiling == 'yes'"
     action:
       classification: "High-risk_Annex_III"
-    next: SCREEN_8
+    next: SCREEN_8  # = /screen7
+    notes: "Article 6(3) third subparagraph — profiling always triggers high-risk regardless of derogation"
 
-  A3_IMPACT_002:
-    rule_id: A3_IMPACT_002
-    namespace: annex_III.impact
-    condition: "impact_checks == ['none_of_the_above']"
+  A3_DEROG_002:
+    rule_id: A3_DEROG_002
+    namespace: annex_III.significant_risk
+    inputs: [answers.significantRiskFactors, answers.profiling]
+    condition: >
+      answers.profiling != 'yes' AND
+      answers.significantRiskFactors intersects
+        ['narrow_procedural','improve_prior_human','detect_patterns_no_replace','preparatory_task']
     action:
-      classification: "AnnexIII_non-significant-risk"
-    next: SCREEN_8
+      classification: "annex_iii_non_significant"
+    next: SCREEN_8  # = /screen7
+    notes: "Article 6(3) — at least one derogation condition applies and no profiling; non-high-risk"
 
-  A3_IMPACT_003:
-    rule_id: A3_IMPACT_003
-    namespace: annex_III.impact
-    condition: "impact_checks contains 'none_of_the_above' AND impact_checks length > 1"
-    action: "error('Cannot select NONE together with other criteria.')"
-    next: SCREEN_6b
+  A3_DEROG_003:
+    rule_id: A3_DEROG_003
+    namespace: annex_III.significant_risk
+    inputs: [answers.significantRiskFactors, answers.profiling]
+    condition: >
+      answers.profiling != 'yes' AND
+      NOT (answers.significantRiskFactors intersects
+        ['narrow_procedural','improve_prior_human','detect_patterns_no_replace','preparatory_task'])
+    action:
+      classification: "High-risk_Annex_III"
+    next: SCREEN_8  # = /screen7
+    notes: "Article 6(2) — no derogation condition applies; default high-risk under Annex III"
 
   ###########################################################
   # MODULE 6 — GPAI + SYSTEMIC RISK
   ###########################################################
+  # PRELIMINARY: Model relationship determines whether GPAI assessment applies.
+  # Screen7 first asks: "What is your relationship to this AI model?"
+  #   answers.modelRelationship == 'provider'    → assess GPAI
+  #   answers.modelRelationship == 'integrator'  → skip to SCREEN_9
+  #   answers.modelRelationship == 'deployer'    → skip to SCREEN_9
+
+  GPAI_000:
+    rule_id: GPAI_000
+    namespace: gpai
+    inputs: [answers.modelRelationship]
+    condition: "answers.modelRelationship == 'integrator' OR answers.modelRelationship == 'deployer'"
+    next: SCREEN_9  # = /screen9
+    notes: "Integrators and deployers of GPAI skip the GPAI model assessment"
 
   GPAI_001:
     rule_id: GPAI_001
     namespace: gpai
-    inputs: [is_gpai]
-    condition: "is_gpai == false"
-    next: SCREEN_9
+    inputs: [answers.isGPAI]
+    condition: "answers.isGPAI == false"
+    next: SCREEN_9  # = /screen9
 
   GPAI_002:
     rule_id: GPAI_002
     namespace: gpai
-    condition: "is_gpai == true"
-    next: SCREEN_8b
+    inputs: [answers.isGPAI]
+    condition: "answers.isGPAI == true"
+    next: SCREEN_8b  # = /screen8 (Systemic Risk)
 
   GPAI_003:
     rule_id: GPAI_003
     namespace: gpai
-    inputs: [has_systemic_risk]
-    condition: "has_systemic_risk == 'yes' OR has_systemic_risk == 'commission_determined'"
+    inputs: [answers.hasSystemicRisk]
+    condition: "answers.hasSystemicRisk == 'yes' OR answers.hasSystemicRisk == 'commission_determined'"
     action: "add_classification('GPAI_systemic_risk')"
     next: SCREEN_9
     notes: |
@@ -400,13 +482,41 @@ rules_engine:
       - "commission_determined" (Commission designated)
       - "no" (neither applies)
 
+      When systemic risk applies, the open-source exception (GPAI_005) does NOT apply;
+      full J1-J16 and K1-K13 obligations are assigned regardless of open-source status.
+
   GPAI_004:
     rule_id: GPAI_004
     namespace: gpai
-    condition: "has_systemic_risk == 'no'"
+    inputs: [answers.hasSystemicRisk]
+    condition: "answers.hasSystemicRisk == 'no'"
     action: "add_classification('GPAI')"
     next: SCREEN_9
-    notes: "Standard GPAI without systemic risk - FLOPS < 10^25 and no Commission designation"
+    notes: "Standard GPAI without systemic risk - FLOPS < 10^25 and no Commission designation. See GPAI_005 for open-source obligation reduction."
+
+  GPAI_005:
+    rule_id: GPAI_005
+    namespace: gpai
+    inputs: [answers.isOpenSourceGPAI, answers.hasSystemicRisk]
+    condition: "answers.isOpenSourceGPAI == 'yes' AND answers.hasSystemicRisk == 'no'"
+    action: "reduce_J_obligations"
+    notes: |
+      Open-source exception per Article 53(2) and Recital 470.
+
+      Qualifying condition: Model released under free and open-source licence WITH publicly
+      available weights, architecture info, and usage info, AND model is not monetised.
+      Exception does NOT apply if model presents systemic risk.
+
+      Effect on checklist obligations:
+      - EXEMPT: J1-J4 (Article 53(1)(a) technical documentation)
+      - EXEMPT: J5  (Article 53(1)(b) information to downstream providers)
+      - EXEMPT: J12 (Article 53(1)(a) update documentation)
+      - ALWAYS APPLIES: J6 (Article 53(1)(c) copyright compliance policy)
+      - ALWAYS APPLIES: J7 (Article 53(1)(d) training data summary)
+      - ALWAYS APPLIES: J8-J11, J13-J16 (not covered by the (1)(a)/(b) exception)
+
+      Implementation: Screen14_Checklist.jsx filters J-items inline using
+      answers.isOpenSourceGPAI and answers.hasSystemicRisk.
 
   ###########################################################
   # MODULE 7 — PROHIBITED PRACTICES (WITH ARTICLE 5 EXCEPTIONS)
@@ -415,8 +525,8 @@ rules_engine:
   PROHIB_001:
     rule_id: PROHIB_001
     namespace: prohibited
-    inputs: [prohibited_actions, prohibited_exceptions]
-    condition: "prohibited_actions not empty"
+    inputs: [answers.prohibitedPractices, answers.prohibitedExceptions]
+    condition: "answers.prohibitedPractices not empty"
     action: "evaluate_exceptions"
     notes: "Article 5 prohibited practices with exceptions evaluation"
     next: PROHIB_EXCEPTION_EVAL
@@ -424,7 +534,7 @@ rules_engine:
   PROHIB_EXCEPTION_EVAL:
     rule_id: PROHIB_EXCEPTION_EVAL
     namespace: prohibited
-    inputs: [prohibited_actions, prohibited_exceptions]
+    inputs: [answers.prohibitedPractices, answers.prohibitedExceptions]
     logic: |
       # Check if any selected practice remains prohibited after exception evaluation
       # Practices with exceptions: criminal_risk, emotion_workplace_education, biometric_categorisation, real_time_rbi
@@ -432,14 +542,14 @@ rules_engine:
 
       truly_prohibited = []
 
-      for practice in prohibited_actions:
+      for practice in answers.prohibitedPractices:
         if practice == 'none':
           continue
         
         # Check if practice has exception and if exception applies
         if practice in ['criminal_risk', 'emotion_workplace_education', 'biometric_categorisation', 'real_time_rbi']:
           # Practice has potential exception - only prohibited if exception evaluated as false
-          if prohibited_exceptions.get(practice) == false:
+          if answers.prohibitedExceptions.get(practice) == false:
             truly_prohibited.append(practice)
           # If exception == true, practice is NOT prohibited
           # If exception not yet evaluated, require evaluation before proceeding
@@ -454,9 +564,9 @@ rules_engine:
         # All practices have valid exceptions or none selected
         # Check if any exceptions were actually applied (need X series documentation)
         applied_exceptions = []
-        for practice in prohibited_actions:
+        for practice in answers.prohibitedPractices:
           if practice in ['criminal_risk', 'emotion_workplace_education', 'biometric_categorisation', 'real_time_rbi']:
-            if prohibited_exceptions.get(practice) == true:
+            if answers.prohibitedExceptions.get(practice) == true:
               applied_exceptions.append(practice)
         
         if applied_exceptions:
@@ -487,8 +597,9 @@ rules_engine:
   PROHIB_002:
     rule_id: PROHIB_002
     namespace: prohibited
-    condition: "prohibited_actions empty OR prohibited_actions == ['none']"
-    next: SCREEN_10
+    inputs: [answers.prohibitedPractices]
+    condition: "answers.prohibitedPractices empty OR answers.prohibitedPractices == ['none']"
+    next: SCREEN_10  # = /screen10
 
   ###########################################################
   # MODULE 8 — TRANSPARENCY + FRIA
@@ -497,13 +608,16 @@ rules_engine:
   TRANS_001:
     rule_id: TRANS_001
     namespace: transparency
-    inputs: [transparency_flags, roles, classification]
+    inputs: [answers.transparencyTriggers]
     condition: "TRUE"
     action: "store_for_later"
-    next:
-      IF: "roles contains 'Public_Authority' AND classification contains_any ['High-risk_Annex_I_A','High-risk_Annex_I_B','High-risk_Annex_III']"
-      THEN: SCREEN_10b
-      ELSE: SCREEN_11
+    next: SCREEN_11  # = /screen11 (FRIA)
+    notes: >
+      Code always proceeds to SCREEN_11 regardless of role or classification.
+      The previously-documented SCREEN_10b (public-authority fast-track) was
+      not implemented; Screen10_Transparency.jsx always navigates to /screen11.
+      Public_Authority is currently NOT assigned as a legal role by any code path;
+      code checks roles.includes('Public_Authority') via isPublicBody in Screen11/Screen14.
 
   FRIA_001:
     rule_id: FRIA_001
@@ -512,38 +626,37 @@ rules_engine:
       [
         roles,
         classification,
-        is_public_body,
-        is_public_service_provider,
-        deployment_sectors,
-        annex_iii_usecases,
-        annex_iii_point,
+        answers.isPublicBody,
+        answers.isPublicServiceProvider,
+        answers.deploymentSectors,
+        answers.annexIIIUsecases,
+        annexIIIPoint,
       ]
     condition: |
       classification contains_any ['High-risk_Annex_I_A','High-risk_Annex_I_B','High-risk_Annex_III']
-      AND annex_iii_point != 2
+      AND annexIIIPoint != 2
       AND (
-        Public_Authority OR 
-        Public_Service_Provider OR 
-        deployment_sectors intersects ['biometrics','education','employment','essential_services','law_enforcement','migration_asylum_border','justice'] OR
-        annex_iii_usecases intersects ['services_creditworthiness','services_insurance']
+        answers.isPublicBody == true OR
+        answers.isPublicServiceProvider == true OR
+        answers.deploymentSectors intersects ['biometrics','education','employment','essential_services','law_enforcement','migration_asylum_border','justice'] OR
+        answers.annexIIIUsecases intersects ['services_creditworthiness','services_insurance']
       )
     action: "add_obligation('FRIA_required')"
     next: SCREEN_11
     notes: |
       Article 27: Fundamental Rights Impact Assessment requirements:
-      1. Public bodies/authorities deploying high-risk systems in any Annex III area (except Point 2)
-      2. Private entities providing public services deploying high-risk in any Annex III area (except Point 2)
-      3. Deployment sectors covered (Annex III Points 1,3-8):
-         - biometrics (Point 1)
-         - education (Point 3)
-         - employment (Point 4)
-         - essential_services (Point 5)
-         - law_enforcement (Point 6)
-         - migration_asylum_border (Point 7)
-         - justice (Point 8)
-      4. ALL deployers (public and private) of Annex III Point 5(b) creditworthiness systems
-      5. ALL deployers (public and private) of Annex III Point 5(c) life/health insurance systems
+      1. Public bodies (answers.isPublicBody == true) deploying in any Annex III sector except Point 2
+      2. Private entities providing public services (answers.isPublicServiceProvider == true) in any sector except Point 2
+      3. Deployment sectors covered — Annex III Points 1, 3-8:
+         - biometrics (Point 1), education (Point 3), employment (Point 4),
+           essential_services (Point 5), law_enforcement (Point 6),
+           migration_asylum_border (Point 7), justice (Point 8)
+      4. ALL deployers of Annex III Point 5(b) creditworthiness systems
+      5. ALL deployers of Annex III Point 5(c) life/health insurance systems
       EXEMPTION: Annex III Point 2 (Critical Infrastructure) is exempt from FRIA per Article 27(1)
+      NOTE: 'Public_Authority' is not a legal role produced by the reclassification engine.
+      Public body / public service provider status is captured via Screen11 checkboxes
+      (answers.isPublicBody, answers.isPublicServiceProvider) independently of role.
 
   ###########################################################
   # MODULE 9 — FINAL CLASSIFICATION SUMMARY
@@ -556,8 +669,11 @@ rules_engine:
     action: "display(classification)"
     next:
       IF: "classification contains_any ['High-risk_Annex_I_A','High-risk_Annex_I_B','High-risk_Annex_III']"
-      THEN: SCREEN_12
-      ELSE: SCREEN_14
+      THEN: SCREEN_12  # = /screen12 (Final Classification) → /screen13 (Conformity Route)
+      ELSE: SCREEN_12  # = /screen12 auto-advances to /screen13 then /screen14 for non-high-risk
+    notes: >
+      Code always routes through Screen12 and Screen13 before reaching Screen14.
+      For non-high-risk systems, Screen13 auto-skips to Screen14 if user is not a Provider.
 
   ###########################################################
   # MODULE 10 — CONFORMITY ASSESSMENT ROUTING
@@ -587,35 +703,8 @@ rules_engine:
     inputs: [classification]
     condition: "classification == 'HIGH_RISK_IA'"
     action: "CA_route = 'Sectoral_Legislation'"
-    next: SCREEN_14
+    next: SCREEN_14  # = /screen14
     notes: "Article 43(3) - Follow the conformity assessment procedure required under the relevant sectoral legislation listed in Annex I Section A"
-
-  CA_ARTICLE_43_2:
-    rule_id: CA_ARTICLE_43_2
-    namespace: CA
-    inputs: [classification, isBiometric]
-    condition: "classification == 'HIGH_RISK_III' AND isBiometric == false"
-    action: "CA_route = 'Internal_Control'"
-    next: SCREEN_14
-    notes: "Article 43(2) - Annex III points 2-8 MUST use internal control (Annex VI), no notified body involvement"
-
-  CA_ARTICLE_43_1_MANDATORY:
-    rule_id: CA_ARTICLE_43_1_MANDATORY
-    namespace: CA
-    inputs: [classification, isBiometric, harmonizedStandardsApplied]
-    condition: "classification == 'HIGH_RISK_III' AND isBiometric == true AND (harmonizedStandardsApplied == 'none' OR harmonizedStandardsApplied == 'partial')"
-    action: "CA_route = 'Notified_Body'"
-    next: SCREEN_14
-    notes: "Article 43(1) - Annex III point 1 (biometric) MUST use notified body (Annex VII) when HS/CS not fully applied"
-
-  CA_ARTICLE_43_1_CHOICE:
-    rule_id: CA_ARTICLE_43_1_CHOICE
-    namespace: CA
-    inputs: [classification, isBiometric, harmonizedStandardsApplied, userChoice]
-    condition: "classification == 'HIGH_RISK_III' AND isBiometric == true AND harmonizedStandardsApplied == 'full'"
-    action: "CA_route = userChoice"
-    next: SCREEN_14
-    notes: "Article 43(1) - Annex III point 1 (biometric) may CHOOSE between Internal Control (Annex VI) or Notified Body (Annex VII) when HS/CS fully applied"
 
   CA_ARTICLE_2_2_SKIP:
     rule_id: CA_ARTICLE_2_2_SKIP
@@ -623,44 +712,69 @@ rules_engine:
     inputs: [classification]
     condition: "classification == 'HIGH_RISK_IB'"
     action: "skip_screen_13 = true"
-    next: SCREEN_14
-    notes: "Article 2(2) - HIGH_RISK_IB systems skip Article 43; only Articles 6(1), 102-109, 112 of AI Act apply; conformity governed by sectoral legislation"
+    next: SCREEN_14  # = /screen14
+    notes: "Article 2(2) - HIGH_RISK_IB systems skip Article 43; only specific articles of the AI Act apply; conformity governed by sectoral legislation"
 
-  ###########################################################
-  # MODULE 11 — ROLE + CLASSIFICATION → OBLIGATION SETS
-  ###########################################################
+  CA_ARTICLE_43_1_MANDATORY:
+    rule_id: CA_ARTICLE_43_1_MANDATORY
+    namespace: CA
+    inputs: [classification, isBiometric, answers.conformity_hs_applied]
+    condition: "classification == 'HIGH_RISK_III' AND isBiometric == true AND (answers.conformity_hs_applied == 'none' OR answers.conformity_hs_applied == 'partial')"
+    action: "CA_route = 'Notified_Body'"
+    next: SCREEN_14  # = /screen14
+    notes: "Article 43(1) - Annex III point 1 (biometric) MUST use notified body (Annex VII) when HS/CS not fully applied"
+
+  CA_ARTICLE_43_1_CHOICE:
+    rule_id: CA_ARTICLE_43_1_CHOICE
+    namespace: CA
+    inputs: [classification, isBiometric, answers.conformity_hs_applied, answers.conformity_user_choice]
+    condition: "classification == 'HIGH_RISK_III' AND isBiometric == true AND answers.conformity_hs_applied == 'full'"
+    action: "CA_route = answers.conformity_user_choice"
+    next: SCREEN_14  # = /screen14
+    notes: "Article 43(1) - Annex III point 1 (biometric) may CHOOSE between Internal Control (Annex VI) or Notified Body (Annex VII) when HS/CS fully applied"
+
+  CA_ARTICLE_43_2:
+    rule_id: CA_ARTICLE_43_2
+    namespace: CA
+    inputs: [classification, isBiometric, answers.conformity_uses_cs]
+    condition: "classification == 'HIGH_RISK_III' AND isBiometric == false"
+    action: "CA_route = answers.conformity_uses_cs == 'cs' ? 'Internal_Control_CS' : 'Internal_Control'"
+    next: SCREEN_14  # = /screen14
+    notes: "Article 43(2) - Annex III points 2-8 MUST use internal control (Annex VI); CS variant when harmonised standards are absent"
+
+  ###########################################################\n  # DO NOT DUPLICATE: CA_ARTICLE_2_2_SKIP already defined above\n  ###########################################################\n\n  ###########################################################\n  # MODULE 11 — ROLE + CLASSIFICATION → OBLIGATION SETS\n  ###########################################################
 
   OBL_001:
     rule_id: OBL_001
     namespace: obligations
-    inputs: [roles]
-    condition: "roles contains 'Provider'"
+    inputs: [roles, classification]
+    condition: "roles contains 'Provider' AND classification contains_any ['High-risk_Annex_I_A','High-risk_Annex_I_B','High-risk_Annex_III']"
     action: "add_obligations('Provider')"
-    notes: "Provider obligations (A1–A17) per Articles 9–17, 25(4), 47–49, 72–75"
+    notes: "Provider obligations (A1–A17) per Articles 9–17, 20–22, 43 — gated on high-risk classification"
 
   OBL_002:
     rule_id: OBL_002
     namespace: obligations
-    inputs: [roles]
-    condition: "roles contains 'Importer'"
+    inputs: [roles, classification]
+    condition: "roles contains 'Importer' AND classification contains_any ['High-risk_Annex_I_A','High-risk_Annex_I_B','High-risk_Annex_III']"
     action: "add_obligations('Importer')"
-    notes: "Importer obligations (D1–D14) per Article 25"
+    notes: "Importer obligations (D1–D14) per Article 23 — gated on high-risk classification"
 
   OBL_003:
     rule_id: OBL_003
     namespace: obligations
-    inputs: [roles]
-    condition: "roles contains 'Distributor'"
+    inputs: [roles, classification]
+    condition: "roles contains 'Distributor' AND classification contains_any ['High-risk_Annex_I_A','High-risk_Annex_I_B','High-risk_Annex_III']"
     action: "add_obligations('Distributor')"
-    notes: "Distributor obligations (E1–E9) per Article 26"
+    notes: "Distributor obligations (E1–E9) per Article 24 — gated on high-risk classification"
 
   OBL_004:
     rule_id: OBL_004
     namespace: obligations
-    inputs: [roles]
-    condition: "roles contains 'Deployer'"
+    inputs: [roles, classification]
+    condition: "roles contains 'Deployer' AND classification contains_any ['High-risk_Annex_I_A','High-risk_Annex_I_B','High-risk_Annex_III']"
     action: "add_obligations('Deployer')"
-    notes: "Deployer obligations (F1–F12) per Article 29"
+    notes: "Deployer obligations (F1–F14) per Article 26 — gated on high-risk classification"
 
   OBL_005:
     rule_id: OBL_005
@@ -691,12 +805,12 @@ rules_engine:
   OBL_008:
     rule_id: OBL_008
     namespace: obligations
-    inputs: [transparency_flags, roles]
+    inputs: [answers.transparencyTriggers, roles]
     condition: >
-      transparency_flags not empty AND
+      answers.transparencyTriggers not empty AND
       (roles contains 'Provider' OR roles contains 'Deployer')
     action: "add_obligations('Transparency')"
-    notes: "Transparency obligations (H1–H9) per Article 52 — applies to Providers and Deployers"
+    notes: "Transparency obligations (H1–H9) per Article 50 — applies to Providers and Deployers"
 
   OBL_009:
     rule_id: OBL_009
@@ -704,17 +818,20 @@ rules_engine:
     inputs: [obligations]
     condition: "obligations contains 'FRIA_required'"
     action: "add_obligations('FRIA')"
-    notes: "FRIA obligations (G1–G15) per Article 27a — Public authorities only"
+    notes: |
+      FRIA obligations (G1–G15) per Article 27.
+      Applies to: public bodies, public service providers, and ALL deployers of
+      Annex III Point 5(b) creditworthiness and Point 5(c) insurance systems.
 
   OBL_010:
     rule_id: OBL_010
     namespace: obligations
     inputs: [classification, roles]
     condition: >
-      classification == 'AnnexIII_non-significant-risk' AND
+      classification == 'annex_iii_non_significant' AND
       roles contains 'Provider'
     action: "add_obligations('Non_Significant_Risk_Notification')"
-    notes: "Non-significant risk notification (I1–I7) per Article 6(2) — Provider only"
+    notes: "Non-significant risk notification (I1–I7) per Articles 6(3), 6(4), 49(2) — Provider only"
 
   OBL_011:
     rule_id: OBL_011
@@ -799,6 +916,14 @@ rules_engine:
     condition: "system_features contains 'ancillary_feature'"
     action: "add_obligations('Exemption_Documentation')"
     notes: "Ancillary feature documentation (X5) per Recital 16 — Required when claiming ancillary feature exemption"
+
+  OBL_021:
+    rule_id: OBL_021
+    namespace: obligations
+    inputs: [roles]
+    condition: "roles contains 'Authorised_Representative'"
+    action: "add_obligations('Authorised_Representative')"
+    notes: "Authorised representative obligations (R-series) per Article 22 — applies only to entities acting as AR for an EU-external provider"
 
   ###########################################################
   # MODULE 12 — OUTPUT CHECKLIST
@@ -1156,85 +1281,85 @@ obligations checklist:
     D1:
       {
         title: "CE Marking Verification",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Verify CE marking"],
       }
     D2:
       {
         title: "Declaration Verification",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Verify Declaration of Conformity"],
       }
     D3:
       {
         title: "Technical File Availability",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Verify technical documentation availability"],
       }
     D4:
       {
         title: "Instructions Verification",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Verify instructions supplied"],
       }
     D5:
       {
         title: "Reject Unsafe Systems",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Reject unsafe systems"],
       }
     D6:
       {
         title: "Storage Compliance",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Maintain compliance during storage"],
       }
     D7:
       {
         title: "Importer Contact Info",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Add importer contact details"],
       }
     D8:
       {
         title: "Retain Declaration",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Retain Declaration of Conformity"],
       }
     D9:
       {
         title: "Traceability",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Maintain traceability"],
       }
     D10:
       {
         title: "Provide Documents",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Provide documents on request"],
       }
     D11:
       {
         title: "Cooperate with Authorities",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Cooperate with authorities"],
       }
     D12:
       {
         title: "Corrective Actions",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Take corrective actions"],
       }
     D13:
       {
         title: "Notify Risks",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Notify authorities of risks"],
       }
     D14:
       {
         title: "Forward Complaints",
-        source: { article: "Article 26" },
+        source: { article: "Article 23" },
         items: ["Forward complaints"],
       }
 
@@ -1246,134 +1371,141 @@ obligations checklist:
     E1:
       {
         title: "Verify CE Marking",
-        source: { article: "Article 27" },
+        source: { article: "Article 24" },
         items: ["Verify CE marking"],
       }
     E2:
       {
         title: "Verify Documentation",
-        source: { article: "Article 27" },
+        source: { article: "Article 24" },
         items: ["Verify documentation availability"],
       }
     E3:
       {
         title: "Reject Unsafe Systems",
-        source: { article: "Article 27" },
+        source: { article: "Article 24" },
         items: ["Reject unsafe systems"],
       }
     E4:
       {
         title: "Preserve Compliance",
-        source: { article: "Article 27" },
+        source: { article: "Article 24" },
         items: ["Preserve compliance conditions"],
       }
     E5:
       {
         title: "Maintain Records",
-        source: { article: "Article 27" },
+        source: { article: "Article 24" },
         items: ["Maintain supplier and customer list"],
       }
     E6:
       {
         title: "Provide Documents",
-        source: { article: "Article 27" },
+        source: { article: "Article 24" },
         items: ["Provide documents on request"],
       }
     E7:
       {
         title: "Cooperate",
-        source: { article: "Article 27" },
+        source: { article: "Article 24" },
         items: ["Cooperate with authorities"],
       }
     E8:
       {
         title: "Stop Distribution",
-        source: { article: "Article 27" },
+        source: { article: "Article 24" },
         items: ["Stop distribution of unsafe systems"],
       }
     E9:
       {
         title: "Report Risks",
-        source: { article: "Article 27" },
+        source: { article: "Article 24" },
         items: ["Report risks"],
       }
 
   ###########################################################
-  # DEPLOYER OBLIGATIONS (F1–F12)
+  # DEPLOYER OBLIGATIONS (F1–F14)
   ###########################################################
 
   Deployer:
     F1:
       {
-        title: "Follow Instructions",
-        source: { article: "Article 29" },
-        items: ["Follow provider instructions"],
+        title: "Use According to Instructions",
+        source: { article: "Article 26" },
+        items: ["Use high-risk AI system in accordance with instructions for use"],
       }
     F2:
       {
-        title: "Use as Intended",
-        source: { article: "Article 29" },
-        items: ["Use system only for intended purpose"],
+        title: "Assign Human Oversight",
+        source: { article: "Article 26" },
+        items: ["Ensure human oversight measures referred to in Article 14 are assigned to competent persons"],
       }
     F3:
       {
-        title: "Ensure Input Data Quality",
-        source: { article: "Article 29" },
-        items: ["Ensure input data quality"],
+        title: "Monitor System Operation",
+        source: { article: "Article 26" },
+        items: ["Monitor operation of system on basis of instructions for use"],
       }
     F4:
       {
-        title: "Maintain Logs",
-        source: { article: "Article 29" },
-        items: ["Maintain logs"],
+        title: "Suspend Use if Risks Identified",
+        source: { article: "Article 26" },
+        items: ["Suspend use of system if identifying serious incident or malfunctioning and inform provider"],
       }
     F5:
       {
-        title: "Assign Human Oversight",
-        source: { article: "Article 29" },
-        items: ["Assign human oversight"],
+        title: "Maintain Logs",
+        source: { article: "Article 26" },
+        items: ["Keep logs automatically generated by system where under their control"],
       }
     F6:
       {
-        title: "Stop System if Needed",
-        source: { article: "Article 29" },
-        items: ["Stop system when required"],
+        title: "Retain Logs",
+        source: { article: "Article 26" },
+        items: ["Keep logs for period appropriate to intended purpose, minimum 6 months"],
       }
     F7:
       {
-        title: "Conduct DPIA if Needed",
-        source: { article: "Article 29" },
-        items: ["Conduct DPIA if required by law"],
+        title: "Use Input Data",
+        source: { article: "Article 26" },
+        items: ["Use input data that is relevant and sufficiently representative in view of intended purpose"],
       }
     F8:
       {
-        title: "Incident Reporting",
-        source: { article: "Article 29" },
-        items: ["Report incidents"],
+        title: "Conduct DPIA",
+        source: { article: "Article 26" },
+        items: ["Carry out data protection impact assessment under Article 35 GDPR where applicable"],
       }
-    F9:
-      {
-        title: "Provide Logs & Docs",
-        source: { article: "Article 29" },
-        items: ["Provide documentation and logs"],
-      }
+    # NOTE: F9 does not exist in checklist.js (gap is intentional; Article 26(9) duties absorbed into G-series)
     F10:
       {
-        title: "Cybersecurity Measures",
-        source: { article: "Article 29" },
-        items: ["Follow cybersecurity requirements"],
+        title: "Inform Representatives",
+        source: { article: "Article 26" },
+        items: ["Inform workers' representatives and affected workers that they are subject to use of high-risk AI system"],
       }
     F11:
       {
-        title: "Protect Vulnerable Persons",
-        source: { article: "Article 29" },
-        items: ["Protect vulnerable persons"],
+        title: "Register System Use (where applicable)",
+        source: { article: "Article 49" },
+        items: ["Register use of high-risk AI system in EU database if deployer is public authority, Union institution or EU agency"],
       }
     F12:
       {
-        title: "Transparency to Users",
-        source: { article: "Article 29" },
-        items: ["Provide transparency to end‑users"],
+        title: "Cooperate with Authorities",
+        source: { article: "Article 26" },
+        items: ["Cooperate with competent authorities and provide information about use"],
+      }
+    F13:
+      {
+        title: "Provider Obligations When Modifying",
+        source: { article: "Article 28" },
+        items: ["Assume provider obligations if making substantial modification to high-risk system"],
+      }
+    F14:
+      {
+        title: "AI Literacy",
+        source: { article: "Article 4" },
+        items: ["Ensure staff dealing with operation and use of AI system have sufficient AI literacy"],
       }
 
   ###########################################################
@@ -1383,93 +1515,93 @@ obligations checklist:
   FRIA:
     G1:
       {
-        title: "Identify Affected Persons",
-        source: { article: "Article 27a" },
-        items: ["Identify affected persons"],
+        title: "Determine Necessity",
+        source: { article: "Article 26, Article 27" },
+        items: ["Determine if Fundamental Rights Impact Assessment is required"],
       }
     G2:
       {
-        title: "Identify Rights Impacts",
-        source: { article: "Article 27a" },
-        items: ["Identify rights impacts"],
+        title: "Identify Deployment Process",
+        source: { article: "Article 27" },
+        items: ["Describe processes in which high-risk AI system will be used"],
       }
     G3:
       {
-        title: "Assess Direct Impacts",
-        source: { article: "Article 27a" },
-        items: ["Assess direct impacts"],
+        title: "Assess Purpose and Benefits",
+        source: { article: "Article 27" },
+        items: ["Assess purpose and benefits of deployment for deployer, individuals and society"],
       }
     G4:
       {
-        title: "Assess Indirect Impacts",
-        source: { article: "Article 27a" },
-        items: ["Assess indirect impacts"],
+        title: "Identify Affected Persons",
+        source: { article: "Article 27" },
+        items: ["Identify categories of natural persons and groups likely to be affected"],
       }
     G5:
       {
-        title: "Assess Cumulative Impacts",
-        source: { article: "Article 27a" },
-        items: ["Assess cumulative impacts"],
+        title: "Identify Fundamental Rights Risks",
+        source: { article: "Article 27" },
+        items: ["Identify reasonably foreseeable risks to fundamental rights of persons and groups"],
       }
     G6:
       {
-        title: "Identify Vulnerabilities",
-        source: { article: "Article 27a" },
-        items: ["Identify vulnerabilities"],
+        title: "Assess Risk Likelihood and Severity",
+        source: { article: "Article 27" },
+        items: ["Describe likelihood and severity of identified risks to fundamental rights"],
       }
     G7:
       {
-        title: "Identify Safeguards",
-        source: { article: "Article 27a" },
-        items: ["Identify safeguards"],
+        title: "Identify Mitigation Measures",
+        source: { article: "Article 27" },
+        items: ["Describe measures to be taken in case of materialisation of those risks"],
       }
     G8:
       {
-        title: "Identify Mitigations",
-        source: { article: "Article 27a" },
-        items: ["Identify mitigations"],
+        title: "Assess Human Oversight",
+        source: { article: "Article 27" },
+        items: ["Describe human oversight measures taken to address identified risks"],
       }
     G9:
       {
-        title: "Assess Human Oversight",
-        source: { article: "Article 27a" },
-        items: ["Assess oversight effectiveness"],
+        title: "Consult Stakeholders",
+        source: { article: "Article 27" },
+        items: ["Consult relevant stakeholders, including workers' representatives, where applicable"],
       }
     G10:
       {
-        title: "Stakeholder Input",
-        source: { article: "Article 27a" },
-        items: ["Gather stakeholder input"],
+        title: "Document Assessment",
+        source: { article: "Article 27" },
+        items: ["Document fundamental rights impact assessment in writing"],
       }
     G11:
       {
-        title: "Prepare FRIA",
-        source: { article: "Article 27a" },
-        items: ["Prepare FRIA"],
+        title: "Update Assessment",
+        source: { article: "Article 27" },
+        items: ["Update assessment when necessary"],
       }
     G12:
       {
-        title: "Submit FRIA",
-        source: { article: "Article 27a" },
-        items: ["Submit FRIA"],
+        title: "Submit to Authorities",
+        source: { article: "Article 27" },
+        items: ["Submit assessment to market surveillance authority upon request"],
       }
     G13:
       {
-        title: "Publish FRIA",
-        source: { article: "Article 27a" },
-        items: ["Publish FRIA unless exempt"],
+        title: "Publish Summary (Public Authorities)",
+        source: { article: "Article 27" },
+        items: ["Make assessment publicly available if deployer is public authority or Union institution"],
       }
     G14:
       {
-        title: "Update FRIA",
-        source: { article: "Article 27a" },
-        items: ["Update FRIA"],
+        title: "Integrate with DPIA",
+        source: { article: "Article 27" },
+        items: ["May be part of data protection impact assessment under Article 35 GDPR"],
       }
     G15:
       {
-        title: "Retain FRIA",
-        source: { article: "Article 27a" },
-        items: ["Retain FRIA"],
+        title: "Follow Commission Guidelines",
+        source: { article: "Article 27" },
+        items: ["Take into account guidelines issued by Commission and AI Board"],
       }
 
   ###########################################################
@@ -1479,57 +1611,57 @@ obligations checklist:
   Transparency:
     H1:
       {
-        title: "Human Interaction Disclosure",
-        source: { article: "Article 52" },
-        items: ["Disclose AI‑mediated interaction"],
+        title: "Disclose AI Interaction",
+        source: { article: "Article 50" },
+        items: ["Inform natural persons that they are interacting with AI system"],
       }
     H2:
       {
-        title: "Synthetic Content Labeling",
-        source: { article: "Article 52" },
-        items: ["Label synthetic content"],
+        title: "Disclose Emotion Recognition",
+        source: { article: "Article 50" },
+        items: ["Inform natural persons when emotion recognition or biometric categorisation system is used"],
       }
     H3:
       {
-        title: "Deepfake Labeling",
-        source: { article: "Article 52" },
-        items: ["Label deepfakes"],
+        title: "Label AI-Generated Content",
+        source: { article: "Article 50" },
+        items: ["Mark in machine-readable format and disclose that content has been artificially generated or manipulated"],
       }
     H4:
       {
-        title: "Exceptions Documentation",
-        source: { article: "Article 52" },
-        items: ["Document exceptions"],
+        title: "Label Deepfakes",
+        source: { article: "Article 50" },
+        items: ["Clearly disclose that content constitutes deepfake or artificially generated or manipulated image, audio or video"],
       }
     H5:
       {
-        title: "Provide Transparency Guidance",
-        source: { article: "Article 52" },
-        items: ["Provide transparency instructions"],
+        title: "Ensure Detectability",
+        source: { article: "Article 50" },
+        items: ["Ensure disclosures are clear, distinguishable and easily perceivable"],
       }
     H6:
       {
-        title: "Ensure Detectability",
-        source: { article: "Article 52" },
-        items: ["Ensure synthetic content is detectable"],
+        title: "Apply Exceptions Appropriately",
+        source: { article: "Article 50" },
+        items: ["Verify whether transparency exceptions apply (e.g. criminal detection)"],
       }
     H7:
       {
-        title: "Biometric Categorisation Disclosure",
-        source: { article: "Article 52" },
-        items: ["Disclose biometric categorisation use"],
+        title: "Technical Implementation",
+        source: { article: "Article 50" },
+        items: ["Implement technical solutions to enable detection and disclosure"],
       }
     H8:
       {
-        title: "Emotion Recognition Disclosure",
-        source: { article: "Article 52" },
-        items: ["Disclose emotion recognition use"],
+        title: "Freedom of Expression Protection",
+        source: { article: "Article 50" },
+        items: ["Ensure transparency measures respect freedom of expression and access to information"],
       }
     H9:
       {
-        title: "Update Transparency Measures",
-        source: { article: "Article 52" },
-        items: ["Update transparency measures"],
+        title: "Follow Implementing Acts",
+        source: { article: "Article 50" },
+        items: ["Follow detailed arrangements established by Commission implementing acts"],
       }
 
   ###########################################################
@@ -1540,43 +1672,43 @@ obligations checklist:
     I1:
       {
         title: "Document Risk Assessment",
-        source: { article: "Article 6(2)" },
+        source: { article: "Articles 6(3), 6(4), 49(2)" },
         items: ["Document risk assessment"],
       }
     I2:
       {
         title: "Notify Authorities",
-        source: { article: "Article 6(2)" },
+        source: { article: "Articles 6(3), 6(4), 49(2)" },
         items: ["Notify authorities"],
       }
     I3:
       {
         title: "Register System",
-        source: { article: "Article 6(2)" },
+        source: { article: "Articles 6(3), 6(4), 49(2)" },
         items: ["Register system"],
       }
     I4:
       {
         title: "Maintain Evidence",
-        source: { article: "Article 6(2)" },
+        source: { article: "Articles 6(3), 6(4), 49(2)" },
         items: ["Maintain evidence"],
       }
     I5:
       {
         title: "Provide Evidence",
-        source: { article: "Article 6(2)" },
+        source: { article: "Articles 6(3), 6(4), 49(2)" },
         items: ["Provide evidence"],
       }
     I6:
       {
         title: "Reassess after Changes",
-        source: { article: "Article 6(2)" },
+        source: { article: "Articles 6(3), 6(4), 49(2)" },
         items: ["Reassess after changes"],
       }
     I7:
       {
         title: "Notify New Risks",
-        source: { article: "Article 6(2)" },
+        source: { article: "Articles 6(3), 6(4), 49(2)" },
         items: ["Notify new risks"],
       }
 
@@ -1773,57 +1905,57 @@ obligations checklist:
   Prohibited:
     L1:
       {
-        title: "Stop Development",
+        title: "Prohibition",
         source: { article: "Article 5" },
-        items: ["Stop development"],
+        items: ["Do not place on market, put into service or use prohibited AI practice"],
       }
     L2:
       {
-        title: "Stop Distribution",
+        title: "Cease Development",
         source: { article: "Article 5" },
-        items: ["Stop distribution"],
+        items: ["Stop development of prohibited AI system"],
       }
     L3:
+      {
+        title: "Cease Distribution",
+        source: { article: "Article 5" },
+        items: ["Stop placing prohibited system on market"],
+      }
+    L4:
+      {
+        title: "Withdraw System",
+        source: { article: "Article 5" },
+        items: ["Withdraw prohibited system from market immediately"],
+      }
+    L5:
       {
         title: "Disable System",
         source: { article: "Article 5" },
         items: ["Disable prohibited functionality"],
       }
-    L4:
-      {
-        title: "Withdraw from Market",
-        source: { article: "Article 5" },
-        items: ["Withdraw system from market"],
-      }
-    L5:
+    L6:
       {
         title: "Notify Authorities",
         source: { article: "Article 5" },
-        items: ["Notify authorities"],
-      }
-    L6:
-      {
-        title: "Provide Documentation",
-        source: { article: "Article 5" },
-        items: ["Provide documentation"],
+        items: ["Inform national competent authorities"],
       }
     L7:
       {
         title: "Document Cessation",
         source: { article: "Article 5" },
-        items: ["Document cessation process"],
+        items: ["Document cessation process and measures taken"],
       }
     L8:
       {
-        title: "Prevent Recurrence",
+        title: "Verify Compliance with Exceptions",
         source: { article: "Article 5" },
-        items: ["Prevent recurrence"],
+        items: ["Verify whether system qualifies for any exception (e.g. Article 5(2-4))"],
       }
     L9:
       {
-        title: "Block Prohibited Features",
+        title: "Cooperate with Investigations",
         source: { article: "Article 5" },
-        items: ["Block prohibited features"],
+        items: ["Cooperate with authorities on prohibition enforcement"],
       }
 
   ###########################################################
@@ -1994,6 +2126,48 @@ obligations checklist:
         - "Re-assess product safety without prohibited AI component"
         - "Document corrective measures and alternative compliance path"
 
+  ###########################################################
+  # AUTHORISED REPRESENTATIVE OBLIGATIONS (R1–R6)
+  ###########################################################
+
+  AuthorisedRepresentative:
+    R1:
+      {
+        title: "Act Under Written Mandate",
+        source: { article: "Article 22" },
+        items: ["Act on behalf of the provider under a written mandate; perform registration, cooperation and notification obligations on the provider's behalf"],
+      }
+    R2:
+      {
+        title: "Verify Compliance Documentation",
+        source: { article: "Article 22" },
+        items: ["Verify that the EU declaration of conformity and technical documentation have been drawn up and are up to date"],
+      }
+    R3:
+      {
+        title: "Cooperate with National Authorities",
+        source: { article: "Article 22" },
+        items: ["Cooperate with and provide information to competent authorities upon motivated request, including making technical documentation available"],
+      }
+    R4:
+      {
+        title: "Provide Documentation to Authorities",
+        source: { article: "Article 22" },
+        items: ["Provide national competent authorities with all information and documentation necessary to demonstrate conformity of the high-risk AI system"],
+      }
+    R5:
+      {
+        title: "Terminate Mandate if Non-Compliant",
+        source: { article: "Article 22" },
+        items: ["Terminate the mandate if the provider acts contrary to obligations under this Regulation and immediately inform the relevant market surveillance authority"],
+      }
+    R6:
+      {
+        title: "Register as Authorised Representative",
+        source: { article: "Article 22, Article 49" },
+        items: ["Register own name, address and contact details in the EU database alongside the provider's registration"],
+      }
+
 ###########################################################
 # CONFORMITY ASSESSMENT OBLIGATIONS (O1–O50)
 ###########################################################
@@ -2039,13 +2213,13 @@ ConformityAssessment:
     O7:
       {
         title: "Affix CE Marking",
-        source: { article: "Article 49" },
+        source: { article: "Article 48" },
         items: ["Affix CE marking"],
       }
     O8:
       {
         title: "Register System",
-        source: { article: "Article 71" },
+        source: { article: "Article 49" },
         items: ["Register AI system in EU database"],
       }
     O9:
@@ -2199,13 +2373,13 @@ ConformityAssessment:
     O33:
       {
         title: "CE Marking",
-        source: { article: "Article 49" },
+        source: { article: "Article 48" },
         items: ["Affix CE marking"],
       }
     O34:
       {
         title: "Registration",
-        source: { article: "Article 71" },
+        source: { article: "Article 49" },
         items: ["Register system in EU database"],
       }
     O35:
@@ -2291,7 +2465,7 @@ ConformityAssessment:
     O48:
       {
         title: "Register in AI Database",
-        source: { article: "Article 71" },
+        source: { article: "Article 49" },
         items: ["Register in EU AI database"],
       }
     O49:

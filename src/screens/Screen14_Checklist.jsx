@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
-import { ALL_OBLIGATIONS, CONFORMITY_ASSESSMENT_ROUTES, CLASSIFICATIONS } from "../data/checklist";
+import { ALL_OBLIGATIONS, CONFORMITY_ASSESSMENT_ROUTES, CLASSIFICATIONS, CLASSIFICATION_LABELS } from "../data/checklist";
 
 export default function Screen14() {
   const navigate = useNavigate();
@@ -47,7 +47,7 @@ export default function Screen14() {
 
   // Mapping for readable route names
   const routeDisplayMap = {
-    [CONFORMITY_ASSESSMENT_ROUTES.INTERNAL_CONTROL]: "Internal Control (Harmonised Standards)",
+    [CONFORMITY_ASSESSMENT_ROUTES.INTERNAL_CONTROL]: "Internal Control (Harmonised Standards / Common Specifications)",
     [CONFORMITY_ASSESSMENT_ROUTES.NOTIFIED_BODY]: "Notified Body (Third-Party Assessment)",
     [CONFORMITY_ASSESSMENT_ROUTES.SECTORAL_LEGISLATION]: "Sectoral Legislation",
   };
@@ -106,7 +106,7 @@ export default function Screen14() {
               conformity assessment via one of these routes:
             </p>
             <ul>
-              <li>Internal Control (Harmonised Standards)</li>
+              <li>Internal Control (Harmonised Standards or Common Specifications)</li>
               <li>Notified Body Assessment</li>
               <li>Sectoral Legislation</li>
             </ul>
@@ -137,7 +137,10 @@ export default function Screen14() {
       if (!applicableCategories.includes("O")) return false;
       if (!selectedRouteLabel) return false;
       // Only show obligations for the selected conformity route
-      return item.route === selectedRouteLabel;
+      if (item.route !== selectedRouteLabel) return false;
+      // CS-only items (O26-O36) only appear when the user confirmed they are using Common Specifications
+      if (item.csOnly && answers.conformity_uses_cs !== "cs") return false;
+      return true;
     }
     
     // Transparency obligations (category "H") - Article 50 only
@@ -258,7 +261,47 @@ export default function Screen14() {
       
       return false; // Don't show if exemption not claimed
     }
-    
+
+    // Deployer obligations (F) — item-level filters for conditional obligations
+    if (item.category === "F") {
+      if (!applicableCategories.includes("F")) return false;
+      // F10: Inform workers' representatives — Article 26(10) — employment deployment only
+      if (item.number === "F10") {
+        return deploymentSector?.includes("employment") ||
+               answers.annexIIIUsecases?.some(u => ["employment_recruitment", "employment_management"].includes(u));
+      }
+      // F11: Register use in EU database — Article 49(3) — public authorities only
+      if (item.number === "F11") {
+        return isPublicAuthority;
+      }
+      return true;
+    }
+
+    // AI Literacy obligations (Q) — Q1 for providers, Q2 for deployers
+    if (item.category === "Q") {
+      if (!applicableCategories.includes("Q")) return false;
+      if (item.number === "Q1") return isProvider;
+      if (item.number === "Q2") return isDeployer;
+      return false;
+    }
+
+    // GPAI obligations (J) — Article 53
+    // Open-source exception (Article 53(2)): exempts obligations under 53(1)(a) [tech docs] and
+    // 53(1)(b) [downstream info] for models released under free and open-source licence with
+    // publicly available parameters. Exception does NOT apply if model has systemic risk.
+    // Articles 53(1)(c) (J6 copyright policy) and 53(1)(d) (J7 training summary) always apply.
+    if (item.category === "J") {
+      if (!applicableCategories.includes("J")) return false;
+      const openSourceExempt =
+        answers.isOpenSourceGPAI === "yes" &&
+        answers.hasSystemicRisk !== "yes" &&
+        answers.hasSystemicRisk !== "commission_determined";
+      if (openSourceExempt && ["J1", "J2", "J3", "J4", "J5", "J12"].includes(item.number)) {
+        return false; // Article 53(1)(a)/(b) — exempt for qualifying open-source models
+      }
+      return true;
+    }
+
     // All other obligation categories
     return applicableCategories.includes(item.category);
   });
@@ -273,7 +316,7 @@ export default function Screen14() {
   });
 
   // Sort categories in logical order (Provider → High-Risk → Role-specific → GPAI → Other)
-  const categoryOrder = ["A", "C", "O", "H", "G", "F", "D", "E", "N", "J", "K", "I", "L", "M", "X", "P"];
+  const categoryOrder = ["A", "C", "O", "H", "Q", "G", "F", "D", "E", "R", "N", "J", "K", "I", "L", "M", "X", "P"];
   const sortedCategories = Object.keys(itemsByCategory).sort((a, b) => {
     const aIndex = categoryOrder.indexOf(a);
     const bIndex = categoryOrder.indexOf(b);
@@ -291,7 +334,7 @@ export default function Screen14() {
     F: "Deployer Obligations",
     G: "Fundamental Rights Impact Assessment",
     H: "Transparency Obligations",
-    I: "Non-Significant Risk Notification",
+    I: "Non-High-Risk Registration",
     J: "GPAI Obligations",
     K: "GPAI Systemic Risk Obligations",
     L: "Prohibited System Obligations",
@@ -299,46 +342,52 @@ export default function Screen14() {
     N: "Product Manufacturer Obligations",
     O: "Conformity Assessment Obligations",
     P: "Prohibited Product Manufacturer Obligations",
+    Q: "AI Literacy Obligations",
+    R: "Authorised Representative Obligations",
     X: "Exemption Documentation",
   };
 
   // Category source citations
   const categorySources = {
-    A: "Articles 9-17, 47-49, 72-75",
-    C: "Articles 16, 23",
-    D: "Article 26",
-    E: "Article 27",
-    F: "Article 29",
+    A: "Articles 9-17, 20-22, 64, 72-73",
+    C: "Articles 13, 16",
+    D: "Article 23",
+    E: "Article 24",
+    F: "Article 26",
     G: "Article 27",
     H: "Article 50",
-    I: "Article 6(2)",
+    I: "Articles 6(3), 6(4), 49(2)",
     J: "Article 53",
     K: "Article 55",
     L: "Article 5",
     M: "Article 2",
-    N: "Article 24",
+    N: "Article 25(1)",
     O: "Article 43",
     P: "Articles 5, 24",
+    Q: "Article 4",
+    R: "Article 22",
     X: "Article 5, Recital 16",
   };
 
   // Category descriptions
   const categoryDescriptions = {
-    A: "Core obligations for providers of high-risk AI systems (includes Article 13 design transparency)",
+    A: "Core obligations for providers of high-risk AI systems (risk management, data governance, logging, human oversight, accuracy, QMS, post-market monitoring, corrective actions, cooperation)",
     C: "Documentation and information to be provided to downstream actors",
     D: "Obligations when importing AI systems into the EU",
     E: "Obligations when distributing AI systems in the EU market",
     F: "Obligations when deploying AI systems for use (includes Article 13 & 29 transparency for deployers)",
     G: "Assessment of impacts on fundamental rights (public authorities & sensitive sectors)",
-    H: "Article 50 transparency: content labeling, deepfake disclosure, and AI interaction disclosure",
-    I: "Notification procedure for Annex III systems with non-significant risk",
-    J: "Obligations for general-purpose AI model providers (Chapter V). These only apply where you are the provider placing the GPAI model on the market or putting it into service.",
-    K: "Additional obligations for GPAI models with systemic risk (Chapter V). These only apply where you are the provider of the systemic GPAI model.",
+    H: "Transparency obligations for AI-generated content, deepfake disclosure, and AI interaction disclosure.",
+    I: "Registration procedure for Annex III systems where the provider has determined the system is not high-risk.",
+    J: "Obligations for general-purpose AI model providers. These only apply where you are the provider placing the GPAI model on the market or putting it into service.",
+    K: "Additional obligations for GPAI models with systemic risk. These only apply where you are the provider of the systemic GPAI model.",
     L: "Actions required when AI system is prohibited",
-    M: "Documentation for systems excluded from AI Act scope under Article 2",
+    M: "Documentation for systems excluded from AI Act scope.",
     N: "Obligations when AI is integrated as a safety component in products",
     O: `Conformity assessment obligations via: ${routeDisplayMap[conformityRoute] || "Not Required"}`,
-    P: "Special obligations for product manufacturers integrating prohibited AI systems",
+    P: "Obligations for product manufacturers integrating prohibited AI systems",
+    Q: "AI literacy obligations applicable to all providers and deployers regardless of risk level.",
+    R: "Obligations for authorised representatives acting on behalf of providers established outside the EU.",
     X: "Documentation to prove compliance with exemption conditions for prohibited practices and ancillary features",
   };
 
@@ -371,11 +420,11 @@ export default function Screen14() {
           }}>
             <div>
               <strong style={{ display: "block", marginBottom: "4px", fontSize: "0.85rem", color: "#555" }}>Classification</strong>
-              <span style={{ fontWeight: 600, color: "#000" }}>{classification}</span>
+              <span style={{ fontWeight: 600, color: "#000" }}>{CLASSIFICATION_LABELS[classification] || classification}</span>
             </div>
             <div>
               <strong style={{ display: "block", marginBottom: "4px", fontSize: "0.85rem", color: "#555" }}>Your Role(s)</strong>
-              <span style={{ fontWeight: 600, color: "#000" }}>{roles.join(", ")}</span>
+              <span style={{ fontWeight: 600, color: "#000" }}>{roles.map(r => r.replace(/_/g, " ")).join(", ")}</span>
             </div>
             {isProvider && isHighRisk && (
               <div>
@@ -585,16 +634,14 @@ export default function Screen14() {
           >
             Start Over
           </button>
-          {progressPercent === 100 && (
-            <button 
-              className="btn btn-success" 
-              onClick={() => {
-                window.print();
-              }}
-            >
-              🖨️ Print Checklist
-            </button>
-          )}
+          <button 
+            className="btn btn-success" 
+            onClick={() => {
+              window.print();
+            }}
+          >
+            🖨️ Print Checklist
+          </button>
         </div>
       </div>
     </div>

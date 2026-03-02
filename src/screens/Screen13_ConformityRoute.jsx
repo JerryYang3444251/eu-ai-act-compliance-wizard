@@ -204,6 +204,11 @@ export default function Screen13A() {
       return;
     }
 
+    if (isNonBiometric && !answers.conformity_uses_cs) {
+      alert("Please indicate whether you are applying harmonised standards or common specifications.");
+      return;
+    }
+
     if (isBiometric) {
       if (!harmonizedStandardsApplied) {
         alert("Please indicate whether harmonized standards or common specifications have been applied.");
@@ -241,10 +246,10 @@ export default function Screen13A() {
               </h3>
               <p>
                 Your AI system is a safety component of a product covered by Union harmonisation 
-                legislation listed in Annex I Section B. Only specific articles of the AI Act apply (Articles 6(1), 102-109, and 112)
+                legislation listed in Annex I Section B. Only specific articles of the AI Act apply. <span className="source-tag" title="Articles 6(1), 102-109, and 112">Source</span>
               </p>
-              <p style={{marginTop: "12px"}}>
-                <strong> Conformity Assessment:</strong> Follow the conformity assessment procedures required 
+              <p className="info-p">
+                <strong>Conformity Assessment:</strong> Follow the conformity assessment procedures required 
                 under your applicable sectoral legislation (e.g., Medical Devices Regulation, Machinery Directive, 
                 Toy Safety Directive, etc.). The AI Act conformity assessment procedures do not apply.
               </p>
@@ -254,14 +259,14 @@ export default function Screen13A() {
 
         {/* Auto-selection banner */}
         {isAnnexIA && annexIACategories.length > 0 && !annexIACategories.includes('none') && (
-          <div className="info-box alert-info" style={{ marginBottom: "24px" }}>
+          <div className="info-box alert-info info-box-banner">
             <strong>ℹ️ Auto-Selection:</strong> Based on your Part 3 Annex IA categories, we've pre-selected the applicable sectoral legislation below. You can change these selections if they don't match your situation.
           </div>
         )}
 
         {/* Inconsistency warning */}
         {sectoralInconsistency && (
-          <div className="info-box alert-warning" style={{ marginBottom: "24px" }}>
+          <div className="info-box alert-warning info-box-banner">
             <strong>⚠️ Potential Inconsistency:</strong> Your current sectoral legislation selection (<strong>{sectoralInconsistency.current}</strong>) differs from your Part 3 Annex IA categories, which suggest <strong>{sectoralInconsistency.expected}</strong>. Please verify this is correct for your situation.
           </div>
         )}
@@ -276,7 +281,7 @@ export default function Screen13A() {
             <p className="subtle">
               Your AI system is covered by Union harmonisation legislation listed in Annex I Section A.
             </p>
-            <p className="subtle" style={{marginTop: '8px'}}>
+            <p className="subtle mt-sm">
               Select the applicable sectoral law(s):
             </p>
 
@@ -320,20 +325,47 @@ export default function Screen13A() {
               Your AI system is classified as high-risk under Annex III points 2-8 (non-biometric use cases).
             </p>
 
-            <div style={{marginTop: "20px"}}>
-              <h4>Harmonized Standards / Common Specifications</h4>
+            <div className="section-spacing">
+              <h4>Conformity Assessment Procedure</h4>
               <p className="subtle">
-                For non-biometric high-risk AI systems, the conformity assessment procedure is based on internal control (Annex VI). Notified body assessment is not available for these systems.
+                For non-biometric high-risk AI systems, the conformity assessment procedure is based on internal control. A notified body assessment is not available for these systems.
               </p>
-              <div className="options-group radio-group" style={{opacity: 0.6, pointerEvents: 'none'}}>
+              <div className="options-group radio-group form-section-disabled">
                 <label className="radio-option">
                   <input type="radio" checked readOnly />
-                  <span>Internal Control (Annex VI) – Self-assessment only</span>
+                  <span>Internal Control – Self-assessment only <span className="source-tag" title="Annex VI">Source</span></span>
                 </label>
                 <label className="radio-option">
                   <input type="radio" disabled />
-                  <span>Notified Body (Annex VII) – <em>Not available</em></span>
+                  <span>Notified Body – <em>Not available</em> <span className="source-tag" title="Annex VII">Source</span></span>
                 </label>
+              </div>
+            </div>
+
+            <div className="section-spacing">
+              <h4>
+                Harmonised Standards / Common Specifications
+                <span className="source-tag" title="Article 40, 41">Source</span>
+              </h4>
+              <p className="subtle">
+                Have harmonised standards been published that fully cover the requirements for your AI system?
+              </p>
+              <div className="options-group radio-group">
+                {[
+                  ["hs", "Yes — harmonised standards exist and I am applying them"],
+                  ["cs", "No — harmonised standards do not exist or are inadequate; I will use Common Specifications"],
+                  ["none", "Not yet determined"],
+                ].map(([value, label]) => (
+                  <label key={value} className="radio-option">
+                    <input
+                      type="radio"
+                      name="uses_cs"
+                      checked={answers.conformity_uses_cs === value}
+                      onChange={() => saveAnswer("conformity_uses_cs", value)}
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
               </div>
             </div>
           </div>
@@ -350,7 +382,7 @@ export default function Screen13A() {
               Your AI system is classified as high-risk under Annex III point 1 (biometric use case).
             </p>
 
-            <div style={{marginTop: "20px"}}>
+            <div className="section-spacing">
               <h4>Harmonized Standards / Common Specifications</h4>
               <p className="subtle">
                 Have you applied harmonized standards <span className="source-tag" title="Article 40">Source</span> or common specifications <span className="source-tag" title="Article 41">Source</span>?
@@ -377,7 +409,7 @@ export default function Screen13A() {
 
             {/* Optional Choice */}
             {harmonizedStandardsApplied === "full" && (
-              <div style={{marginTop: "24px"}}>
+              <div className="form-section-spacing">
                 <h4>Choose Your Conformity Assessment Procedure</h4>
                 <p className="subtle">
                   Since you have fully applied harmonized standards or common specifications, you may choose 
@@ -392,7 +424,7 @@ export default function Screen13A() {
                       checked={userChoice === "internal"}
                       onChange={() => saveAnswer("conformity_user_choice", "internal")}
                     />
-                    <span><strong>Internal Control (Annex VI)</strong> - Self-assessment, no notified body required</span>
+                    <span><strong>Internal Control</strong> – Self-assessment, no notified body required <span className="source-tag" title="Annex VI">Source</span></span>
                   </label>
 
                   <label className="radio-option">
@@ -402,7 +434,7 @@ export default function Screen13A() {
                       checked={userChoice === "notified_body"}
                       onChange={() => saveAnswer("conformity_user_choice", "notified_body")}
                     />
-                    <span><strong>Notified Body (Annex VII)</strong> - Third-party assessment by notified body</span>
+                    <span><strong>Notified Body</strong> – Third-party assessment by a notified body <span className="source-tag" title="Annex VII">Source</span></span>
                   </label>
                 </div>
               </div>
@@ -412,32 +444,40 @@ export default function Screen13A() {
 
         {/* Result Summary Banner */}
         {!isAnnexIB && (
-          <div className="classification-result" style={{marginTop: "32px"}}>
+          <div className="classification-result">
             <div className="info-box alert-success">
               <strong>✓ Conformity Assessment Route Identified:</strong>
-              <p style={{marginTop: "8px", marginBottom: "0"}}>
+              <p className="mt-sm">
                 {route === CONFORMITY_ASSESSMENT_ROUTES.SECTORAL_LEGISLATION && (
                   <>
-                    Sectoral Legislation
-                    <span className="source-tag" title="Article 43(3)">Source</span>
-                    <br />
-                    Your AI system must follow the conformity assessment procedure required under the applicable sectoral legislation.
+                    <span className="route-result-name">
+                      Route: Sectoral Legislation
+                      <span className="source-tag" title="Article 43(3)">Source</span>
+                    </span>
+                    <span className="route-result-desc">Your AI system must follow the conformity assessment procedure required under the applicable sectoral legislation.</span>
                   </>
                 )}
               {route === CONFORMITY_ASSESSMENT_ROUTES.NOTIFIED_BODY && (
                 <>
-                  <strong>Route:</strong> Notified Body (Annex VII)
-                  <span className="source-tag" title="Article 43(1)">Source</span>
-                  <br />
-                  Your AI system requires third-party assessment by a notified body.
+                  <span className="route-result-name">
+                    Route: Notified Body
+                    <span className="source-tag" title="Article 43(1), Annex VII">Source</span>
+                  </span>
+                  <span className="route-result-desc">Your AI system requires third-party assessment by a notified body.</span>
                 </>
               )}
               {route === CONFORMITY_ASSESSMENT_ROUTES.INTERNAL_CONTROL && (
                 <>
-                  <strong>Route:</strong> Internal Control (Annex VI)
-                  <span className="source-tag" title={isNonBiometric ? "Article 43(2)" : "Article 43(1)"}>Source</span>
-                  <br />
-                  Your AI system can only use self-assessment based on internal control procedures. No notified body required.
+                  <span className="route-result-name">
+                    Route: Internal Control{answers.conformity_uses_cs === "cs" ? " via Common Specifications" : ""}
+                    <span className="source-tag" title={isNonBiometric ? "Article 43(2), Annex VI" : answers.conformity_uses_cs === "cs" ? "Article 43(1), Article 41, Annex VI" : "Article 43(1), Annex VI"}>Source</span>
+                  </span>
+                  <span className="route-result-desc">
+                    {answers.conformity_uses_cs === "cs"
+                      ? "Your AI system will use Common Specifications as the compliance framework within the internal control procedure, since no adequate harmonised standards exist."
+                      : "Your AI system can use self-assessment based on internal control procedures. No notified body required."
+                    }
+                  </span>
                 </>
               )}
               </p>

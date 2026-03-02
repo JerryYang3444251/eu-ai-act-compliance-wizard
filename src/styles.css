@@ -295,6 +295,12 @@ body {
   list-style: disc;
 }
 
+.helper-box ol,
+.info-box ol {
+  margin: 10px 0 0 0;
+  padding-left: 18px;
+}
+
 .helper-box li,
 .info-box li {
   margin: 5px 0;
@@ -1279,4 +1285,61 @@ body {
   .classification-badge h2 {
     font-size: 1.5rem;
   }
+}
+
+/* ===================================================================
+   Spacing & State Utility Classes (used in Part 13 / Conformity Route)
+   =================================================================== */
+
+/* Route result summary used in the conformity route result banner */
+.route-result-name {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.route-result-desc {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-color);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* Standard info-box banner with bottom spacing */
+.info-box-banner {
+  margin-bottom: 24px;
+}
+
+/* Small top margin utility */
+.mt-sm {
+  margin-top: 8px;
+}
+
+/* Medium top margin utility */
+.mt-md {
+  margin-top: 12px;
+}
+
+/* Block paragraph inside info-box (overrides the default inline display) */
+.info-box .info-p {
+  display: block;
+  margin-top: 10px;
+}
+
+/* Section sub-heading spacing */
+.section-spacing {
+  margin-top: 20px;
+}
+
+/* Conditional/optional form section spacing */
+.form-section-spacing {
+  margin-top: 24px;
+}
+
+/* Read-only/disabled interactive section */
+.form-section-disabled {
+  opacity: 0.65;
+  pointer-events: none;
 }

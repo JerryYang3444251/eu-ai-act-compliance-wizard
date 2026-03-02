@@ -236,7 +236,7 @@ export default function Screen11_Transparency() {
           <div style={{ marginTop: "24px" }}>
             {hasTransparencyObligation ? (
               <div className="info-box alert-warning">
-                <strong>Transparency Obligations Identified:</strong>
+                <strong>⚠️ Transparency Obligations Identified:</strong>
                 <p>
                   You selected one or more transparency-triggering functionalities. Your AI system has transparency disclosure obligations. Transparency checklist items will apply.
                   {contentCharacteristics?.includes("realistic") && 

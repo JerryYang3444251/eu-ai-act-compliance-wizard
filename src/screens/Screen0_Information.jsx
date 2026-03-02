@@ -63,12 +63,30 @@ export default function Screen0_Information() {
         </div>
 
         <div className="info-box">
-          <h3>Note</h3>
-          <p>
-          <ul>
-            <li> This tool concerns Articles over Recitals. Please refer to the Act for Recital guidances"</li>
-          </ul>
+          <h3>Note — When Re-Assessment is Required</h3>
+          <p style={{ marginBottom: "8px" }}>
+            A new conformity assessment is triggered for a high-risk AI system in the following situations:
           </p>
+          <ol>
+            <li style={{ marginBottom: "8px" }}>
+              <strong>Substantial modification</strong> <span className="source-tag" title="Article 43(4), Article 3(23)">Source</span> — any change after deployment that was not planned in the initial assessment and either affects compliance with Chapter III, Section 2 requirements or changes the system's intended purpose. Performance changes in continuing-to-learn systems are exempt if pre-determined and documented.
+            </li>
+            <li style={{ marginBottom: "8px" }}>
+              <strong>Notified body certificate expiry</strong> <span className="source-tag" title="Article 44(2), Article 44(3)">Source</span> — certificates are valid for four years (Annex III systems) or five years (Annex I systems). Renewal, or suspension due to non-compliance, requires a new assessment.
+            </li>
+            <li style={{ marginBottom: "8px" }}>
+              <strong>QMS modification procedures</strong> <span className="source-tag" title="Article 17(1)(a)">Source</span> — where the provider's quality management system identifies a modification that qualifies as substantial, a new assessment is triggered.
+            </li>
+            <li style={{ marginBottom: "8px" }}>
+              <strong>Post-market monitoring or serious incident</strong> <span className="source-tag" title="Article 72(2), Article 73(6)">Source</span> — where corrective actions taken in response to monitoring findings or a serious incident constitute a substantial modification, a new assessment is required.
+            </li>
+            <li style={{ marginBottom: "8px" }}>
+              <strong>Market surveillance enforcement</strong> <span className="source-tag" title="Articles 79(2), 82(1), 83">Source</span> — authorities may order corrective action, withdrawal, or recall. Where remedial changes constitute a substantial modification, a new assessment is required.
+            </li>
+            <li style={{ marginBottom: "8px" }}>
+              <strong>Revised harmonised standards</strong> <span className="source-tag" title="Article 40(1), Article 17(1)(e)">Source</span> — if applicable standards are updated or withdrawn, providers must re-verify compliance. Where re-verification requires changes that constitute a substantial modification, a new assessment is triggered.
+            </li>
+          </ol>
         </div>
 
         <div className="screen-navigation">

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
-import { CLASSIFICATIONS } from "../data/checklist";
+import { CLASSIFICATIONS, CLASSIFICATION_LABELS } from "../data/checklist";
 
 export default function Screen12() {
   const navigate = useNavigate();
@@ -63,22 +63,7 @@ export default function Screen12() {
     );
   }
 
-  // Normalized classification labels for display
-  const classificationLabel = {
-    [CLASSIFICATIONS.EXCLUDED]: "Excluded",
-    [CLASSIFICATIONS.PROHIBITED]: "Prohibited",
-    [CLASSIFICATIONS.OUT_OF_SCOPE]: "Out of Scope",
-    [CLASSIFICATIONS.GPAI_SYSTEMIC]: "GPAI with Systemic Risk",
-    [CLASSIFICATIONS.GPAI]: "General Purpose AI",
-    [CLASSIFICATIONS.HIGH_RISK_IB]: "High-Risk (Annex I Section B)",
-    [CLASSIFICATIONS.HIGH_RISK_IA]: "High-Risk (Annex I Section A)",
-    [CLASSIFICATIONS.HIGH_RISK_III]: "High-Risk (Annex III)",
-    [CLASSIFICATIONS.ANNEX_III_NON_SIGNIFICANT]:
-      "Annex III Non-Significant Risk",
-    [CLASSIFICATIONS.IN_SCOPE_NON_HIGH_RISK]: "In-Scope, Non-High-Risk",
-  };
-
-  const label = classificationLabel[finalClassification] || "Unknown Classification";
+  const label = CLASSIFICATION_LABELS[finalClassification] || "Unknown Classification";
 
   const handleNext = () => {
     // Clear re-evaluation flag if set
@@ -105,7 +90,7 @@ export default function Screen12() {
           <div className="classification-details">
             <p>
               <strong>Role:</strong>{" "}
-              {roles && roles.length > 0 ? roles.join(", ") : "Not selected"}
+              {roles && roles.length > 0 ? roles.map(r => r.replace(/_/g, " ")).join(", ") : "Not selected"}
             </p>
             <p>
               <strong>Classification:</strong> {label}
@@ -121,8 +106,9 @@ export default function Screen12() {
             <div className="info-box alert-warning">
               <strong>⚠️ High-Risk System:</strong>
               <p>
-                High-risk AI systems face comprehensive obligations under 
+                High-risk AI systems face comprehensive obligations under
                 the EU AI Act. The next step will detail every requirement.
+                {" "}<span className="source-tag" title="Chapter III, Section 2 (Articles 9-17, 20-22 and 43)">Source</span>
               </p>
             </div>
           )}
@@ -132,8 +118,9 @@ export default function Screen12() {
             <div className="info-box alert-info">
               <strong>ℹ️ Non-Significant Risk (Annex III):</strong>
               <p>
-                This system is an Annex III use case but does not pose 
+                This system is an Annex III use case but does not pose
                 significant risk. Notification obligations still apply.
+                {" "}<span className="source-tag" title="Article 6(3), Article 6(4), Article 49(2)">Source</span>
               </p>
             </div>
           )}
