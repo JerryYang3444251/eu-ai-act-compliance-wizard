@@ -873,12 +873,12 @@ export const TRANSPARENCY_OBLIGATIONS = {
   H2: { 
     category: "H", number: "H2", title: "Disclose Emotion Recognition", 
     source: { article: "Article 50" }, 
-    items: [{ text: "Inform natural persons when emotion recognition or biometric categorisation system is used", source: "Article 50(2)" }] 
+    items: [{ text: "Inform natural persons when emotion recognition or biometric categorisation system is used", source: "Article 50(3)" }] 
   },
   H3: { 
     category: "H", number: "H3", title: "Label AI-Generated Content", 
     source: { article: "Article 50" }, 
-    items: [{ text: "Mark in machine-readable format and disclose that content has been artificially generated or manipulated", source: "Article 50(3)" }] 
+    items: [{ text: "Ensure outputs are marked in a machine-readable format as artificially generated or manipulated, and implement effective, interoperable technical solutions to enable their detection", source: "Article 50(2)" }] 
   },
   H4: { 
     category: "H", number: "H4", title: "Label Deepfakes", 

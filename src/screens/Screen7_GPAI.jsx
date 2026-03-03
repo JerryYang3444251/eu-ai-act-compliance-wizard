@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
 import { CLASSIFICATIONS } from "../data/checklist";
@@ -11,105 +11,123 @@ export default function Screen7_GPAI() {
     pushHistory("/screen7");
   }, [pushHistory]);
 
-  const modelRelationship = answers.modelRelationship || null;
+  const modelRelationships = Array.isArray(answers.modelRelationship)
+    ? answers.modelRelationship
+    : (answers.modelRelationship ? [answers.modelRelationship] : []);
   const isGPAI = answers.isGPAI || null;
   const isOpenSourceGPAI = answers.isOpenSourceGPAI || null;
 
-  // Smart pre-selection based on Part 2 activities
-  const predictModelRelationship = (activities) => {
-    if (!activities || activities.length === 0) return null;
-    
-    // Priority 1: Model development → provider
-    if (activities.includes("develop_model") || activities.includes("fine_tune")) {
-      return "provider";
+  // Map ALL Part 2 activities to all applicable Part 7 roles (no priority — all can apply simultaneously)
+  const predictAllModelRelationships = (activities) => {
+    if (!activities || activities.length === 0) return [];
+    const result = [];
+    // develop_model → Model Provider (GPAI model obligations)
+    if (activities.includes("develop_model")) {
+      result.push("provider");
     }
-    
-    // Priority 2: System development/integration/manufacturing → integrator
-    if (activities.includes("develop_system") || activities.includes("modify") || activities.includes("change_purpose") || activities.includes("product_manufacturer")) {
-      return "integrator";
+    // System development / modification / commissioning / manufacturing → System Developer / Integrator
+    if (activities.some(a => ["develop_system", "modify", "change_purpose", "product_manufacturer", "place_on_market"].includes(a))) {
+      result.push("integrator");
     }
-    
-    // Priority 3: Operational roles → deployer
-    if (activities.includes("deploy") || activities.includes("import") || activities.includes("distribute")) {
-      return "deployer";
+    // Operational roles: importing, distributing, deploying, rebranding, or acting as AR → System Operator
+    if (activities.some(a => ["deploy", "import", "distribute", "brand", "act_as_ar"].includes(a))) {
+      result.push("deployer");
     }
-    
-    return null;
-  };
-
-  // Detect inconsistency between predicted and selected role
-  const detectInconsistency = () => {
-    if (!modelRelationship || !roles_raw || roles_raw.length === 0) return null;
-    
-    const predicted = predictModelRelationship(roles_raw);
-    if (!predicted || predicted === modelRelationship) return null;
-    
-    // Map roles to friendly names
-    const roleNames = {
-      provider: "Model Provider",
-      integrator: "System Integrator",
-      deployer: "System Operator"
-    };
-    
-    return {
-      predicted: roleNames[predicted],
-      selected: roleNames[modelRelationship]
-    };
+    return result;
   };
 
   // Check if user selected both model development AND system integration
   const hasDualRole = () => {
     if (!roles_raw || roles_raw.length === 0) return false;
     
-    const hasModelDev = roles_raw.includes("develop_model") || roles_raw.includes("fine_tune");
+    const hasModelDev = roles_raw.includes("develop_model");
     const hasSystemDev = roles_raw.includes("develop_system") || roles_raw.includes("modify");
     
     return hasModelDev && hasSystemDev;
   };
 
-  // Auto-populate on first visit if not already set
+  // Auto-populate on first visit: pre-select ALL roles that match Part 2 activities
+  // Uses applyRelationship so isGPAI is also auto-set when provider is predicted
   useEffect(() => {
-    if (modelRelationship === null && roles_raw && roles_raw.length > 0) {
-      const predicted = predictModelRelationship(roles_raw);
-      if (predicted) {
-        saveAnswer("modelRelationship", predicted);
+    if (modelRelationships.length === 0 && roles_raw && roles_raw.length > 0) {
+      const predicted = predictAllModelRelationships(roles_raw);
+      if (predicted.length > 0) {
+        applyRelationship(predicted);
       }
     }
-  }, [modelRelationship, roles_raw, saveAnswer]);
+  }, []);
 
-  const inconsistency = detectInconsistency();
   const showDualRoleWarning = hasDualRole();
 
+  const [pendingRelationship, setPendingRelationship] = useState(null);
+
+  const gpaiRoleNames = {
+    provider: "Model Provider",
+    integrator: "System Developer / Integrator",
+    deployer: "System Operator"
+  };
+
+  const applyRelationship = (selections) => {
+    saveAnswer("modelRelationship", selections);
+    if (selections.includes("provider")) {
+      // Provider = GPAI model provider by definition (Part 2 develop_model is GPAI-specific)
+      saveAnswer("isGPAI", "yes");
+    } else {
+      saveAnswer("isGPAI", null);
+      saveAnswer("isOpenSourceGPAI", null);
+    }
+  };
+
+  const handleToggleRelationship = (value) => {
+    const updated = modelRelationships.includes(value)
+      ? modelRelationships.filter(v => v !== value)
+      : [...modelRelationships, value];
+
+    // Check deviation against Part 2 prediction
+    if (roles_raw && roles_raw.length > 0) {
+      const predicted = predictAllModelRelationships(roles_raw);
+      if (predicted.length > 0) {
+        const added   = updated.filter(r => !predicted.includes(r));
+        const removed = predicted.filter(r => !updated.includes(r));
+        if (added.length > 0 || removed.length > 0) {
+          setPendingRelationship({
+            updated,
+            predicted,
+            resulting: updated.map(r => gpaiRoleNames[r]).join(", ") || "None",
+            expected:  predicted.map(r => gpaiRoleNames[r]).join(", "),
+          });
+          return;
+        }
+      }
+    }
+
+    applyRelationship(updated);
+  };
+
+  const confirmRelationship = () => {
+    if (!pendingRelationship) return;
+    applyRelationship(pendingRelationship.updated);
+    setPendingRelationship(null);
+  };
+
+  const cancelRelationship = () => setPendingRelationship(null);
+
   const handleNext = () => {
-    // Clear re-evaluation flag if set
-    if (shouldReevaluateRules) {
-      setShouldReevaluateRules(false);
-    }
+    if (shouldReevaluateRules) setShouldReevaluateRules(false);
 
-    // If deployer/integrator, skip GPAI systemic risk assessment and go to Screen 9
-    if (modelRelationship === "deployer" || modelRelationship === "integrator") {
-      navigate("/screen9");
-      return;
-    }
-
-    // If model provider and confirmed as GPAI model
-    if (modelRelationship === "provider" && isGPAI === "yes") {
+    // GPAI providers always proceed to systemic risk assessment
+    if (modelRelationships.includes("provider")) {
       navigate("/screen8");
       return;
     }
 
-    // If model provider but not GPAI, skip to Screen 9
-    if (modelRelationship === "provider" && isGPAI === "no") {
-      navigate("/screen9");
-      return;
-    }
+    // Integrators / deployers proceed to prohibited practices check
+    navigate("/screen9");
   };
 
   const canProceed = () => {
-    if (modelRelationship === null) return false;
-    if (modelRelationship === "deployer" || modelRelationship === "integrator") return true;
-    if (modelRelationship === "provider" && isGPAI === null) return false;
-    if (modelRelationship === "provider" && isGPAI === "yes" && isOpenSourceGPAI === null) return false;
+    if (modelRelationships.length === 0) return false;
+    if (modelRelationships.includes("provider") && isOpenSourceGPAI === null) return false;
     return true;
   };
 
@@ -119,6 +137,28 @@ export default function Screen7_GPAI() {
         <h1>Part 7: General Purpose AI (GPAI) Assessment</h1>
         <p className="subtitle">Determine your obligations related to General Purpose AI models</p>
       </div>
+
+      {pendingRelationship && (
+        <div className="modal-overlay" onClick={cancelRelationship}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <strong>⚠️ Selection Conflict</strong>
+            </div>
+            <div className="modal-body">
+              <p style={{ marginBottom: "12px" }}>
+                Your updated relationship selection (<strong>{pendingRelationship.resulting}</strong>) differs from what your Part 2 activities suggest.
+              </p>
+              <p style={{ marginBottom: "14px" }}>
+                Based on your Part 2 activities, the expected roles are: <strong>{pendingRelationship.expected}</strong>. Confirm only if your GPAI relationship genuinely differs from your Part 2 answers.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={cancelRelationship}>Cancel</button>
+              <button className="btn btn-primary" onClick={confirmRelationship}>Confirm — keep my selection</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="screen-content">
         <div className="helper-box alert-info" style={{ marginBottom: "24px" }}>
@@ -132,24 +172,10 @@ export default function Screen7_GPAI() {
           <span className="source-tag" title="Article 3(63), Chapter V">Source</span>
         </div>
 
-        {/* Pre-selection info banner */}
-        {roles_raw && roles_raw.length > 0 && predictModelRelationship(roles_raw) && (
-          <div className="info-box alert-info" style={{ marginBottom: "24px" }}>
-            <strong>ℹ️ Auto-Selection:</strong> Based on your Part 2 activities, we've pre-selected your role below. You can change this selection if it doesn't match your situation.
-          </div>
-        )}
-
-        {/* Inconsistency warning */}
-        {inconsistency && (
-          <div className="info-box alert-warning" style={{ marginBottom: "24px" }}>
-            <strong>⚠️ Potential Inconsistency:</strong> Your current selection (<strong>{inconsistency.selected}</strong>) differs from your Part 2 activities, which suggest <strong>{inconsistency.predicted}</strong>. Please verify this is correct for your situation.
-          </div>
-        )}
-
         {/* Dual-role precedence guidance */}
-        {showDualRoleWarning && modelRelationship === "provider" && (
-          <div className="info-box alert-warning" style={{ marginBottom: "24px", backgroundColor: "#fff3cd", borderColor: "#ffc107" }}>
-            <strong>⚠️ Model Provider + System Integrator:</strong> You selected both model development and system integration activities in Part 2. Under the EU AI Act, when you develop AI models AND integrate them into systems, your model provider obligations take precedence and apply in addition to system provider obligations.
+        {showDualRoleWarning && modelRelationships.includes("provider") && (
+          <div className="info-box alert-warning" style={{ marginBottom: "24px" }}>
+            <strong>⚠️ Model Provider + System Developer / Integrator:</strong> You selected both model development and system development or integration activities in Part 2. Under the EU AI Act, when you develop AI models AND integrate them into systems, your model provider obligations take precedence and apply in addition to system provider obligations.
             <span className="source-tag" title="Article 25">Source</span>
           </div>
         )}
@@ -157,116 +183,40 @@ export default function Screen7_GPAI() {
         {/* Step 1: What is your relationship to AI models? */}
         <div style={{ marginBottom: "32px" }}>
           <h3>Your Relationship to AI Models</h3>
-          <p style={{ marginBottom: "12px", color: "var(--text-light)" }}>Select the option that best describes your organization's work:</p>
-          <div className="options-group radio-group">
-            <label className="radio-option">
+          <p style={{ marginBottom: "12px", color: "var(--text-light)" }}>Select all that apply to your organization:</p>
+          <div className="options-group checkbox-group">
+            <label className="checkbox-option">
               <input
-                type="radio"
-                name="model_relationship"
+                type="checkbox"
                 value="provider"
-                checked={modelRelationship === "provider"}
-                onChange={() => {
-                  saveAnswer("modelRelationship", "provider");
-                  saveAnswer("isGPAI", null);
-                  saveAnswer("isOpenSourceGPAI", null);
-                }}
+                checked={modelRelationships.includes("provider")}
+                onChange={() => handleToggleRelationship("provider")}
               />
-              <div>
-                <strong>Model Provider:</strong> We develop, train, or place AI models on the market
-                <div style={{ fontSize: "0.9rem", color: "var(--text-lighter)", marginTop: "4px" }}>
-                  Examples: Training foundation models, developing language models, creating AI model tools for others to use
-                </div>
-              </div>
+              <span><strong>Model Provider:</strong> We develop, train, or place general-purpose AI models on the market</span>
             </label>
-            <label className="radio-option">
+            <label className="checkbox-option">
               <input
-                type="radio"
-                name="model_relationship"
+                type="checkbox"
                 value="integrator"
-                checked={modelRelationship === "integrator"}
-                onChange={() => {
-                  saveAnswer("modelRelationship", "integrator");
-                  saveAnswer("isGPAI", null);
-                  saveAnswer("isOpenSourceGPAI", null);
-                }}
+                checked={modelRelationships.includes("integrator")}
+                onChange={() => handleToggleRelationship("integrator")}
               />
-              <div>
-                <strong>System Integrator:</strong> We integrate existing AI models into our AI systems
-                <div style={{ fontSize: "0.9rem", color: "var(--text-lighter)", marginTop: "4px" }}>
-                  Examples: Building applications using GPT-4 API, creating diagnosis tools powered by AI models
-                </div>
-              </div>
+              <span><strong>System Developer / Integrator:</strong> We develop AI systems or integrate existing AI models into our products and services</span>
             </label>
-            <label className="radio-option">
+            <label className="checkbox-option">
               <input
-                type="radio"
-                name="model_relationship"
+                type="checkbox"
                 value="deployer"
-                checked={modelRelationship === "deployer"}
-                onChange={() => {
-                  saveAnswer("modelRelationship", "deployer");
-                  saveAnswer("isGPAI", null);
-                  saveAnswer("isOpenSourceGPAI", null);
-                }}
+                checked={modelRelationships.includes("deployer")}
+                onChange={() => handleToggleRelationship("deployer")}
               />
-              <div>
-                <strong>System Operator (Importer/Distributor/Deployer):</strong> We import, distribute, or deploy complete AI systems without developing or integrating the models ourselves
-                <div style={{ fontSize: "0.9rem", color: "var(--text-lighter)", marginTop: "4px" }}>
-                  Select this if you work with complete AI systems but not the underlying AI models. Your obligations depend on your specific role (importer/distributor/deployer), not on whether the systems contain GPAI models. Examples: Importing AI-powered products, distributing AI systems, deploying ChatGPT Enterprise.
-                </div>
-              </div>
+              <span><strong>System Operator (Importer / Distributor / Deployer):</strong> We import, distribute, or deploy complete AI systems without developing or integrating the underlying models</span>
             </label>
+
           </div>
+
         </div>
-
-        {/* Step 2: Determine if model is GPAI (only for model providers) */}
-        {modelRelationship === "provider" && (
-          <div style={{ marginBottom: "32px", paddingTop: "24px", borderTop: "2px solid var(--border-color)" }}>
-            <h3>Is Your Model a General Purpose AI Model?</h3>
-            <p style={{ marginBottom: "12px", color: "var(--text-light)" }}>
-              Assess whether your AI model qualifies as a General Purpose AI (GPAI) model:
-            </p>
-            <div className="helper-box" style={{ marginBottom: "16px", fontSize: "0.9rem" }}>
-              <strong>GPAI model characteristics:</strong>
-              <ul style={{ marginTop: "8px", marginLeft: "20px" }}>
-                <li>Displays <strong>significant generality</strong> — not limited to one specific task or domain</li>
-                <li>Can <strong>competently perform a wide range of distinct tasks</strong> (text, images, code, reasoning, etc.)</li>
-                <li>Typically trained on large amounts of data using self-supervised or unsupervised learning</li>
-                <li>Can be integrated into various downstream systems or applications</li>
-                <li>Examples: Large language models (GPT, Claude), multimodal models, foundation models</li>
-              </ul>
-              <p style={{ marginTop: "8px" }}>
-                <strong>Not GPAI:</strong> Task-specific models (e.g., fraud detection model, medical image classifier, recommendation engine for one website)
-              </p>
-              <span className="source-tag" title="Article 3(63)">Source</span>
-            </div>
-            <div className="options-group radio-group">
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="is_gpai"
-                  value="yes"
-                  checked={isGPAI === "yes"}
-                  onChange={() => saveAnswer("isGPAI", "yes")}
-                />
-                <span>Yes, my model is a general-purpose AI model</span>
-              </label>
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="is_gpai"
-                  value="no"
-                  checked={isGPAI === "no"}
-                  onChange={() => { saveAnswer("isGPAI", "no"); saveAnswer("isOpenSourceGPAI", null); }}
-                />
-                <span>No, my model is specialized/task-specific</span>
-              </label>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Open-source licence status (only for GPAI providers) */}
-        {modelRelationship === "provider" && isGPAI === "yes" && (
+        {modelRelationships.includes("provider") && (
           <div style={{ marginBottom: "32px", paddingTop: "24px", borderTop: "2px solid var(--border-color)" }}>
             <h3>Is Your Model Released Under a Free and Open-Source Licence?</h3>
             <p style={{ marginBottom: "12px", color: "var(--text-light)" }}>
@@ -322,47 +272,66 @@ export default function Screen7_GPAI() {
           </div>
         )}
 
-        {/* Result messages based on choices */}
-        {modelRelationship === "integrator" && (
-          <div className="info-box alert-info" style={{ marginTop: "24px" }}>
-            <strong>ℹ️ System Provider — No GPAI Model Obligations:</strong> As a system provider who integrates existing AI models into your systems, GPAI model provider requirements do not apply to you. Those obligations remain with the original model provider.
-            <span className="source-tag" title="Article 25(3), Article 25(4)">Source</span>
-          </div>
-        )}
+        {/* Unified result banner */}
+        {(() => {
+          if (modelRelationships.length === 0) return null;
 
-        {modelRelationship === "deployer" && (
-          <div className="info-box alert-success" style={{ marginTop: "24px" }}>
-            <strong>✓ No GPAI Model Obligations:</strong> As an importer, distributor, or deployer of complete AI systems, GPAI model provider requirements do not apply to you. Your obligations are based on your specific role determined in Part 2.
-            <span className="source-tag" title="Articles 23, 24, 25, 26">Source</span>
-          </div>
-        )}
+          const isProvider   = modelRelationships.includes("provider");
+          const isIntegrator = modelRelationships.includes("integrator");
+          const isDeployer   = modelRelationships.includes("deployer");
 
-        {modelRelationship === "provider" && isGPAI === "yes" && isOpenSourceGPAI === "yes" && (
-          <div className="info-box alert-warning" style={{ marginTop: "24px" }}>
-            <strong>⚠️ GPAI Provider — Open-Source Exception Applies:</strong> Technical
-            documentation and downstream-provider information obligations do not apply to
-            you. Your copyright compliance policy and training data summary obligations still apply.
-            If your model is found to have systemic risk in the next step, the full set of obligations applies.
-            <span className="source-tag" title="Article 53(2), Recital 470">Source</span>
-          </div>
-        )}
-        {modelRelationship === "provider" && isGPAI === "yes" && isOpenSourceGPAI === "no" && (
-          <div className="info-box alert-warning" style={{ marginTop: "24px" }}>
-            <strong>⚠️ GPAI Provider Classification:</strong> As a proprietary general-purpose AI model
-            provider, the full set of GPAI obligations applies. Next, we will assess whether your
-            model presents systemic risks, which would add further obligations.
-            <span className="source-tag" title="Article 53, Chapter V">Source</span>
-          </div>
-        )}
 
-        {modelRelationship === "provider" && isGPAI === "no" && (
-          <div className="info-box alert-success" style={{ marginTop: "24px" }}>
-            <strong>✓ Task-Specific AI Model:</strong> Your model does not qualify as general-purpose AI. GPAI-specific requirements do not apply to you.
-            <span className="source-tag" title="Article 3(1), Chapter V">Source</span>
-          </div>
-        )}
+          // Wait until provider has answered the open-source question
+          if (isProvider && isOpenSourceGPAI === null) return null;
 
-        <div className="screen-navigation" style={{ marginTop: "40px" }}>
+          let bannerClass, icon, title, body, sourceArticle;
+
+          const nonProviderRoles = [
+            isIntegrator && "System Developer / Integrator",
+            isDeployer   && "System Operator",
+          ].filter(Boolean);
+          const nonProviderNote = nonProviderRoles.length > 0
+            ? ` As ${nonProviderRoles.join(" and ")}, your system-level obligations are assessed separately based on the AI system risk classification in Parts 3–6.`
+            : "";
+
+          if (isProvider) {
+            if (isOpenSourceGPAI === "yes") {
+              bannerClass   = "alert-warning";
+              icon          = "⚠️";
+              title         = "GPAI Provider — Open-Source Partial Exception";
+              body          = "Technical documentation and downstream-provider information obligations are reduced under Article 53(2). Copyright compliance policy and training data summary obligations still apply in full. If systemic risk is confirmed in the next step, the full obligation set applies." + nonProviderNote;
+              sourceArticle = "Article 53(1)(c), Article 53(1)(d), Article 53(2), Recital 470";
+            } else {
+              // isOpenSourceGPAI === "no"
+              bannerClass   = "alert-warning";
+              icon          = "⚠️";
+              title         = "GPAI Provider — Full Obligations Apply";
+              body          = "As a proprietary general-purpose AI model provider, the full Chapter V obligation set applies, including technical documentation, transparency, and downstream information requirements. The next step assesses whether your model also presents systemic risk, which would add further obligations." + nonProviderNote;
+              sourceArticle = "Article 53, Chapter V";
+            }
+          } else {
+            // Only integrator / deployer — no provider
+            bannerClass   = "alert-success";
+            icon          = "✓";
+            title         = "No GPAI Model Obligations";
+            const roleList = nonProviderRoles.join(" and ");
+            body          = `As ${roleList}, GPAI model provider requirements do not apply to you. Those obligations remain with the original model provider. Your obligations are determined by your role and the AI system risk classification assessed in Parts 3–6.`;
+            sourceArticle = [
+              isIntegrator && "Article 25(3), Article 25(4)",
+              isDeployer   && "Articles 23, 24, 25, 26",
+            ].filter(Boolean).join(", ");
+          }
+
+          return (
+            <div className={`info-box ${bannerClass}`} style={{ marginTop: "24px" }}>
+              <strong>{icon} {title}:</strong>{" "}
+              {body}{" "}
+              <span className="source-tag" title={sourceArticle}>Source</span>
+            </div>
+          );
+        })()}
+
+        <div className="screen-navigation">
           <button className="btn btn-secondary" onClick={() => navigateBack(navigate)}>
             ← Back
           </button>

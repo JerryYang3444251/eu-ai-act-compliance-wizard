@@ -148,37 +148,53 @@ export default function Screen14() {
     if (item.category === "H") {
       if (!applicableCategories.includes("H")) return false;
       
-      // H1: Disclose AI Interaction (Article 50(1)) - human interaction systems
+      // H1: Disclose AI Interaction (Article 50(1)) — PROVIDER obligation (design) + DEPLOYER obligation (operation).
+      // Art. 50(1): "Providers shall ensure that AI systems intended to interact directly with natural
+      // persons are DESIGNED AND DEVELOPED in such a way that natural persons are informed".
+      // Deployers also inherit this operational duty, so it applies to both roles.
       if (item.number === "H1") {
-        return systemFunctionality?.includes("human_interaction");
+        return (isProvider || isDeployer) && systemFunctionality?.includes("human_interaction");
       }
       
-      // H2: Disclose Emotion Recognition (Article 50(2)) - emotion/biometric systems
+      // H2: Disclose Emotion Recognition (Article 50(3)) — DEPLOYER ONLY.
+      // Art. 50(3): "Deployers of an emotion recognition system or a biometric categorisation
+      // system shall inform the natural persons exposed thereto". Provider has no parallel duty.
       if (item.number === "H2") {
-        return systemFunctionality?.includes("emotion_recognition") || 
-               systemFunctionality?.includes("biometric_categorization");
+        return isDeployer &&
+          (systemFunctionality?.includes("emotion_recognition") ||
+           systemFunctionality?.includes("biometric_categorization"));
       }
       
-      // H3: Label AI-Generated Content (Article 50(3)) - content generation
+      // H3: Label AI-Generated Content (Article 50(2)) — PROVIDER ONLY.
+      // Art. 50(2): "Providers of AI systems...generating synthetic audio, image, video or text
+      // content, shall ensure that the outputs of the AI system are marked in a machine-readable
+      // format and detectable as artificially generated or manipulated".
       if (item.number === "H3") {
-        return systemFunctionality?.some(f => 
-          ["text", "audio", "images", "video"].includes(f)
-        );
+        return isProvider &&
+          systemFunctionality?.some(f =>
+            ["text", "audio", "images", "video"].includes(f)
+          );
       }
       
-      // H4: Label Deepfakes (Article 50(4)) - realistic synthetic media
+      // H4: Label Deepfakes (Article 50(4)) — DEPLOYER ONLY.
+      // Art. 50(4): "Deployers of an AI system that generates or manipulates image, audio or video
+      // content constituting a deep fake, shall disclose that the content has been artificially
+      // generated or manipulated".
       if (item.number === "H4") {
         const generatesMedia = systemFunctionality?.some(f => ["images", "video", "audio"].includes(f));
-        return contentCharacteristics?.includes("realistic") && generatesMedia;
+        return isDeployer && contentCharacteristics?.includes("realistic") && generatesMedia;
       }
       
-      // H5: Ensure Detectability (Article 50(5)) - applies when H3 or H4 apply
+      // H5: Ensure Detectability (Article 50(5)) — applies when H3 (provider) or H4 (deployer) apply.
+      // Art. 50(5): disclosures shall be clear, distinguishable, and easily perceivable.
+      // Since H3 is provider-only and H4 is deployer-only, H5 follows the same role scoping.
       if (item.number === "H5") {
-        const hasH3 = systemFunctionality?.some(f => 
+        const hasH3 = isProvider && systemFunctionality?.some(f =>
           ["text", "audio", "images", "video"].includes(f)
         );
-        const hasH4 = contentCharacteristics?.includes("realistic") && 
-                     systemFunctionality?.some(f => ["images", "video", "audio"].includes(f));
+        const hasH4 = isDeployer &&
+          contentCharacteristics?.includes("realistic") &&
+          systemFunctionality?.some(f => ["images", "video", "audio"].includes(f));
         return hasH3 || hasH4;
       }
       
@@ -334,7 +350,7 @@ export default function Screen14() {
     F: "Deployer Obligations",
     G: "Fundamental Rights Impact Assessment",
     H: "Transparency Obligations",
-    I: "Non-High-Risk Registration",
+    I: "Non-High-Risk Assessment & Registration",
     J: "GPAI Obligations",
     K: "GPAI Systemic Risk Obligations",
     L: "Prohibited System Obligations",
@@ -378,7 +394,7 @@ export default function Screen14() {
     F: "Obligations when deploying AI systems for use (includes Article 13 & 29 transparency for deployers)",
     G: "Assessment of impacts on fundamental rights (public authorities & sensitive sectors)",
     H: "Transparency obligations for AI-generated content, deepfake disclosure, and AI interaction disclosure.",
-    I: "Registration procedure for Annex III systems where the provider has determined the system is not high-risk.",
+    I: "Assessment documentation and registration for Annex III systems where the provider has self-determined the system is not high-risk (Art. 6(3) assessment + Art. 49(2) EU database registration).",
     J: "Obligations for general-purpose AI model providers. These only apply where you are the provider placing the GPAI model on the market or putting it into service.",
     K: "Additional obligations for GPAI models with systemic risk. These only apply where you are the provider of the systemic GPAI model.",
     L: "Actions required when AI system is prohibited",

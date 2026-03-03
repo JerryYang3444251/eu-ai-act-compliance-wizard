@@ -65,9 +65,22 @@ export function WizardProvider({ children }) {
   const identifyRawRoles = (org_actions) => {
     const raw_role_tags = new Set();
 
-    // ROLE_001: Development/Modification tag
-    if (org_actions.some(a => ['develop_system','develop_model','modify','change_purpose','fine_tune'].includes(a))) {
-      raw_role_tags.add('Development_Modification');
+    // ROLE_001a: Original Development — developing a new system/model from scratch → Provider unconditionally
+    // Article 3(3): entity that develops and places on the market under own name/trademark
+    if (org_actions.some(a => ['develop_system', 'develop_model'].includes(a))) {
+      raw_role_tags.add('Original_Development');
+    }
+
+    // ROLE_001b: Substantial Modification → Provider conditionally
+    // change_purpose is definitionally substantial per Article 3(23) — always applies.
+    // modify: only substantial if (a) no base operational role (standalone developer), or
+    //         (b) confirmed substantial via answers.isSubstantialModification === 'yes' (Phase 2 gate).
+    const hasBaseOperationalAction = org_actions.some(a => ['deploy', 'import', 'distribute', 'product_manufacturer'].includes(a));
+    const hasModifyAction = org_actions.includes('modify');
+    const hasChangePurposeAction = org_actions.includes('change_purpose');
+    const modifyIsSubstantial = hasModifyAction && (!hasBaseOperationalAction || answers.isSubstantialModification === 'yes');
+    if (modifyIsSubstantial || hasChangePurposeAction) {
+      raw_role_tags.add('Substantial_Modification');
     }
 
     // ROLE_002: Branding tag
@@ -122,67 +135,111 @@ export function WizardProvider({ children }) {
     const legal_roles = new Set();
     let provider_assigned = false;
 
-    // RECLASS_001: Development_Modification → PROVIDER
-    if (roles_raw_tags.includes('Development_Modification')) {
+    // Track WHICH operational roles were themselves the source of Provider reclassification.
+    // These are the only ones that get absorbed into Provider.
+    // Operational roles reclassified from an INDEPENDENT Provider source (e.g. develop_model)
+    // must be retained alongside Provider — they represent separate compliance obligations.
+    let deployer_absorbed = false;
+    let importer_absorbed = false;
+    let distributor_absorbed = false;
+    let product_manufacturer_absorbed = false;
+
+    // RECLASS_001a: Original_Development → PROVIDER (unconditional — Article 3(3))
+    if (roles_raw_tags.includes('Original_Development')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // RECLASS_002: Branding → PROVIDER
-    if (roles_raw_tags.includes('Branding')) {
+    // RECLASS_001b: REMOVED — merged into RECLASS_007.
+    // A standalone modifier (no base operational role) who substantially modifies a high-risk AI system
+    // is subject to Art. 25(1)(b)/(c), which requires isHighRisk — identical to the operational-role path.
+    // There is no unconditional Provider path for modification activities: Art. 25 applies to ALL
+    // "distributors, importers, deployers or other third parties", and always requires high-risk.
+
+    // RECLASS_002: Branding alone (non-developer) → PROVIDER
+    // Article 25(1)(a): only applies when the system is HIGH-RISK.
+    // A non-developer who merely places a minimal-risk system under their own name
+    // does NOT become a Provider. Late binding: fires only when isHighRisk is confirmed.
+    // Note: if Original_Development is also set, RECLASS_001a already assigned Provider;
+    // this rule is a no-op in that case but kept for completeness.
+    if (roles_raw_tags.includes('Branding') && isHighRisk) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // RECLASS_003: Market_Placer → PROVIDER
+    // RECLASS_003: Market_Placer → PROVIDER (Article 3(3), Article 16)
+    // Placing on market under own name implies being the developer/commercialiser — unconditional.
     if (roles_raw_tags.includes('Market_Placer')) {
       legal_roles.add("Provider");
       provider_assigned = true;
     }
 
-    // RECLASS_004: Product_Manufacturer + safety component → PROVIDER
+    // RECLASS_004: Product_Manufacturer + safety component → PROVIDER (Article 25(3))
+    // The product manufacturer role is absorbed only when the safety component trigger fires.
     if (roles_raw_tags.includes('Product_Manufacturer')) {
       if (answers.safety_function === "yes") {
         legal_roles.add("Provider");
         provider_assigned = true;
+        product_manufacturer_absorbed = true;
       }
     }
 
-    // RECLASS_005: Importer + placing_under_own_name → PROVIDER
-    if (roles_raw_tags.includes('Importer') && roles_raw_tags.includes('Branding')) {
+    // RECLASS_005: Importer + Branding → PROVIDER (Article 25(1)(a))
+    // HIGH-RISK ONLY — late binding.
+    // For non-high-risk systems, the Importer retains their base role.
+    if (roles_raw_tags.includes('Importer') && roles_raw_tags.includes('Branding') && isHighRisk) {
       legal_roles.add("Provider");
       provider_assigned = true;
+      importer_absorbed = true;
     }
 
-    // RECLASS_006: Distributor + placing_under_own_name → PROVIDER
-    if (roles_raw_tags.includes('Distributor') && roles_raw_tags.includes('Branding')) {
+    // RECLASS_006: Distributor + Branding → PROVIDER (Article 25(1)(a))
+    // HIGH-RISK ONLY — late binding.
+    if (roles_raw_tags.includes('Distributor') && roles_raw_tags.includes('Branding') && isHighRisk) {
       legal_roles.add("Provider");
       provider_assigned = true;
+      distributor_absorbed = true;
     }
 
-    // RECLASS_007: Deployer + modifications → PROVIDER
-    if (roles_raw_tags.includes('Deployer') && roles_raw_tags.includes('Development_Modification')) {
+    // RECLASS_007: Substantial_Modification → PROVIDER (Article 25(1)(b)/(c), Article 3(3))
+    // HIGH-RISK ONLY — applies to ALL actors (Deployer, Importer, Distributor, or standalone third party).
+    //
+    // Art. 25(1)(b): substantial modification of an ALREADY-high-risk system → system remains high-risk.
+    // Art. 25(1)(c): change of intended purpose making a NON-high-risk system BECOME high-risk.
+    //
+    // Both paths require isHighRisk (the system is high-risk after the modification/repurposing).
+    // Late binding: fires only when isHighRisk is confirmed from Parts 3–6.
+    //
+    // Absorb flags: operational roles that were THEMSELVES the source of reclassification are absorbed
+    // into Provider so they are not also retained as independent roles (RECLASS_008–010).
+    if (roles_raw_tags.includes('Substantial_Modification') && isHighRisk) {
       legal_roles.add("Provider");
       provider_assigned = true;
+      if (roles_raw_tags.includes('Deployer')) deployer_absorbed = true;
+      if (roles_raw_tags.includes('Importer') && !importer_absorbed) importer_absorbed = true;
+      if (roles_raw_tags.includes('Distributor') && !distributor_absorbed) distributor_absorbed = true;
     }
 
-    // RECLASS_008: Deployer without modifications → DEPLOYER
-    if (roles_raw_tags.includes('Deployer') && !provider_assigned) {
+    // RECLASS_008: Deployer → DEPLOYER when NOT absorbed into Provider.
+    // Important: if Provider was assigned from a different activity (e.g. develop_model),
+    // the Deployer role must still be retained — Article 26 obligations are independent of
+    // Article 53 GPAI model obligations and Article 16 system provider obligations.
+    if (roles_raw_tags.includes('Deployer') && !deployer_absorbed) {
       legal_roles.add("Deployer");
     }
 
-    // RECLASS_009: Importer without provider status → IMPORTER
-    if (roles_raw_tags.includes('Importer') && !provider_assigned) {
+    // RECLASS_009: Importer → IMPORTER when NOT absorbed into Provider.
+    if (roles_raw_tags.includes('Importer') && !importer_absorbed) {
       legal_roles.add("Importer");
     }
 
-    // RECLASS_010: Distributor without provider status → DISTRIBUTOR
-    if (roles_raw_tags.includes('Distributor') && !provider_assigned) {
+    // RECLASS_010: Distributor → DISTRIBUTOR when NOT absorbed into Provider.
+    if (roles_raw_tags.includes('Distributor') && !distributor_absorbed) {
       legal_roles.add("Distributor");
     }
 
-    // RECLASS_011: Product_Manufacturer without safety component → PRODUCT_MANUFACTURER
-    if (roles_raw_tags.includes('Product_Manufacturer') && !provider_assigned) {
+    // RECLASS_011: Product_Manufacturer → PRODUCT_MANUFACTURER when NOT absorbed into Provider.
+    if (roles_raw_tags.includes('Product_Manufacturer') && !product_manufacturer_absorbed) {
       if (answers.safety_function !== "yes") {
         legal_roles.add("Product_Manufacturer");
       }
@@ -278,11 +335,22 @@ export function WizardProvider({ children }) {
 
     // DUAL-ROLE LOGIC: Assign both high-risk and GPAI obligations if both apply, regardless of classification precedence
     const isModelProvider = answers.modelRelationship === "provider";
+
+    // Phase 4 guard: modification-triggered providers only receive system-level obligations if
+    // (a) they are original developers (develop_system / develop_model), or
+    // (b) their modification was confirmed substantial (answers.isSubstantialModification === 'yes'),
+    // (c) change_purpose is always substantial per Article 3(23).
+    const isOriginalDeveloper = roles_raw.some(a => ['develop_system', 'develop_model'].includes(a));
+    const isModificationTriggeredOnly = !isOriginalDeveloper && roles_raw.some(a => ['modify', 'change_purpose'].includes(a));
+    const modificationConfirmed = !isModificationTriggeredOnly
+      || roles_raw.includes('change_purpose')
+      || answers.isSubstantialModification === 'yes';
+
     // isSystemProvider: true for (a) directly classified high-risk, or (b) GPAI/GPAI_SYSTEMIC provider
     // who also touches high-risk use cases (dual-role). Explicitly excludes ANNEX_III_NON_SIGNIFICANT
     // and IN_SCOPE_NON_HIGH_RISK to avoid incorrectly pushing A/C/O for non-high-risk providers
     // who still have annexIII answers filled in from the wizard journey.
-    const isSystemProvider = roles.includes("Provider") && (
+    const isSystemProvider = roles.includes("Provider") && modificationConfirmed && (
       // Direct high-risk classification
       [CLASSIFICATIONS.HIGH_RISK_IA, CLASSIFICATIONS.HIGH_RISK_IB, CLASSIFICATIONS.HIGH_RISK_III].includes(classification)
       || (
@@ -375,7 +443,7 @@ export function WizardProvider({ children }) {
         console.warn("Error re-classifying roles:", e);
       }
     }
-  }, [answers.safety_function, answers.modelRelationship, roles_raw]);
+  }, [answers.safety_function, answers.modelRelationship, roles_raw, classification]);
 
   // Automatically persist computed obligations whenever inputs change
   useEffect(() => {
@@ -591,6 +659,11 @@ export function WizardProvider({ children }) {
 
     // Also clear state variables associated with later steps
     const stateVariablesToClear = {
+      // classification is first set at Screen 3 — clear it (and the derived roles state) whenever
+      // navigating back to Screen 2 or earlier so reclassifyRoles() in Screen 2 never sees a stale
+      // isHighRisk and does not fire high-risk-only reclassification rules (RECLASS_002/005/006/007)
+      // before Parts 3–6 have been completed.
+      "/screen3": () => { setClassification(null); setRoles([]); },
       "/screen8": () => setCommissionDesignation(false),
       "/screen10": () => {
         setSystemFunctionality([]);

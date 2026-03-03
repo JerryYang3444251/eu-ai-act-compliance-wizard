@@ -98,22 +98,29 @@ export default function Screen1_Exclusions() {
         </div>
 
         <div className="options-group checkbox-group">
-          {EXCLUSIONS.map((option) => (
-            <label key={option.id} className="checkbox-option">
-              <input
-                type="checkbox"
-                checked={selectedItems.includes(option.id)}
-                onChange={() => handleToggle(option.id)}
-              />
-              <span>
-                {option.label}{option.source && (
-                  <span className="source-tag" title={option.source}>
-                    Source
-                  </span>
-                )}
-              </span>
-            </label>
-          ))}
+          {EXCLUSIONS.flatMap((option) => {
+            const el = (
+              <label key={option.id} className="checkbox-option">
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(option.id)}
+                  onChange={() => handleToggle(option.id)}
+                />
+                <span>
+                  {option.label}{option.source && (
+                    <span className="source-tag" title={option.source}>
+                      Source
+                    </span>
+                  )}
+                </span>
+              </label>
+            );
+            if (option.id === "none") return [
+              <hr key="none-sep" style={{ margin: "8px 0", borderColor: "var(--border-color)" }} />,
+              el
+            ];
+            return el;
+          })}
         </div>
 
         {/* Display detailed definitions for selected exclusions */}

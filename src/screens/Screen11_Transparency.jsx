@@ -122,9 +122,9 @@ export default function Screen11_Transparency() {
 
         {/* SYSTEM FUNCTIONALITY SECTION - Only show if generates content */}
         {generatesContent && (
-          <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border-color)" }}>
+          <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "2px solid var(--border-color)" }}>
             <h3>What does your system generate?</h3>
-            <p style={{ marginBottom: "16px", fontSize: "0.9rem", color: "#666" }}>
+            <p style={{ marginBottom: "16px", fontSize: "0.9rem", color: "var(--text-light)" }}>
               Select all types of content your AI system produces. This helps determine specific transparency requirements.
             </p>
             
@@ -169,6 +169,7 @@ export default function Screen11_Transparency() {
                 />
                 <span>Code or software</span>
               </label>
+              <hr style={{ margin: "8px 0", borderColor: "var(--border-color)" }} />
               <label className="checkbox-option">
                 <input
                   type="checkbox"
@@ -183,9 +184,9 @@ export default function Screen11_Transparency() {
 
         {/* CONTENT CHARACTERISTICS SECTION - Only show if generates content AND answered Q1 */}
         {generatesContent && shouldShowDeepfakeQuestion && (
-          <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border-color)" }}>
+          <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "2px solid var(--border-color)" }}>
             <h3>Does generated content resemble real persons, objects, places or events?</h3>
-          <p style={{ marginBottom: "16px", fontSize: "0.9rem", color: "#666" }}>
+          <p style={{ marginBottom: "16px", fontSize: "0.9rem", color: "var(--text-light)" }}>
             This identifies deepfake-like capabilities requiring enhanced transparency obligations. <span className="source-tag" title="Article 50">Source</span>
           </p>
           

@@ -56,7 +56,7 @@ export default function Screen8b_Systemic() {
 
         <div className="form-section" style={{ marginTop: "24px" }}>
           <h3>Systemic Risk Assessment</h3>
-          <p style={{ fontSize: "0.9em", color: "#666", marginBottom: "16px" }}>
+          <p style={{ fontSize: "0.9rem", color: "var(--text-light)", marginBottom: "16px" }}>
             Based on FLOPS and other risk indicators, does your model have systemic risk?
           </p>
           <div className="options-group radio-group">

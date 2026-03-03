@@ -1,6 +1,45 @@
-/* EU AI Act Wizard - Comprehensive Styling */
+/* ── Mutual-exclusivity confirmation modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
 
-* {
+.modal-box {
+  background: var(--bg-white);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 540px;
+  margin: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 1.05em;
+}
+
+.modal-body {
+  padding: 20px 24px;
+  font-size: 0.95em;
+  line-height: 1.6;
+  color: var(--text-color);
+}
+
+.modal-footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+} {
   margin: 0;
   padding: 0;
   box-sizing: border-box;

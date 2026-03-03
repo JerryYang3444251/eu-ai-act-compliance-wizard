@@ -84,13 +84,49 @@
   # MODULE 2 — RAW ROLE DETERMINATION (USER INPUT ONLY)
   ###########################################################
 
-  ROLE_001:
-    rule_id: ROLE_001
+  ROLE_001a:
+    rule_id: ROLE_001a
     namespace: roles.raw
     inputs: [org_actions]
-    condition: "org_actions intersects ['develop_system','develop_model','modify','change_purpose','fine_tune']"
-    action: "add_role_raw('Development_Modification')"
-    notes: "Any form of development or substantial modification"
+    condition: "org_actions intersects ['develop_system','develop_model']"
+    action: "add_role_raw('Original_Development')"
+    notes: "Original creation of an AI system or model — unconditionally a Provider (Article 3(3), Article 16)"
+
+  ROLE_001b:
+    rule_id: ROLE_001b
+    namespace: roles.raw
+    inputs: [org_actions, isSubstantialModification]
+    condition: >
+      (org_actions contains 'change_purpose')
+      OR
+      (org_actions contains 'modify'
+        AND (no_base_operational_role
+             OR isSubstantialModification == 'yes'))
+    action: "add_role_raw('Substantial_Modification')"
+    notes: >
+      Substantial modification triggers Provider reclassification (Article 3(23), Article 25(1)(b), Article 28(1)).
+      'change_purpose' is always substantial by definition (Article 3(23) prong 2 — change of intended purpose);
+      no gate is presented to the user for change_purpose.
+      'modify' alone (without a base operational role such as deploy/import/distribute/product_manufacturer) is
+      treated as substantial by default; when a base operational role is also present the user must confirm via
+      the isSubstantialModification gate presented in Step 3 of Screen 2.
+
+      Step 2 'modify' UI label: describes the action broadly as making changes to an existing AI system
+      developed or placed on the market by another party (does NOT pre-load substantiality criteria).
+      The substantiality criteria are captured exclusively in Step 3.
+
+      Step 3 gate question: "Does your modification qualify as a substantial modification under Article 3(23)?"
+        isSubstantialModification = 'yes' when:
+          "This change was not foreseen in the original provider's conformity assessment and affects the
+           system's outputs, capabilities, risk thresholds, or compliance with this Regulation."
+        isSubstantialModification = 'no' when:
+          "This change was pre-planned in the original conformity assessment or does not affect the
+           system's compliance characteristics." — ROLE_001b does NOT fire; no Substantial_Modification tag.
+
+      Article 3(23) definition: a modification is substantial if (a) not pre-planned in the original
+      conformity assessment, AND (b) it affects compliance characteristics or changes the intended purpose.
+      A pre-planned adjustment (e.g. scheduled model update within original conformity scope) is not
+      substantial per Article 43(4) and does NOT fire this tag.
 
   ROLE_002:
     rule_id: ROLE_002
@@ -150,15 +186,113 @@
     notes: "Acting as authorised representative for an EU-external provider (Article 22)"
 
   ###########################################################
+  # MODULE 2 — MUTUAL EXCLUSIVITY CONSTRAINTS
+  # Enforced via modal confirmation in Screen 2 UI before applying selection.
+  # Rule types: 'swap' = Step 1 selected while conflicting Step 2 active (removes Step 2);
+  #             'block' = Step 2 selected while conflicting Step 1 active (prevents Step 2).
+  # Step 1 selections always take priority over Step 2 selections.
+  ###########################################################
+
+  ROLE_MX_002a:
+    rule_id: ROLE_MX_002a
+    namespace: roles.ui_constraints
+    trigger: "selecting ['develop_system','develop_model','place_on_market'] while 'brand' is selected"
+    type: swap
+    removes: brand
+    reason: >
+      Article 25(1)(a) applies to importers/distributors rebranding a third party's AI system.
+      As original developer or market placer, Provider status arises from Article 3(3) directly —
+      Article 25(1)(a) does not apply.
+    article: "Article 3(3), Article 25(1)(a)"
+
+  ROLE_MX_002b:
+    rule_id: ROLE_MX_002b
+    namespace: roles.ui_constraints
+    trigger: "selecting 'brand' while ['develop_system','develop_model','place_on_market'] is selected"
+    type: block
+    reason: "same as ROLE_MX_002a"
+    article: "Article 3(3), Article 25(1)(a)"
+
+  ROLE_MX_003a:
+    rule_id: ROLE_MX_003a
+    namespace: roles.ui_constraints
+    trigger: "selecting ['develop_system','develop_model'] while 'modify' is selected"
+    type: swap
+    removes: modify
+    reason: >
+      Article 25(1)(b) applies to 'any other natural or legal person, other than the provider'.
+      As original developer, changes are governed by Article 43(4), not Article 25(1)(b).
+    article: "Article 25(1)(b), Article 43(4)"
+
+  ROLE_MX_003b:
+    rule_id: ROLE_MX_003b
+    namespace: roles.ui_constraints
+    trigger: "selecting 'modify' while ['develop_system','develop_model'] is selected"
+    type: block
+    reason: "same as ROLE_MX_003a"
+    article: "Article 25(1)(b), Article 43(4)"
+
+  ROLE_MX_004a:
+    rule_id: ROLE_MX_004a
+    namespace: roles.ui_constraints
+    trigger: "selecting ['develop_system','develop_model'] while 'change_purpose' is selected"
+    type: swap
+    removes: change_purpose
+    reason: >
+      Article 25(1)(c) applies to 'any other distributor, importer, deployer or other third party'.
+      As original developer, intended purpose is defined by own conformity assessment under
+      Articles 9 and 43.
+    article: "Article 25(1)(c), Article 9, Article 43"
+
+  ROLE_MX_004b:
+    rule_id: ROLE_MX_004b
+    namespace: roles.ui_constraints
+    trigger: "selecting 'change_purpose' while ['develop_system','develop_model'] is selected"
+    type: block
+    reason: "same as ROLE_MX_004a"
+    article: "Article 25(1)(c), Article 9, Article 43"
+
+  ROLE_MX_005a:
+    rule_id: ROLE_MX_005a
+    namespace: roles.ui_constraints
+    trigger: "selecting 'act_as_ar' while any of ['modify','change_purpose','brand'] is selected"
+    type: swap
+    removes: "all selected Step 2 actions"
+    reason: >
+      Article 22 — Authorised Representative is mandated solely to act on behalf of the provider;
+      performs no independent technical operations; Step 2 actions are legally incompatible.
+    article: "Article 22"
+
+  ROLE_MX_005b:
+    rule_id: ROLE_MX_005b
+    namespace: roles.ui_constraints
+    trigger: "selecting any of ['modify','change_purpose','brand'] while 'act_as_ar' is selected"
+    type: block
+    reason: "same as ROLE_MX_005a — deselect Authorised Representative in Step 1 first"
+    article: "Article 22"
+
+  ###########################################################
   # MODULE 2B — LEGAL ROLE RECLASSIFICATION (EU AI ACT)
   # NOTE: 'roles_raw' in conditions below refers to roles_raw_TAGS (e.g.
-  # 'Development_Modification'), not the raw org_actions array. The code
-  # first calls identifyRawRoles() to produce role tags, then calls
+  # 'Original_Development', 'Substantial_Modification'), not the raw org_actions array.
+  # The code first calls identifyRawRoles() to produce role tags, then calls
   # reclassifyRoles() which uses those tags.
   # Key input variable mappings:
   #   ai_is_safety_component   → answers.safety_function == "yes"
   #   placing_under_own_name   → presence of 'Branding' raw-role tag
-  #   modifications array      → presence of 'Development_Modification' tag
+  #   Original_Development     → org_actions includes 'develop_system' or 'develop_model'
+  #   Substantial_Modification → 'change_purpose' selected, OR 'modify' confirmed substantial
+  #                              via isSubstantialModification gate (Screen 2 Step 3)
+  #
+  # BACK-NAVIGATION SAFETY — isHighRisk enforcement:
+  #   RECLASS_002, 005, 006, 007 are HIGH-RISK ONLY (late-binding). Their condition
+  #   depends on isHighRisk being true. isHighRisk derives from the classification
+  #   state variable which is first set in Parts 3–6 (Screens 3–9).
+  #   When the user navigates back to Part 2 (Screen 2) or earlier,
+  #   clearAnswersAfter() now explicitly resets classification = null and roles = []
+  #   (in addition to clearing answers keys). This guarantees isHighRisk == false
+  #   during the Screen 2 live preview, so late-binding rules cannot fire
+  #   prematurely from a previous wizard run's stale classification.
   ###########################################################
 
   ROLE_RECLASS_FLAG_INIT:
@@ -167,26 +301,41 @@
     action: "provider_assigned = false"
     notes: "Tracking variable used in subsequent role rules"
 
-  # BLOCK 1 — DEVELOPMENT/MODIFICATION → PROVIDER
-  ROLE_RECLASS_001:
-    rule_id: ROLE_RECLASS_001
+  # BLOCK 1a — ORIGINAL DEVELOPMENT → PROVIDER (unconditional)
+  ROLE_RECLASS_001a:
+    rule_id: ROLE_RECLASS_001a
     namespace: roles.legal
     inputs: [roles_raw]
-    condition: "roles_raw contains 'Development_Modification'"
+    condition: "roles_raw contains 'Original_Development'"
     action:
       - "add_role('Provider')"
       - "provider_assigned = true"
-    notes: "Articles 3 & 16 — developers and modifiers are providers"
+    notes: "Article 3(3), Article 16 — original developers of AI systems or models are unconditionally providers"
 
-  # BLOCK 2 — BRANDING → PROVIDER
+  # BLOCK 1b — SUPERSEDED (merged into RECLASS_007)
+  # ROLE_RECLASS_001b previously fired unconditionally for standalone modifiers (no base operational role).
+  # This was legally incorrect: Art. 25(1)(b) and Art. 25(1)(c) both require the AI system to be or
+  # become high-risk. Art. 25 covers 'any distributor, importer, deployer or OTHER THIRD-PARTY' —
+  # standalone modifiers are 'other third parties' and are equally subject to the high-risk condition.
+  # RECLASS_007 now covers ALL Substantial_Modification cases regardless of base operational role.
+  # ROLE_RECLASS_001b: REMOVED.
+
+  # BLOCK 2 — BRANDING → PROVIDER (HIGH-RISK ONLY)
   ROLE_RECLASS_002:
     rule_id: ROLE_RECLASS_002
     namespace: roles.legal
-    condition: "roles_raw contains 'Branding'"
+    inputs: [roles_raw, isHighRisk]
+    condition: "roles_raw contains 'Branding' AND isHighRisk == true"
     action:
       - "add_role('Provider')"
       - "provider_assigned = true"
-    notes: "Placing under own name counts as provider"
+    notes: >
+      Article 25(1)(a) — placing a high-risk AI system under own name/trademark reclassifies the actor as Provider.
+      HIGH-RISK ONLY: Article 25(1) explicitly limits this reclassification to high-risk AI systems.
+      Late binding: this rule is re-evaluated once risk classification is confirmed in Parts 3–6.
+      Enforcement: clearAnswersAfter() clears classification and roles when navigating back to Part 2 or
+      earlier, ensuring isHighRisk == false during Screen 2 live preview (prevents premature firing).
+      If risk is not yet known at Part 2, a conditional pending-reclassification banner is shown.
 
   # BLOCK 3 — MARKET PLACER → PROVIDER
   ROLE_RECLASS_003:
@@ -209,71 +358,102 @@
       - "provider_assigned = true"
     notes: "Article 24 — manufacturers become providers for AI safety components"
 
-  # BLOCK 5 — IMPORTER WHO REBRANDS → PROVIDER
+  # BLOCK 5 — IMPORTER WHO REBRANDS → PROVIDER (HIGH-RISK ONLY)
   ROLE_RECLASS_005:
     rule_id: ROLE_RECLASS_005
     namespace: roles.legal
-    inputs: [placing_under_own_name]
-    condition: "roles_raw contains 'Importer' AND placing_under_own_name == true"
+    inputs: [roles_raw, isHighRisk]
+    condition: "roles_raw contains 'Importer' AND roles_raw contains 'Branding' AND isHighRisk == true"
     action:
       - "add_role('Provider')"
       - "provider_assigned = true"
-    notes: "Article 25"
+      - "importer_absorbed = true"
+    notes: >
+      Article 25(1)(a) — an Importer who places a high-risk AI system under own name/trademark becomes Provider.
+      HIGH-RISK ONLY: Article 25(1) explicitly limits reclassification to high-risk AI systems.
+      importer_absorbed = true ensures the Importer role is NOT also retained (RECLASS_009 is gated on !importer_absorbed).
+      Late binding: re-evaluated once risk classification confirmed.
 
-  # BLOCK 6 — DISTRIBUTOR WHO REBRANDS → PROVIDER
+  # BLOCK 6 — DISTRIBUTOR WHO REBRANDS → PROVIDER (HIGH-RISK ONLY)
   ROLE_RECLASS_006:
     rule_id: ROLE_RECLASS_006
     namespace: roles.legal
-    inputs: [placing_under_own_name]
-    condition: "roles_raw contains 'Distributor' AND placing_under_own_name == true"
+    inputs: [roles_raw, isHighRisk]
+    condition: "roles_raw contains 'Distributor' AND roles_raw contains 'Branding' AND isHighRisk == true"
     action:
       - "add_role('Provider')"
       - "provider_assigned = true"
-    notes: "Article 26"
+      - "distributor_absorbed = true"
+    notes: >
+      Article 25(1)(a) — a Distributor who places a high-risk AI system under own name/trademark becomes Provider.
+      HIGH-RISK ONLY: Article 25(1) explicitly limits reclassification to high-risk AI systems.
+      distributor_absorbed = true ensures the Distributor role is NOT also retained (RECLASS_010 is gated on !distributor_absorbed).
+      Late binding: re-evaluated once risk classification confirmed.
 
-  # BLOCK 7 — DEPLOYER WHO MODIFIES → PROVIDER
+  # BLOCK 7 — ALL SUBSTANTIAL MODIFICATION ACTORS → PROVIDER (HIGH-RISK ONLY)
   ROLE_RECLASS_007:
     rule_id: ROLE_RECLASS_007
     namespace: roles.legal
-    inputs: [roles_raw, modifications]
-    condition: "roles_raw contains 'Deployer' AND modifications intersects ['substantial_modification','new_intended_purpose','fine_tuning','retraining']"
+    inputs: [roles_raw, isHighRisk]
+    condition: "roles_raw contains 'Substantial_Modification' AND isHighRisk == true"
     action:
       - "add_role('Provider')"
       - "provider_assigned = true"
-    notes: "Article 16(2)"
+      - If Deployer tag present: "deployer_absorbed = true"
+      - If Importer tag present (and not already absorbed): "importer_absorbed = true"
+      - If Distributor tag present (and not already absorbed): "distributor_absorbed = true"
+    notes: >
+      Article 25(1)(b): substantial modification to an ALREADY-high-risk AI system — system remains high-risk.
+      Article 25(1)(c): change of intended purpose of a NON-high-risk AI system in a way that makes it high-risk.
+      Covers ALL actors: Deployer, Importer, Distributor, and standalone 'other third parties' (Art. 25(1) covers
+      'any distributor, importer, deployer or other third-party'). No unconditional path exists for modification.
+      HIGH-RISK ONLY: both (b) and (c) require the system to be or become high-risk after the modification/repurposing.
+      Late binding: re-evaluated when isHighRisk is confirmed in Parts 3–6.
+      Enforcement: clearAnswersAfter() clears classification and roles when navigating back to Part 2 or
+      earlier, ensuring isHighRisk == false during Screen 2 live preview (prevents premature firing).
+      Absorbed flags prevent the operational role from also being retained via RECLASS_008-010 when it was
+      the role that itself triggered reclassification.
 
   # BLOCK 8 — NON‑MODIFYING DEPLOYER RETAINS DEPLOYER ROLE
   ROLE_RECLASS_008:
     rule_id: ROLE_RECLASS_008
     namespace: roles.legal
-    inputs: [roles_raw, provider_assigned]
-    condition: "roles_raw contains 'Deployer' AND provider_assigned == false"
+    inputs: [roles_raw, deployer_absorbed]
+    condition: "roles_raw contains 'Deployer' AND deployer_absorbed == false"
     action: "add_role('Deployer')"
-    notes: "Article 29"
+    notes: >
+      Article 29 — Deployer obligations are retained alongside Provider obligations when Provider
+      status was assigned from an INDEPENDENT activity (e.g. model development, branding).
+      The Deployer role is only absorbed into Provider when the deployment activity itself was
+      the reclassification source (RECLASS_007: Deployer + Substantial_Modification → Provider).
+      An AI model developer who also deploys AI systems bears both sets of obligations.
 
-  # BLOCK 9 — IMPORTER (UNBRANDED)
+  # BLOCK 9 — IMPORTER (UNBRANDED, NOT ABSORBED)
   ROLE_RECLASS_009:
     rule_id: ROLE_RECLASS_009
     namespace: roles.legal
-    inputs: [roles_raw, provider_assigned]
-    condition: "roles_raw contains 'Importer' AND provider_assigned == false"
+    inputs: [roles_raw, importer_absorbed]
+    condition: "roles_raw contains 'Importer' AND importer_absorbed == false"
     action: "add_role('Importer')"
+    notes: "Article 23 — Importer role retained unless absorbed via RECLASS_005 (Importer + Branding)"
 
-  # BLOCK 10 — DISTRIBUTOR (UNBRANDED)
+  # BLOCK 10 — DISTRIBUTOR (UNBRANDED, NOT ABSORBED)
   ROLE_RECLASS_010:
     rule_id: ROLE_RECLASS_010
     namespace: roles.legal
-    inputs: [roles_raw, provider_assigned]
-    condition: "roles_raw contains 'Distributor' AND provider_assigned == false"
+    inputs: [roles_raw, distributor_absorbed]
+    condition: "roles_raw contains 'Distributor' AND distributor_absorbed == false"
     action: "add_role('Distributor')"
+    notes: "Article 24 — Distributor role retained unless absorbed via RECLASS_006 (Distributor + Branding)"
 
-  # BLOCK 11 — PRODUCT MANUFACTURER (NOT SAFETY COMPONENT)
+  # BLOCK 11 — PRODUCT MANUFACTURER (NOT ABSORBED)
   ROLE_RECLASS_011:
     rule_id: ROLE_RECLASS_011
     namespace: roles.legal
-    inputs: [roles_raw, ai_is_safety_component]
-    condition: "roles_raw contains 'Product_Manufacturer' AND ai_is_safety_component == false"
+    inputs: [roles_raw, ai_is_safety_component, product_manufacturer_absorbed]
+    condition: "roles_raw contains 'Product_Manufacturer' AND ai_is_safety_component == false AND product_manufacturer_absorbed == false"
     action: "add_role('Product_Manufacturer')"
+    notes: "Article 24 — Product Manufacturer role retained unless absorbed via RECLASS_004 (safety component → Provider)"
 
   # BLOCK 12 — FINAL CONSOLIDATION
   ROLE_RECLASS_012:
@@ -303,6 +483,22 @@
     condition: "roles_raw_tags contains 'Authorised_Representative'"
     action: "add_role('Authorised_Representative')"
     notes: "Article 22 — authorised representatives are not reclassified; role passes through as-is"
+
+  # BLOCK 16 — GPAI MODEL RELATIONSHIP PROVIDER PATH
+  ROLE_RECLASS_016:
+    rule_id: ROLE_RECLASS_016
+    namespace: roles.legal
+    inputs: [answers.modelRelationship, provider_assigned]
+    condition: "answers.modelRelationship contains 'provider' AND provider_assigned == false"
+    action:
+      - "add_role('Provider')"
+      - "provider_assigned = true"
+    notes: >
+      When the user identifies as a GPAI model provider in Part 7 (Screen 7) but was not already
+      assigned Provider via earlier rules (e.g. they are a pure model provider without develop_model
+      in Part 2), this rule ensures Provider status is assigned for GPAI Chapter V obligations.
+      answers.modelRelationship is stored as an array; use 'contains' operator.
+      Also fires for GPAI_SYSTEMIC classification when modelRelationship contains 'provider'.
 
   ###########################################################
   # MODULE 3 — ANNEX I A (Product Safety)
@@ -437,33 +633,45 @@
   ###########################################################
   # MODULE 6 — GPAI + SYSTEMIC RISK
   ###########################################################
-  # PRELIMINARY: Model relationship determines whether GPAI assessment applies.
-  # Screen7 first asks: "What is your relationship to this AI model?"
-  #   answers.modelRelationship == 'provider'    → assess GPAI
-  #   answers.modelRelationship == 'integrator'  → skip to SCREEN_9
-  #   answers.modelRelationship == 'deployer'    → skip to SCREEN_9
+  # PRELIMINARY: Model relationship (array) determines whether GPAI assessment applies.
+  #
+  # Screen7 Step 1 asks: "What is your relationship to AI models?" (multi-select array)
+  #   answers.modelRelationship contains 'provider'   → GPAI model provider
+  #   answers.modelRelationship contains 'integrator' → system developer/integrator
+  #   answers.modelRelationship contains 'deployer'   → system operator
+  #
+  # GPAI yes/no question (formerly Step 2) is REMOVED.
+  # answers.isGPAI is now auto-set to 'yes' whenever 'provider' is selected.
+  # Rationale: Part 2 develop_model is explicitly labelled "Provider (GPAI model)" —
+  # selecting it already constitutes self-identification as a GPAI provider.
+  #
+  # Screen7 Step 2 (formerly Step 3) asks directly: "Is your model open-source?"
+  #   answers.isOpenSourceGPAI == 'yes' | 'no'
+  #
+  # Providers always proceed to SCREEN_8b (Systemic Risk) after Screen7.
+  # Integrators/deployers (without provider) skip directly to SCREEN_9.
 
   GPAI_000:
     rule_id: GPAI_000
     namespace: gpai
     inputs: [answers.modelRelationship]
-    condition: "answers.modelRelationship == 'integrator' OR answers.modelRelationship == 'deployer'"
+    condition: "NOT (answers.modelRelationship contains 'provider')"
     next: SCREEN_9  # = /screen9
-    notes: "Integrators and deployers of GPAI skip the GPAI model assessment"
+    notes: |
+      Users who are integrators and/or deployers only (no provider role) skip GPAI model
+      assessment entirely. answers.modelRelationship is an array; use 'contains' operator.
 
-  GPAI_001:
-    rule_id: GPAI_001
-    namespace: gpai
-    inputs: [answers.isGPAI]
-    condition: "answers.isGPAI == false"
-    next: SCREEN_9  # = /screen9
+  # GPAI_001 REMOVED — formerly checked answers.isGPAI == false (task-specific model path).
+  # answers.isGPAI is now derived automatically: always 'yes' when provider is selected,
+  # null otherwise. The task-specific provider path no longer exists in the UI.
 
   GPAI_002:
     rule_id: GPAI_002
     namespace: gpai
-    inputs: [answers.isGPAI]
-    condition: "answers.isGPAI == true"
+    inputs: [answers.modelRelationship]
+    condition: "answers.modelRelationship contains 'provider'"
     next: SCREEN_8b  # = /screen8 (Systemic Risk)
+    notes: "All providers proceed to systemic risk assessment. isGPAI is always 'yes' for providers."
 
   GPAI_003:
     rule_id: GPAI_003
@@ -924,6 +1132,19 @@
     condition: "roles contains 'Authorised_Representative'"
     action: "add_obligations('Authorised_Representative')"
     notes: "Authorised representative obligations (R-series) per Article 22 — applies only to entities acting as AR for an EU-external provider"
+
+  OBL_022:
+    rule_id: OBL_022
+    namespace: obligations
+    inputs: [roles, isHighRisk]
+    condition: "isHighRisk == false AND (roles contains 'Provider' OR roles contains 'Deployer')"
+    action: "add_obligations('Q')"
+    notes: >
+      AI Literacy obligations (Q-series) per Article 4 — universal obligation for all Providers
+      and Deployers of non-high-risk systems. Code reference: WizardContext.jsx computeObligations().
+      For high-risk systems, AI literacy is already embedded within A18 (Provider) and F14 (Deployer)
+      obligations; Q-series is not additionally assigned in those cases to avoid duplication.
+      Q1 applies to Providers; Q2 applies to Deployers (filtered in Screen14_Checklist.jsx).
 
   ###########################################################
   # MODULE 12 — OUTPUT CHECKLIST

@@ -152,6 +152,7 @@ export default function Screen10_Prohibited() {
         <div className="options-group checkbox-group">
           {PROHIBITED_PRACTICES.map((option) => (
             <div key={option.id}>
+              {option.id === "none" && <hr style={{ margin: "8px 0", borderColor: "var(--border-color)" }} />}
               <label className="checkbox-option">
                 <input
                   type="checkbox"
@@ -174,8 +175,9 @@ export default function Screen10_Prohibited() {
                   marginTop: "12px", 
                   marginBottom: "12px",
                   padding: "14px",
-                  background: "#fff8e1",
-                  border: "1px solid #ffd54f",
+                  border: "1px solid var(--border-color)",
+                  borderLeft: "3px solid var(--warning-color)",
+                  background: "#fef3c7",
                   borderRadius: "6px"
                 }}>
                   {practiceDefinitions[option.id] && (
@@ -187,7 +189,7 @@ export default function Screen10_Prohibited() {
                     margin: "0 0 10px 0", 
                     fontSize: "0.9rem", 
                     fontWeight: 600,
-                    color: "#f57c00"
+                    color: "var(--text-color)"
                   }}>
                     ⚠️ Exception Evaluation Required:
                   </p>
@@ -228,8 +230,9 @@ export default function Screen10_Prohibited() {
                   marginTop: "12px", 
                   marginBottom: "12px",
                   padding: "14px",
-                  background: "#f5f5f5",
-                  border: "1px solid #e0e0e0",
+                  border: "1px solid var(--border-color)",
+                  borderLeft: "3px solid var(--primary-color)",
+                  background: "var(--bg-light)",
                   borderRadius: "6px"
                 }}>
                   <p style={{ margin: "0 0 10px 0", fontSize: "0.875rem", lineHeight: "1.5" }}>

@@ -5,7 +5,7 @@ import { CLASSIFICATIONS } from "../data/checklist";
 
 export default function Screen6_SignificantRisk() {
   const navigate = useNavigate();
-  const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory } = useWizard();
+  const { answers, saveAnswer, setClassificationWithPrecedence, navigateBack, shouldReevaluateRules, setShouldReevaluateRules, pushHistory, roles_raw } = useWizard();
 
   useEffect(() => {
     pushHistory("/screen6");
@@ -46,15 +46,20 @@ export default function Screen6_SignificantRisk() {
     },
   ];
 
-  const hasDerogation = derogationChecks.length > 0;
+  const isNone = derogationChecks.includes("none");
+  const hasDerogation = derogationChecks.some(v => v !== "none");
   const isProfilingYes = profiling === "yes";
   const isProfilingNo = profiling === "no";
 
   // Classification result:
   // - Profiling = yes → always HIGH-RISK (Art. 6(3) absolute override)
   // - Any derogation + no profiling → ANNEX_III_NON_SIGNIFICANT
-  // - No derogation → HIGH-RISK (default under Art. 6(2))
-  const canProceed = hasDerogation ? (profiling !== null) : true;
+  // - No derogation / none selected → HIGH-RISK (default under Art. 6(2))
+  const canProceed = derogationChecks.length === 0
+    ? false
+    : isNone
+    ? true
+    : profiling !== null;
 
   const getClassification = () => {
     if (isProfilingYes) return CLASSIFICATIONS.HIGH_RISK_III;
@@ -63,12 +68,20 @@ export default function Screen6_SignificantRisk() {
   };
 
   const handleToggleDerogation = (id) => {
-    const updated = derogationChecks.includes(id)
-      ? derogationChecks.filter((v) => v !== id)
-      : [...derogationChecks, id];
+    let updated;
+    if (id === "none") {
+      // Selecting "none" clears all real derogations
+      updated = derogationChecks.includes("none") ? [] : ["none"];
+    } else {
+      // Selecting a real option clears "none"
+      const withoutNone = derogationChecks.filter(v => v !== "none");
+      updated = withoutNone.includes(id)
+        ? withoutNone.filter(v => v !== id)
+        : [...withoutNone, id];
+    }
     saveAnswer("impact_checks", updated);
-    // Reset profiling if all derogations removed
-    if (updated.length === 0) saveAnswer("profiling", null);
+    // Reset profiling if no real derogations remain
+    if (!updated.some(v => v !== "none")) saveAnswer("profiling", null);
   };
 
   const handleNext = () => {
@@ -77,8 +90,24 @@ export default function Screen6_SignificantRisk() {
     navigate("/screen7");
   };
 
+  // Pending reclassification detection — Art. 25(1)/28(1) fires only for high-risk systems
+  const _hasBrand   = roles_raw && roles_raw.includes("brand");
+  const _hasDeploy  = roles_raw && roles_raw.includes("deploy");
+  const _hasImport  = roles_raw && roles_raw.includes("import");
+  const _hasDistrib = roles_raw && roles_raw.includes("distribute");
+  const _hasDevAct  = roles_raw && roles_raw.some(a => ["develop_system", "develop_model"].includes(a));
+  const _hasModAct  = roles_raw && roles_raw.some(a => ["modify", "change_purpose"].includes(a));
+  const _isChgPurp  = roles_raw && roles_raw.includes("change_purpose") && !roles_raw.includes("modify");
+  const _pendBrand  = _hasBrand && !_hasDevAct;
+  const _pendMod    = _hasModAct && !_hasDevAct && !(roles_raw.includes("modify") && !roles_raw.includes("change_purpose") && answers.isSubstantialModification === "no");
+  const _willReclass = _pendBrand || _pendMod;
+  const _reclassFrom = _hasImport ? "Importer" : _hasDistrib ? "Distributor" : _hasDeploy ? "Deployer" : null;
+  const _reclassArt  = _pendBrand ? "Article 25(1)(a)" : _isChgPurp ? "Article 25(1)(c)" : "Article 25(1)(b)";
+
   // Live classification preview
-  const previewClassification = !hasDerogation
+  const previewClassification = derogationChecks.length === 0
+    ? null
+    : !hasDerogation  // only "none" selected
     ? "high_risk"
     : isProfilingYes
     ? "high_risk"
@@ -96,12 +125,18 @@ export default function Screen6_SignificantRisk() {
       </div>
 
       <div className="screen-content">
+        {/* Phase 3: Context banner for pure model developers */}
+        {roles_raw && roles_raw.includes("develop_model") && !roles_raw.some(id => ["develop_system", "modify", "change_purpose", "place_on_market", "brand"].includes(id)) && (
+          <div className="info-box alert-info" style={{ marginBottom: "24px" }}>
+            <strong>ℹ️ Note for AI Model Developers:</strong> These questions address the intended use of the AI system in which your model may be integrated. If you have no knowledge of the downstream deployment context, select "None of the above" — your obligations as a model developer will be assessed from Part 7 onwards.
+          </div>
+        )}
         <div className="helper-box alert-info" style={{ marginBottom: "24px" }}>
           <strong>ℹ️ Default: High-Risk</strong>
           <p style={{ marginTop: "8px" }}>
             All Annex III systems are classified as <strong>high-risk by default</strong> under Article&nbsp;6(2).
             Article&nbsp;6(3) provides a narrow derogation: a system escapes the high-risk designation
-            only if at least one of the four conditions below is met <em>and</em> the system does not
+            only if at least one of the four conditions below is met and the system does not
             perform profiling of natural persons.
           </p>
           <span className="source-tag" title="Article 6(2), Article 6(3)">Source</span>
@@ -109,7 +144,7 @@ export default function Screen6_SignificantRisk() {
 
         <h3>Step 1: Article&nbsp;6(3) Derogation Conditions</h3>
         <p style={{ color: "var(--text-light)", marginBottom: "16px" }}>
-          Select <strong>all conditions that apply</strong> to your system. If none apply, leave all unchecked.
+          Select <strong>all conditions that apply</strong> to your system. If none apply, select "None of the above".
         </p>
 
         <div className="options-group checkbox-group">
@@ -130,6 +165,18 @@ export default function Screen6_SignificantRisk() {
               </div>
             </label>
           ))}
+          <hr style={{ margin: "8px 0", borderColor: "var(--border-color)" }} />
+          <label className="checkbox-option" style={{ alignItems: "flex-start" }}>
+            <input
+              type="checkbox"
+              checked={derogationChecks.includes("none")}
+              onChange={() => handleToggleDerogation("none")}
+              style={{ marginTop: "3px" }}
+            />
+            <div>
+              <strong>None of the above apply to our system</strong>
+            </div>
+          </label>
         </div>
 
         {hasDerogation && (
@@ -151,22 +198,12 @@ export default function Screen6_SignificantRisk() {
               <label className="radio-option">
                 <input type="radio" name="profiling" value="yes"
                   checked={profiling === "yes"} onChange={() => saveAnswer("profiling", "yes")} />
-                <div>
-                  <strong>Yes</strong> — the system profiles natural persons
-                  <div style={{ fontSize: "0.875rem", color: "var(--text-lighter)", marginTop: "2px" }}>
-                    System will be classified as High-Risk regardless of derogation conditions.
-                  </div>
-                </div>
+                <span><strong>Yes</strong> — the system profiles natural persons</span>
               </label>
               <label className="radio-option">
                 <input type="radio" name="profiling" value="no"
                   checked={profiling === "no"} onChange={() => saveAnswer("profiling", "no")} />
-                <div>
-                  <strong>No</strong> — the system does not profile natural persons
-                  <div style={{ fontSize: "0.875rem", color: "var(--text-lighter)", marginTop: "2px" }}>
-                    Derogation condition(s) will apply; system qualifies as Not High-Risk.
-                  </div>
-                </div>
+                <span><strong>No</strong> — the system does not profile natural persons</span>
               </label>
             </div>
           </div>
@@ -179,7 +216,13 @@ export default function Screen6_SignificantRisk() {
               ? "Your system performs profiling. Full high-risk obligations apply regardless of derogation conditions."
               : "No derogation condition applies. Your system is High-Risk by default."}
             {" "}<span className="source-tag" title={isProfilingYes ? "Article 6(3), third subparagraph" : "Article 6(2)"}>Source</span>
-          </div>
+            {_willReclass && (
+              <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid rgba(0,0,0,0.15)" }}>
+                <strong>Role Reclassification:</strong>{" "}
+                <>Because this system is high-risk, you are reclassified as <strong>Provider</strong>. Full Provider obligations apply.</>
+                {" "}<span className="source-tag" title={_reclassArt}>Source</span>
+              </div>
+            )}          </div>
         )}
 
         {previewClassification === "non_significant" && (
@@ -192,8 +235,8 @@ export default function Screen6_SignificantRisk() {
         )}
 
         <div className="screen-navigation" style={{ marginTop: "32px" }}>
-          <button className="btn btn-secondary" onClick={() => navigateBack(navigate)}>Back</button>
-          <button className="btn btn-primary" onClick={handleNext} disabled={!canProceed}>Next</button>
+          <button className="btn btn-secondary" onClick={() => navigateBack(navigate)}>← Back</button>
+          <button className="btn btn-primary" onClick={handleNext} disabled={!canProceed}>Next →</button>
         </div>
       </div>
     </div>

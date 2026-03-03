@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
 import { CONFORMITY_ASSESSMENT_ROUTES, CLASSIFICATIONS } from "../data/checklist";
@@ -117,7 +117,32 @@ export default function Screen13A() {
   };
 
   const sectoralInconsistency = detectSectoralInconsistency();
-  
+
+  const [pendingSectoral, setPendingSectoral] = useState(null);
+
+  const sectoralDisplayLabels = {
+    mdr: 'Medical Devices (MDR)',
+    ivdr: 'IVD Devices (IVDR)',
+    machinery: 'Machinery',
+    toys: 'Toys',
+    lifts: 'Lifts',
+    atex: 'ATEX',
+    radio: 'Radio Equipment',
+    pressure: 'Pressure Equipment',
+    cableways: 'Cableways',
+    ppe: 'PPE',
+    gas: 'Gas Appliances',
+    recreational: 'Recreational Craft'
+  };
+
+  const confirmSectoral = () => {
+    if (!pendingSectoral) return;
+    saveAnswer("conformity_sectoral_law", pendingSectoral.resultingLaw);
+    setPendingSectoral(null);
+  };
+
+  const cancelSectoral = () => setPendingSectoral(null);
+
   // Auto-populate sectoral law if not already set and we have Annex IA categories
   useEffect(() => {
     if (isAnnexIA && sectoralLaw.length === 0 && annexIACategories.length > 0) {
@@ -131,23 +156,38 @@ export default function Screen13A() {
   // Handler for toggle options
   const handleToggleSectoral = (id) => {
     const current = sectoralLaw;
+    let resultingLaw;
     if (id === "none") {
-      if (current.includes("none")) {
-        saveAnswer("conformity_sectoral_law", []);
-      } else {
-        saveAnswer("conformity_sectoral_law", ["none"]);
-      }
+      resultingLaw = current.includes("none") ? [] : ["none"];
     } else {
       if (current.includes("none")) {
-        saveAnswer("conformity_sectoral_law", [id]);
+        resultingLaw = [id];
       } else {
-        if (current.includes(id)) {
-          saveAnswer("conformity_sectoral_law", current.filter(item => item !== id));
-        } else {
-          saveAnswer("conformity_sectoral_law", [...current, id]);
+        resultingLaw = current.includes(id)
+          ? current.filter(item => item !== id)
+          : [...current, id];
+      }
+    }
+
+    // If deviates from Part 3 Annex IA expected sectoral law, confirm before applying
+    if (isAnnexIA && id !== "none" && annexIACategories.length > 0 && !annexIACategories.includes('none')) {
+      const expected = getAutoSectoralLaw();
+      if (expected.length > 0) {
+        const hasMajorDeviation =
+          expected.some(e => !resultingLaw.includes(e)) ||
+          resultingLaw.some(r => r !== 'none' && !expected.includes(r));
+        if (hasMajorDeviation) {
+          setPendingSectoral({
+            resultingLaw,
+            expected: expected.map(s => sectoralDisplayLabels[s] || s).join(', '),
+            resulting: resultingLaw.includes('none') ? 'None' : resultingLaw.map(s => sectoralDisplayLabels[s] || s).join(', ')
+          });
+          return;
         }
       }
     }
+
+    saveAnswer("conformity_sectoral_law", resultingLaw);
   };
 
   // MODULE 10: CA ROUTING (Article 43)
@@ -234,6 +274,28 @@ export default function Screen13A() {
         <p className="subtitle">Determine your conformity assessment route. <span className="source-tag" title="Article 43">Source</span></p>
       </div>
 
+      {pendingSectoral && (
+        <div className="modal-overlay" onClick={cancelSectoral}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <strong>⚠️ Selection Conflict</strong>
+            </div>
+            <div className="modal-body">
+              <p style={{ marginBottom: "12px" }}>
+                Your updated sectoral legislation selection (<strong>{pendingSectoral.resulting}</strong>) differs from what your Part 3 Annex IA categories suggest.
+              </p>
+              <p style={{ marginBottom: "14px" }}>
+                Based on your Part 3 Annex IA category selections, the expected sectoral legislation is: <strong>{pendingSectoral.expected}</strong>. Confirm only if the applicable sectoral legislation genuinely differs from the Annex IA category mapping.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={cancelSectoral}>Cancel</button>
+              <button className="btn btn-primary" onClick={confirmSectoral}>Confirm — keep my selection</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="screen-content">
 
         {/* ANNEX I SECTION B (HIGH_RISK_IB) - Article 2(2) */}
@@ -254,20 +316,6 @@ export default function Screen13A() {
                 Toy Safety Directive, etc.). The AI Act conformity assessment procedures do not apply.
               </p>
             </div>
-          </div>
-        )}
-
-        {/* Auto-selection banner */}
-        {isAnnexIA && annexIACategories.length > 0 && !annexIACategories.includes('none') && (
-          <div className="info-box alert-info info-box-banner">
-            <strong>ℹ️ Auto-Selection:</strong> Based on your Part 3 Annex IA categories, we've pre-selected the applicable sectoral legislation below. You can change these selections if they don't match your situation.
-          </div>
-        )}
-
-        {/* Inconsistency warning */}
-        {sectoralInconsistency && (
-          <div className="info-box alert-warning info-box-banner">
-            <strong>⚠️ Potential Inconsistency:</strong> Your current sectoral legislation selection (<strong>{sectoralInconsistency.current}</strong>) differs from your Part 3 Annex IA categories, which suggest <strong>{sectoralInconsistency.expected}</strong>. Please verify this is correct for your situation.
           </div>
         )}
 
@@ -300,16 +348,23 @@ export default function Screen13A() {
                 ["gas", "Gas Appliances Regulation - Regulation (EU) 2016/426"],
                 ["recreational", "Recreational Craft Directive - Directive 2013/53/EU"],
                 ["none", "None of the above"],
-              ].map(([id, label]) => (
-                <label key={id} className="checkbox-option">
-                  <input
-                    type="checkbox"
-                    checked={sectoralLaw.includes(id)}
-                    onChange={() => handleToggleSectoral(id)}
-                  />
-                  <span>{label}</span>
-                </label>
-              ))}
+              ].flatMap(([id, label]) => {
+                const el = (
+                  <label key={id} className="checkbox-option">
+                    <input
+                      type="checkbox"
+                      checked={sectoralLaw.includes(id)}
+                      onChange={() => handleToggleSectoral(id)}
+                    />
+                    <span>{label}</span>
+                  </label>
+                );
+                if (id === "none") return [
+                  <hr key="none-sep" style={{ margin: "8px 0", borderColor: "var(--border-color)" }} />,
+                  el
+                ];
+                return el;
+              })}
             </div>
           </div>
         )}
@@ -337,7 +392,7 @@ export default function Screen13A() {
                 </label>
                 <label className="radio-option">
                   <input type="radio" disabled />
-                  <span>Notified Body – <em>Not available</em> <span className="source-tag" title="Annex VII">Source</span></span>
+                  <span>Notified Body – Not available <span className="source-tag" title="Annex VII">Source</span></span>
                 </label>
               </div>
             </div>

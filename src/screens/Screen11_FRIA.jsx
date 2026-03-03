@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWizard } from "../state/WizardContext";
 import { CLASSIFICATIONS } from "../data/checklist";
@@ -84,6 +84,38 @@ export default function Screen11b_FRIA() {
   };
 
   const deploymentInconsistency = detectDeploymentInconsistency();
+
+  const [pendingSector, setPendingSector] = useState(null);
+
+  const sectorLabels11 = {
+    biometrics: 'Biometrics',
+    education: 'Education',
+    employment: 'Employment',
+    essential_services: 'Essential Services',
+    law_enforcement: 'Law Enforcement',
+    migration_asylum_border: 'Migration, Asylum and Border Control',
+    justice: 'Justice'
+  };
+
+  const getExpectedSectors = () => {
+    const expected = [];
+    if (selectedUseCases.some(id => ['biometric_rbi', 'biometric_categorisation', 'emotion_recognition'].includes(id))) expected.push('biometrics');
+    if (selectedUseCases.some(id => id.startsWith('education_'))) expected.push('education');
+    if (selectedUseCases.some(id => id.startsWith('employment_'))) expected.push('employment');
+    if (selectedUseCases.some(id => id.startsWith('services_'))) expected.push('essential_services');
+    if (selectedUseCases.some(id => id.startsWith('law_'))) expected.push('law_enforcement');
+    if (selectedUseCases.some(id => id.startsWith('migration_'))) expected.push('migration_asylum_border');
+    if (selectedUseCases.some(id => id.startsWith('justice_'))) expected.push('justice');
+    return expected;
+  };
+
+  const confirmSector = () => {
+    if (!pendingSector) return;
+    saveAnswer("deploymentSectors", pendingSector.resultingSectors);
+    setPendingSector(null);
+  };
+
+  const cancelSector = () => setPendingSector(null);
 
   // Auto-set Annex III point if not already set
   useEffect(() => {
@@ -173,22 +205,39 @@ export default function Screen11b_FRIA() {
 
   // Handle deployment sector toggle
   const handleSectorToggle = (sectorId) => {
+    let resultingSectors;
     if (sectorId === "none") {
-      if (deploymentSectors.includes("none")) {
-        saveAnswer("deploymentSectors", []);
-      } else {
-        saveAnswer("deploymentSectors", ["none"]);
-      }
+      resultingSectors = deploymentSectors.includes("none") ? [] : ["none"];
     } else {
       if (deploymentSectors.includes("none")) {
-        saveAnswer("deploymentSectors", [sectorId]);
+        resultingSectors = [sectorId];
       } else {
-        const updated = deploymentSectors.includes(sectorId)
+        resultingSectors = deploymentSectors.includes(sectorId)
           ? deploymentSectors.filter(x => x !== sectorId)
           : [...deploymentSectors, sectorId];
-        saveAnswer("deploymentSectors", updated);
       }
     }
+
+    // If deviates from Part 5 Annex III expected sectors, confirm before applying
+    const hasAnnexIII = selectedUseCases.length > 0 && !selectedUseCases.includes('none');
+    if (hasAnnexIII && sectorId !== "none") {
+      const expected = getExpectedSectors();
+      if (expected.length > 0) {
+        const hasMajorDeviation =
+          expected.some(e => !resultingSectors.includes(e)) ||
+          resultingSectors.some(r => r !== 'none' && !expected.includes(r));
+        if (hasMajorDeviation) {
+          setPendingSector({
+            resultingSectors,
+            expected: expected.map(s => sectorLabels11[s] || s).join(', '),
+            resulting: resultingSectors.length === 0 ? 'None' : resultingSectors.map(s => sectorLabels11[s] || s).join(', ')
+          });
+          return;
+        }
+      }
+    }
+
+    saveAnswer("deploymentSectors", resultingSectors);
   };
 
   const handleNext = () => {
@@ -224,12 +273,34 @@ export default function Screen11b_FRIA() {
         <p className="subtitle">Determine if FRIA is required for your AI system. <span className="source-tag" title="Article 27">Source</span></p>
       </div>
 
+      {pendingSector && (
+        <div className="modal-overlay" onClick={cancelSector}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <strong>⚠️ Selection Conflict</strong>
+            </div>
+            <div className="modal-body">
+              <p style={{ marginBottom: "12px" }}>
+                Your updated deployment sector selection (<strong>{pendingSector.resulting}</strong>) differs from what your Part 5 Annex III use cases suggest.
+              </p>
+              <p style={{ marginBottom: "14px" }}>
+                Based on your Part 5 use case selections, the expected deployment sectors are: <strong>{pendingSector.expected}</strong>. Confirm only if your deployment situation genuinely differs from the Annex III use cases you selected.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={cancelSector}>Cancel</button>
+              <button className="btn btn-primary" onClick={confirmSector}>Confirm — keep my selection</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="screen-content">
 
         {/* ===== PUBLIC BODY / AUTHORITY QUESTION ===== */}
         <div style={{ marginTop: "0", paddingTop: "0", borderTop: "none" }}>
           <h3>Are you a public body or authority?</h3>
-          <p style={{ marginBottom: "16px", fontSize: "0.9rem", color: "#666" }}>
+          <p style={{ marginBottom: "16px", fontSize: "0.9rem", color: "var(--text-light)" }}>
             This affects whether Fundamental Rights Impact Assessment (FRIA) is required.
             Select "Yes" if you work for a government agency, public administration, or you are a private actor performing tasks “in the public interest” on behalf of a public authority (outsourced services).
           </p>
@@ -259,9 +330,9 @@ export default function Screen11b_FRIA() {
         </div>
 
         {/* ===== PUBLIC SERVICE PROVIDER QUESTION ===== */}
-        <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border-color)" }}>
+        <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "2px solid var(--border-color)" }}>
           <h3>Are you a public service provider?</h3>
-          <p style={{ marginBottom: "16px", fontSize: "0.95em", color: "#666" }}>
+          <p style={{ marginBottom: "16px", fontSize: "0.9rem", color: "var(--text-light)" }}>
             This applies to private entities that provide services in the public interest (e.g., healthcare, utilities, education) 
             on behalf of or under contract with public authorities. This is distinct from being a public body directly.
           </p>
@@ -292,8 +363,8 @@ export default function Screen11b_FRIA() {
 
         {/* ===== ANNEX III POINT 5(b)/5(c) DETECTION - PRIVATE SECTOR FRIA ===== */}
         {isAnnexIII_5b_or_5c && (
-          <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border-color)" }}>
-            <div className="info-box" style={{ background: "#fff9e6", borderLeft: "4px solid #ffcc00" }}>
+          <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "2px solid var(--border-color)" }}>
+            <div className="info-box alert-warning">
               <strong>⚠️ Special FRIA Requirement Detected:</strong>
               <p style={{ margin: "8px 0 0 0" }}>
                 Your AI system uses {isAnnexIII_5b && "creditworthiness evaluation or credit scoring"}
@@ -307,24 +378,10 @@ export default function Screen11b_FRIA() {
           </div>
         )}
 
-        {/* Auto-selection banner for deployment sectors */}
-        {selectedUseCases.length > 0 && !selectedUseCases.includes('none') && deploymentSectors.length > 0 && !deploymentSectors.includes('none') && (
-          <div className="info-box alert-info" style={{ marginBottom: "24px" }}>
-            <strong>ℹ️ Auto-Selection:</strong> Based on your Part 5 Annex III use cases, we've pre-selected the corresponding deployment sectors below. You can change these selections if they don't match your situation.
-          </div>
-        )}
-
-        {/* Inconsistency warning */}
-        {deploymentInconsistency && (
-          <div className="info-box alert-warning" style={{ marginBottom: "24px" }}>
-            <strong>⚠️ Potential Inconsistency:</strong> Your current deployment sectors (<strong>{deploymentInconsistency.current}</strong>) differ from your Part 5 Annex III use cases, which suggest <strong>{deploymentInconsistency.expected}</strong>. Please verify this is correct for your situation.
-          </div>
-        )}
-
         {/* ===== DEPLOYMENT SECTOR QUESTION ===== */}
-        <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border-color)" }}>
+        <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "2px solid var(--border-color)" }}>
           <h3 style={{ marginBottom: "16px" }}>Deployment Sectors</h3>
-          <p style={{ marginBottom: "16px", fontSize: "0.95em", color: "#666" }}>
+          <p style={{ marginBottom: "16px", fontSize: "0.9rem", color: "var(--text-light)" }}>
             Select the sectors in which your AI system will be deployed. For public bodies and public service providers, deployment in high-risk sectors triggers FRIA requirements.
           </p>
           
@@ -385,6 +442,7 @@ export default function Screen11b_FRIA() {
               />
               <span>Administration of Justice and Democratic Processes<span className="source-tag" title="Annex III(8) - Administration of justice and democratic processes">Source</span></span>
             </label>
+            <hr style={{ margin: "8px 0", borderColor: "var(--border-color)" }} />
             <label className="checkbox-option">
               <input
                 type="checkbox"

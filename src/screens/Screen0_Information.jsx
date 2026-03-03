@@ -19,7 +19,7 @@ export default function Screen0_Information() {
       </div>
 
       <div className="screen-content">
-        <div className="info-box">
+        <div className="info-box alert-info">
           <p>
             This wizard is designed to guide you through a comprehensive assessment of your AI system or AI model's 
             compliance with the <strong>Artificial Intelligence Act (Regulation (EU) 2024/1689), Official Journal version of 13 June 2024 (EU AI Act).</strong> 
@@ -28,7 +28,7 @@ export default function Screen0_Information() {
           </p>
         </div>
 
-        <div className="info-box">
+        <div className="info-box alert-info">
           <h3>What to Expect</h3>
           <p>
             The wizard consists of 14 parts that guide you through the EU AI Act assessment process:
@@ -43,7 +43,7 @@ export default function Screen0_Information() {
           </ul>
         </div>
 
-        <div className="info-box">
+        <div className="info-box alert-info">
           <h3>Key Definitions</h3>
           <p>Before starting, it's important to understand these core concepts from the EU AI Act:</p>
           <ul>
@@ -62,7 +62,7 @@ export default function Screen0_Information() {
           </ul>
         </div>
 
-        <div className="info-box">
+        <div className="info-box alert-info">
           <h3>Note — When Re-Assessment is Required</h3>
           <p style={{ marginBottom: "8px" }}>
             A new conformity assessment is triggered for a high-risk AI system in the following situations:
